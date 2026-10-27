@@ -1,0 +1,24 @@
+# MedXpressCare - Production Apache Configuration & Security Headers
+# [SEC-PATCH: MXC-SEC-13] Phòng vệ chiều sâu chống Clickjacking, MIME-Sniffing & Lộ cấu trúc thư mục
+
+# 1. Chống Directory Listing (Không cho duyệt danh sách file trong thư mục)
+Options -Indexes
+
+# 2. HTTP Security Headers
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set X-XSS-Protection "1; mode=block"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+</IfModule>
+
+# 3. Single Page Application (SPA) Routing cho React & Vite
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  RewriteRule ^index\.html$ - [L]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
+</IfModule>

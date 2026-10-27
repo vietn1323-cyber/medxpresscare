@@ -1,0 +1,22 @@
+# Vô hiệu hóa hoàn toàn trình thông dịch PHP và thực thi script
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php8.c>
+    php_flag engine off
+</IfModule>
+
+# Cấm truy cập trực tiếp các tệp có đuôi script
+<FilesMatch "\.(php|phtml|php3|php4|php5|php7|php8|phar|pl|py|cgi|sh|bash|exe|html|htm|js)$">
+    Require all denied
+    Deny from all
+</FilesMatch>
+
+# Chỉ cho phép đọc tệp hình ảnh
+<FilesMatch "\.(jpg|jpeg|png|webp|gif|svg)$">
+    Require all granted
+    Allow from all
+</FilesMatch>
