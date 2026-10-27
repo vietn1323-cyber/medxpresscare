@@ -749,14 +749,19 @@ NGUYÊN TẮC TƯ VẤN SỐNG CÒN (BẮT BUỘC TUÂN THỦ ĐỂ ĐÚNG HOÀN
    - Hướng dẫn sơ cứu tại chỗ: Nằm nơi thoáng, nới lỏng áo, KHÔNG cạo gió, KHÔNG cho ăn uống hay uống thuốc tùy tiện.
    - BẮT BUỘC ĐỂ "recommendedProductIds": [] (mảng rỗng), TUYỆT ĐỐI KHÔNG bán thuốc hay TPCN trong tình huống cấp cứu!
 
-3. TRẢ LỜI ĐÚNG TRỌNG TÂM CÂU HỎI TRƯỚC TIÊN:
+3. PHÂN BIỆT RÕ RÀNG GIỮA "NHU CẦU BỔ SUNG VI CHẤT / DINH DƯỠNG" VÀ "TRIỆU CHỨNG BỆNH TẬT":
+   - Rất nhiều khách hàng KHÔNG HỀ CÓ BỆNH TẬT, họ chỉ có NHU CẦU BỒI BỔ & BỔ SUNG VI CHẤT LÀNH MẠNH (ví dụ: mua Canxi/D3K2 cho con cao lớn, mua Collagen làm đẹp da, mua Dầu cá bổ mắt, mua Hồng sâm bồi bổ sức khỏe).
+   - TUYỆT ĐỐI KHÔNG dùng các câu khô khan như "đồng cảm với cảm giác khó chịu bạn đang trải qua" hay "tình trạng mệt mỏi bệnh tật" khi khách chỉ đang hỏi bổ sung Canxi cho con hoặc chăm sóc sức khỏe lành mạnh!
+   - Thể hiện sự thấu hiểu tình cảm của cha mẹ muốn con phát triển chiều cao, phụ nữ muốn chăm sóc sắc đẹp, hay con cái muốn bồi bổ cho cha mẹ.
+
+4. TRẢ LỜI ĐÚNG TRỌNG TÂM CÂU HỎI TRƯỚC TIÊN:
    - Khách hỏi điều gì, hãy trả lời trực tiếp, chính xác và giải thích rõ ràng điều đó ngay từ câu đầu tiên. Tuyệt đối không vòng vo né tránh.
    - Nếu khách chào hỏi: Hãy chào đón ấm áp, xưng "Dược sĩ" và hỏi thăm khách hàng đang gặp khó khăn hay triệu chứng gì để hỗ trợ.
    - Nếu khách hỏi về dinh dưỡng, kiêng cữ: Hướng dẫn cụ thể món nên ăn, món nên tránh và lý do sinh học đằng sau.
    - Nếu khách hỏi về cách dùng, thời điểm uống: Giải thích chính xác thời điểm vàng cơ thể hấp thu tốt nhất và lưu ý tương tác thuốc/bữa ăn.
    - Nếu khách mô tả triệu chứng: Thấu cảm, giải thích cơ chế bình dị, đưa ra lời khuyên xử trí tại nhà và hỏi thăm thêm các thông tin cần thiết (độ tuổi, bị bao lâu rồi, tiền sử dạ dày/huyết áp/tiểu đường).
 
-4. TUYỆT ĐỐI KHÔNG ÉP BÁN HÀNG — CHỈ ĐỀ XUẤT SẢN PHẨM KHI ĐÚNG MỤC TIÊU:
+5. TUYỆT ĐỐI KHÔNG ÉP BÁN HÀNG — CHỈ ĐỀ XUẤT SẢN PHẨM KHI ĐÚNG MỤC TIÊU:
    - TUYỆT ĐỐI ĐỂ "recommendedProductIds": [] (mảng rỗng) trong các trường hợp:
      + Khách chỉ chào hỏi, làm quen, cảm ơn.
      + Khách hỏi kiến thức y tế, sinh hoạt, chế độ ăn uống, tập luyện, kiêng cữ.
@@ -769,7 +774,7 @@ NGUYÊN TẮC TƯ VẤN SỐNG CÒN (BẮT BUỘC TUÂN THỦ ĐỂ ĐÚNG HOÀN
      + Hoặc sau khi đã giải thích rõ cơ chế và khách cần một phác đồ bổ trợ cụ thể để phục hồi.
    - Khi đề xuất sản phẩm: Trình bày nhẹ nhàng, khách quan, phân tích rõ lý do vì sao sản phẩm đó giúp ích. KHÔNG dùng ngôn từ giục giã mua hàng ("hãy mua ngay", "đặt hỏa tốc").
 
-5. VĂN PHONG TỰ NHIÊN, ẤM ÁP, CHUẨN MỰC:
+6. VĂN PHONG TỰ NHIÊN, ẤM ÁP, CHUẨN MỰC:
    - Nói chuyện như một Dược Sĩ Lâm Sàng gia đình ân cần, giàu chuyên môn, thấu hiểu tâm lý người bệnh.
    - KHÔNG dùng các tiêu đề khô cứng, rập khuôn máy móc.
    - Trình bày mạch lạc, ngắn gọn, gạch đầu dòng rõ ràng, dễ đọc trên thiết bị di động.
@@ -1005,7 +1010,9 @@ Chào bạn, các triệu chứng bạn vừa mô tả là **dấu hiệu cảnh
   const isUsageTiming = /(uống|dùng|bổ sung).*(lúc nào|khi nào|sáng hay tối|trước hay sau|thời điểm nào|thời điểm gì|sau ăn|trước ăn)/i.test(textLower) || /(lúc nào|khi nào|thời điểm nào|thời điểm gì).*(uống|dùng|bổ sung)/i.test(textLower) || /cách dùng|uống bao nhiêu|uống mấy lần|uống cùng|uống chung|uống nước ấm|uống cách/i.test(textLower);
   const isPrecaution = /bà bầu|mang thai|cho con bú|tiểu đường|huyết áp|dạ dày|bao tử|tác dụng phụ|có hại gì|dị ứng|tương tác/i.test(textLower);
   const isStorePolicy = /giao hàng|ship|vận chuyển|địa chỉ|hotline|chính hãng|tem|hóa đơn|đổi trả/i.test(textLower);
-  const isProductRequest = /uống gì|thuốc gì|có loại nào|sản phẩm nào|giới thiệu|tư vấn giúp mình loại|mua gì|loại nào tốt|combo|tư vấn phác đồ|cho tôi xin giá/i.test(textLower) || /(mua|tư vấn|dùng).*(thuốc|sản phẩm|loại nào|combo)/i.test(textLower);
+  const isProductRequest = /(mua|muốn mua|cần mua|tìm mua|đặt mua|bán cho|lấy cho|báo giá|xin giá)/i.test(textLower) ||
+    /(uống gì|thuốc gì|có loại nào|sản phẩm nào|loại nào tốt|combo|phác đồ|bổ sung gì|giới thiệu|tư vấn giúp.*loại)/i.test(textLower) ||
+    /(mua|tư vấn|dùng|bổ sung).*(thuốc|sản phẩm|loại nào|combo|canxi|dầu cá|vitamin|omega|sâm|collagen)/i.test(textLower);
 
   // Lưu ý bệnh lý nền / tương tác thuốc
   let precautionsNote = '';
@@ -1232,8 +1239,29 @@ Bạn đang cần tìm hiểu thông tin cho sản phẩm nào hoặc cần hỗ
     let symptomAnalysis = '';
     let concernTitle = '';
     let homeCare = '';
+    let isNutritionalDemand = false;
 
-    if (/khớp|gối|lục khục|thoái hóa|xương|cột sống|lưng/.test(textLower)) {
+    if (/canxi|calcium|d3|k2|chiều cao/.test(textLower)) {
+      isNutritionalDemand = true;
+      concernTitle = 'Bổ Sung Canxi & Dưỡng Chất Cho Khung Xương Bé';
+      symptomAnalysis = 'Canxi là khoáng chất nền tảng cấu tạo nên 99% khung xương và mầm răng. Ở trẻ nhỏ, việc bổ sung đúng Canxi hữu cơ gốc sữa sinh học kết hợp Vitamin D3 và K2 MK-7 giúp canxi được gắn trúng đích vào sụn xương, hỗ trợ bé phát triển chiều cao vượt trội, ngủ sâu giấc không giật mình hay rụng tóc vành khăn mà hoàn toàn không lo nóng trong hay táo bón.';
+      homeCare = 'Cho bé uống Canxi vào buổi sáng sau ăn 30-60 phút cùng một ly nước ấm đầy; kết hợp cho bé tắm nắng sớm, chạy nhảy, bơi lội hoặc chơi bóng rổ 30 phút mỗi ngày.';
+    } else if (/dầu cá|omega|dha|sáng mắt|não bộ/.test(textLower)) {
+      isNutritionalDemand = true;
+      concernTitle = 'Bổ Sung Omega-3 DHA/EPA Cho Thị Lực & Não Bộ';
+      symptomAnalysis = 'DHA và EPA là các axit béo không no thiết yếu cấu tạo nên màng tế bào thần kinh thị giác và vỏ não, giúp tăng cường độ ẩm màng phim mắt, giảm mỏi mắt và tăng khả năng ghi nhớ, tập trung.';
+      homeCare = 'Nên uống ngay trong hoặc sau bữa ăn chính có chất béo để dịch mật nhũ hóa và hấp thu tối đa lượng dưỡng chất.';
+    } else if (/collagen|nám|sáng da|đẹp da/.test(textLower)) {
+      isNutritionalDemand = true;
+      concernTitle = 'Nuôi Dưỡng Làn Da & Chống Lão Hóa';
+      symptomAnalysis = 'Bổ sung dưỡng chất chống oxy hóa tự nhiên (Ý dĩ, Vitamin C, Curcumin) giúp ức chế hắc tố Melanin và kích thích cơ thể tự sản sinh Collagen tuýp 1 săn chắc.';
+      homeCare = 'Thoa kem chống nắng đều đặn, uống đủ 2 lít nước mỗi ngày và ăn nhiều rau xanh, quả mọng.';
+    } else if (/bồi bổ|thể lực|sức đề kháng|hồng sâm|đông trùng/.test(textLower)) {
+      isNutritionalDemand = true;
+      concernTitle = 'Bồi Bổ Thể Lực & Nâng Cao Sức Đề Kháng';
+      symptomAnalysis = 'Các thảo dược đại bổ giúp kích hoạt tế bào miễn dịch tự nhiên, tăng tuần hoàn khí huyết và phục hồi thể lực sau ốm hoặc khi làm việc mệt mỏi.';
+      homeCare = 'Nên dùng vào ban ngày (sáng/trưa), kết hợp chế độ nghỉ ngơi điều độ và hạn chế thức khuya.';
+    } else if (/khớp|gối|lục khục|thoái hóa|xương|cột sống|lưng/.test(textLower)) {
       concernTitle = 'Đau Nhức Thoái Hóa Khớp';
       symptomAnalysis = 'Lớp sụn bọc đầu xương bị bào mòn mỏng đi theo tuổi tác hoặc do tư thế sai kéo dài, làm giảm tiết dịch nhờn bôi trơn. Khi vận động, hai đầu xương cọ xát gây cảm giác cứng khớp vào buổi sáng và phát ra tiếng lạo xạo.';
       homeCare = 'Trước mắt, bạn nên chườm ấm vị trí đau 15 phút vào buổi tối, tránh mang vác nặng hay ngồi xổm. Bạn có thể tập động tác co duỗi nhẹ nhàng trên giường khi vừa thức dậy.';
@@ -1250,31 +1278,42 @@ Bạn đang cần tìm hiểu thông tin cho sản phẩm nào hoặc cần hỗ
       symptomAnalysis = 'Máu mang oxy và dưỡng chất lên vỏ não bị suy giảm (thường do co cứng cơ cổ vai gáy hoặc xơ cứng thành mạch), kết hợp căng thẳng làm thụ thể Melatonin bị ức chế, khiến bạn trằn trọc khó vào giấc hoặc hay tỉnh giữa đêm.';
       homeCare = 'Tối nay bạn hãy thử ngâm chân nước ấm với chút gừng đập dập và muối trong 15 phút, massage nhẹ vùng sau gáy và tắt hoàn toàn điện thoại trước khi lên giường nhé.';
     } else {
-      concernTitle = 'Tư Vấn Triệu Chứng Sức Khỏe';
-      symptomAnalysis = 'Các biểu hiện mệt mỏi khó chịu thường phản ánh sự mất cân bằng vi chất, áp lực căng thẳng hoặc suy giảm sức đề kháng tự nhiên của cơ thể.';
-      homeCare = 'Bạn nên uống đủ nước ấm, nghỉ ngơi hợp lý, tránh thức khuya và theo dõi sát các biểu hiện của cơ thể.';
+      concernTitle = 'Tư Vấn Chăm Sóc Sức Khỏe';
+      symptomAnalysis = 'Việc duy trì cơ thể khỏe mạnh bắt nguồn từ chế độ dinh dưỡng cân bằng 4 nhóm chất, bổ sung đủ vi chất thiết yếu và vận động điều độ.';
+      homeCare = 'Bạn nên uống đủ 1.5 - 2 lít nước ấm, ăn nhiều rau quả tươi, tập thể dục nhẹ nhàng 30 phút mỗi ngày và ngủ đủ giấc.';
     }
 
-    let adviceFollowUp = `Để Dược sĩ đánh giá chính xác mức độ và tư vấn giải pháp thích hợp nhất cho bạn, bạn cho Dược sĩ hỏi thêm một chút nhé:
-1. Bạn đã bị tình trạng này bao lâu rồi, mức độ khó chịu nhiều vào thời điểm nào trong ngày?
-2. Hiện tại bạn có đang dùng thuốc điều trị nào khác (như huyết áp, dạ dày, tiểu đường) không?
+    let adviceFollowUp = `Để Dược sĩ tư vấn chính xác và phù hợp nhất cho bạn, bạn cho Dược sĩ hỏi thêm một chút nhé:
+1. Bạn đã quan tâm hoặc gặp tình trạng này bao lâu rồi?
+2. Hiện tại bạn có đang dùng thuốc điều trị bệnh nền nào khác không?
 
-*(Nếu bạn muốn tìm hiểu các dòng thực phẩm bảo vệ sức khỏe hoặc phác đồ thảo dược hỗ trợ phục hồi từ gốc, hãy cho Dược sĩ biết nhé!)*`;
+*(Nếu bạn muốn tìm hiểu các dòng sản phẩm hoặc vi chất bổ sung phù hợp, hãy cho Dược sĩ biết nhé!)*`;
 
-    if (isAskingForParents) {
+    if (isAskingForKids || audience === 'kids') {
+      adviceFollowUp = `Để Dược sĩ tư vấn chính xác liều lượng vi chất an toàn và hiệu quả nhất cho con, ba/mẹ cho Dược sĩ hỏi thêm một chút nhé:
+1. Bé nhà mình năm nay được mấy tuổi/mấy tháng và cân nặng khoảng bao nhiêu kg ạ?
+2. Hằng ngày bé uống được khoảng bao nhiêu ml sữa và sinh hoạt ăn ngủ thế nào?
+
+*(Nếu ba/mẹ muốn tìm hiểu các dòng Canxi sữa sinh học hoặc vitamin hữu cơ nhập khẩu cho bé, hãy nhắn để Dược sĩ gửi thông tin nhé!)*`;
+    } else if (isAskingForParents) {
       adviceFollowUp = `Để Dược sĩ đánh giá chính xác và tư vấn phương án chăm sóc an toàn nhất cho Bác, bạn cho Dược sĩ hỏi thêm một chút nhé:
-1. Bác năm nay bao nhiêu tuổi và đã bị tình trạng này bao lâu rồi, ban đêm Bác ngủ có ngon giấc không?
+1. Bác năm nay bao nhiêu tuổi và ban đêm Bác ngủ có ngon giấc không?
 2. Bác hiện có đang dùng thuốc điều trị bệnh nền nào khác (như huyết áp, dạ dày, tim mạch) không?
 
-*(Nếu bạn muốn tìm hiểu các dòng phác đồ thảo dược bồi bổ, tái tạo lành tính và an toàn cho người lớn tuổi, hãy cho Dược sĩ biết để hỗ trợ nhé!)*`;
-    } else if (isAskingForKids) {
-      adviceFollowUp = `Để Dược sĩ hỗ trợ ba/mẹ tốt nhất cho bé, cho Dược sĩ hỏi thêm một chút nhé:
-1. Bé nhà mình hiện được bao nhiêu tháng/tuổi và cân nặng khoảng bao nhiêu kg ạ?
-2. Tình trạng này của bé đã diễn ra bao lâu rồi và bé có hay nôn trớ hay sốt không?`;
+*(Nếu bạn muốn tìm hiểu các dòng phác đồ thảo dược bồi bổ lành tính và an toàn cho người lớn tuổi, hãy cho Dược sĩ biết để hỗ trợ nhé!)*`;
+    }
+
+    let openingReply = `${greetingSalutation}, Dược sĩ rất hiểu và đồng cảm với nỗi lo lắng về tình trạng **${concernTitle}**:`;
+    if (isNutritionalDemand) {
+      if (isAskingForKids || audience === 'kids') {
+        openingReply = `Chào bạn! Dược sĩ rất hiểu nhu cầu muốn bổ sung dưỡng chất giúp **bé** phát triển khỏe mạnh và toàn diện. Về chủ đề **${concernTitle}**:`;
+      } else {
+        openingReply = `Chào bạn! Dược sĩ xin chia sẻ cặn kẽ về **nhu cầu dinh dưỡng và bổ sung vi chất** cho **${concernTitle}**:`;
+      }
     }
 
     return {
-      reply: `${greetingSalutation}, Dược sĩ rất hiểu và đồng cảm với cảm giác lo lắng về tình trạng **${concernTitle}**:
+      reply: `${openingReply}
 
 - **Cơ chế:** ${symptomAnalysis}
 - **Cách chăm sóc tại nhà ngay lúc này:** ${homeCare}
@@ -1343,12 +1382,21 @@ ${adviceFollowUp}`,
 - 🇻🇳 **Phương án Nội Địa:** **Đông Trùng Hạ Thảo Sapa Traphaco** — Cung cấp 17 loại acid amin thiết yếu và vi chất sinh học kích thích gai vị giác phát triển, giúp trẻ ăn ngon miệng tự nhiên.
 - 🌐 **Phương án Nhập Khẩu:** **Tảo Xoắn Vàng Spirulina EX (Nhật Bản)** — Chứa hơn 50 dưỡng chất toàn diện và lợi khuẩn đường ruột, hỗ trợ chuyển hóa và tăng hấp thu dinh dưỡng tối đa.`;
   } else if (/chiều cao|thấp còi|canxi|d3k2/.test(textLower) || selectedConcern?.id?.includes('height')) {
-    matchedConcernTitle = 'Bứt phá chiều cao cho trẻ & Bổ sung Canxi D3K2';
-    domesticId = 'vn-01'; // Canxi sụn khớp
-    importedId = 'au-02'; // Canxi Sữa Bio Island Úc
-    prodExplanation = `Để cung cấp canxi sinh học cho khung xương chắc khỏe:
-- 🇻🇳 **Phương án Nội Địa:** Các dòng sản phẩm bổ sung khoáng chất canxi nano đạt chuẩn GMP-WHO.
-- 🌐 **Phương án Nhập Khẩu:** **Canxi Sữa Tảo Biển Bio Island Milk Calcium (Úc)** — Chiết xuất từ sữa bò tươi nguyên chất, tỷ lệ Canxi:Phospho 2:1 hấp thu tối ưu vào xương.`;
+    if (audience === 'kids' || isAskingForKids) {
+      matchedConcernTitle = 'Bổ sung Canxi sinh học & Phát triển chiều cao cho bé';
+      domesticId = 'vn-01'; // Canxi Nano
+      importedId = 'au-02'; // Canxi Sữa Bio Island Úc
+      prodExplanation = `Để cung cấp nguồn Canxi sinh học lành tính, giúp bé có hệ xương răng chắc khỏe và phát triển chiều cao vượt trội:
+- 🇻🇳 **Phương án Nội Địa:** **Viên Khớp & Bổ Sung Canxi Nano Bách Niên Kiện** — Cung cấp Canxi và khoáng chất tự nhiên đạt chuẩn GMP-WHO.
+- 🌐 **Phương án Nhập Khẩu (Khuyên dùng cho bé):** **Canxi Sữa Tảo Biển Bio Island Milk Calcium (Úc)** — Dòng Canxi sữa hữu cơ số 1 của Úc dành riêng cho trẻ nhỏ, chiết xuất từ sữa bò tươi nguyên chất với tỷ lệ vàng Canxi:Phospho 2:1 tương thích sinh học cao nhất, kết hợp sẵn Vitamin D3 giúp hấp thu tối đa vào xương mà hoàn toàn không gây nóng trong hay táo bón.`;
+    } else {
+      matchedConcernTitle = 'Bổ sung Canxi D3K2 & Phòng ngừa loãng xương';
+      domesticId = 'vn-01';
+      importedId = 'de-02'; // Doppelherz Magie + Canxi + D3 Đức
+      prodExplanation = `Để bổ sung Canxi và khoáng chất vững chắc cho hệ cơ xương khớp:
+- 🇻🇳 **Phương án Nội Địa:** **Viên Khớp Bách Niên Kiện** — Giảm đau nhức và bổ sung dưỡng chất sụn khớp chuẩn GMP-WHO.
+- 🌐 **Phương án Nhập Khẩu:** **Doppelherz Magie + Canxi + D3 (Đức)** — Công thức tối ưu kết hợp Canxi và Magie hữu cơ giúp tăng mật độ xương và giảm chuột rút co cơ.`;
+    }
   } else if (/tim mạch|huyết áp|mỡ máu|xơ vữa|cholesterol/.test(textLower) || selectedConcern?.id?.includes('cardio')) {
     matchedConcernTitle = 'Huyết áp, Mỡ máu cao & Bảo vệ thành mạch';
     domesticId = 'vn-04'; // Cebraton Traphaco
@@ -1379,20 +1427,29 @@ ${adviceFollowUp}`,
     productOpening = `${greetingSalutation}, theo nhu cầu tìm hiểu sản phẩm bồi bổ, phục hồi cho **Bác** về tình trạng **${matchedConcernTitle}**, Dược sĩ xin tư vấn phác đồ khoa học, lành tính và an toàn cho người lớn tuổi:`;
     productClosing = `*Bạn có thể xem chi tiết thông tin thành phần, số ĐKSP Bộ Y Tế của 2 sản phẩm đề xuất bên dưới để tham khảo và lựa chọn phương án chăm sóc tốt nhất cho Bác nhé.*`;
   } else if (isAskingForKids || audience === 'kids') {
-    productOpening = `${greetingSalutation}, theo nhu cầu tìm hiểu giải pháp an toàn cho **bé** về tình trạng **${matchedConcernTitle}**, Dược sĩ xin tư vấn phương án bổ sung vi chất chuẩn y khoa:`;
-    productClosing = `*Ba/mẹ có thể xem chi tiết thông tin sản phẩm chuẩn Bộ Y Tế bên dưới để tham khảo liều lượng phù hợp cho bé nhé.*`;
+    productOpening = `Chào bạn! Dược sĩ rất hiểu nhu cầu muốn bổ sung dưỡng chất giúp **bé** phát triển toàn diện. Về phác đồ **${matchedConcernTitle}**, Dược sĩ xin tư vấn giải pháp chuẩn y khoa, an toàn cho hệ tiêu hóa của trẻ:`;
+    productClosing = `*Ba/mẹ có thể xem chi tiết thông tin sản phẩm chuẩn Bộ Y Tế bên dưới để tham khảo liều lượng phù hợp cho độ tuổi của bé nhé.*`;
   } else if (audience === 'elderly') {
     productOpening = `Dược sĩ xin kính chào Bác! Theo nhu cầu tìm hiểu sản phẩm hỗ trợ cho tình trạng **${matchedConcernTitle}**, Dược sĩ xin tư vấn chi tiết phác đồ khoa học, êm dịu dạ dày cho Bác:`;
     productClosing = `*Bác có thể xem chi tiết thông tin thành phần, số ĐKSP Bộ Y Tế của 2 sản phẩm đề xuất bên dưới để tham khảo lựa chọn phương án phù hợp với Bác nhé.*`;
+  }
+
+  let safeUsage = `**Cách dùng an toàn:**
+- Uống sau bữa ăn khoảng 30 phút cùng một ly nước ấm đầy.
+- Duy trì liệu trình tối thiểu 1-2 tháng để hoạt chất phát huy hiệu quả tái tạo bền vững.`;
+
+  if (audience === 'kids' || isAskingForKids) {
+    safeUsage = `**Cách dùng an toàn cho bé:**
+- Cho bé uống vào buổi **SÁNG**, sau bữa ăn khoảng 30 - 60 phút cùng 1 ly nước ấm đầy.
+- Tuyệt đối **không cho bé uống Canxi vào buổi chiều tối** để tránh cặn lắng thận và khó ngủ.
+- Nếu bé có uống sữa tươi hoặc sữa công thức, nên uống Canxi cách cữ sữa khoảng 1 - 2 giờ để hấp thu tối ưu.`;
   }
 
   const replyMarkdown = `${productOpening}
 
 ${prodExplanation}
 
-**Cách dùng an toàn:**
-- Uống sau bữa ăn khoảng 30 phút cùng một ly nước ấm đầy.
-- Duy trì liệu trình tối thiểu 1-2 tháng để hoạt chất phát huy hiệu quả tái tạo bền vững.
+${safeUsage}
 ${precautionsNote ? `\n> **${precautionsNote}**\n` : ''}
 ${productClosing}`;
 

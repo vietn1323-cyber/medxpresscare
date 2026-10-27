@@ -158,6 +158,19 @@ async function testAiFlow() {
   assert.ok(resEmergency.reply.includes('CẢNH BÁO Y TẾ KHẨN CẤP') || resEmergency.reply.includes('115'), 'Phải kích hoạt giao thức cấp cứu khẩn cấp 115');
   assert.strictEqual(resEmergency.recommendedProductIds.length, 0, 'Tuyệt đối KHÔNG bán bất kỳ sản phẩm nào khi có dấu hiệu cấp cứu đỏ!');
   console.log('  ✅ PASSED: Quy trình Triage Cấp Cứu Đỏ: Nhận diện nguy kịch tim mạch/đột quỵ, yêu cầu gọi 115 ngay, 0 sản phẩm chèo kéo.');
+
+  // Case 9: Nhu cầu bổ sung Canxi cho con (Fix lỗi coi nhu cầu bổ sung vi chất là bệnh lý khó chịu)
+  const resUserPrompt = await consultWithAiPharmacist({
+    userMessage: 'tôi muốn mua canxi cho con',
+    products: PRODUCTS
+  });
+  assert.strictEqual(resUserPrompt.detectedAudience, 'kids', 'Nhận diện đối tượng là con nhỏ (Kids)');
+  assert.ok(resUserPrompt.recommendedProductIds.includes('au-02'), 'Phải gợi ý đúng Canxi Sữa Bio Island Úc chuyên dụng cho trẻ nhỏ');
+  assert.ok(!resUserPrompt.reply.includes('cảm giác khó chịu bạn đang trải qua'), 'Tuyệt đối KHÔNG gán "cảm giác khó chịu" khi khách chỉ muốn bổ sung Canxi cho con');
+  assert.ok(!resUserPrompt.reply.includes('Tư Vấn Triệu Chứng Sức Khỏe'), 'Không được xếp vào nhóm Triệu Chứng Sức Khỏe');
+  assert.ok(!resUserPrompt.reply.includes('tránh thức khuya'), 'Không khuyên trẻ em "tránh thức khuya"');
+  assert.ok(resUserPrompt.reply.includes('Canxi') && resUserPrompt.reply.includes('bé'), 'Nội dung tư vấn thấu hiểu tình cảm cha mẹ muốn con phát triển chiều cao');
+  console.log('  ✅ PASSED: Câu hỏi thực tế "tôi muốn mua canxi cho con": Nhận diện đúng nhu cầu bổ sung vi chất cho bé, gợi ý Canxi sữa Bio Island, không gán bệnh lý!');
 }
 
 testAiFlow().then(() => {
