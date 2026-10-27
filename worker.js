@@ -28,13 +28,7 @@ function errorResponse(message, status = 500) {
 async function initDb(db) {
   if (!db) return false;
   try {
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS store_data (
-        collection TEXT PRIMARY KEY,
-        data TEXT,
-        updated_at TEXT
-      );
-    `);
+    await db.prepare('CREATE TABLE IF NOT EXISTS store_data (collection TEXT PRIMARY KEY, data TEXT, updated_at TEXT)').run();
     return true;
   } catch (err) {
     console.error('initDb error:', err);
@@ -90,6 +84,22 @@ export default {
     // 2. Handle /api/* endpoints
     if (pathname.startsWith('/api/')) {
       const db = env.DB;
+
+      // /api/init-db
+      if (pathname === '/api/init-db') {
+        if (!db) return errorResponse('D1 database not configured', 500);
+        try {
+          await initDb(db);
+          const { results } = await db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all();
+          return jsonResponse({
+            success: true,
+            message: 'Bảng store_data đã được khởi tạo và kiểm tra thành công trên Cloudflare D1!',
+            tables: results
+          });
+        } catch (err) {
+          return errorResponse(err.message, 500);
+        }
+      }
 
       // /api/sync
       if (pathname === '/api/sync') {
