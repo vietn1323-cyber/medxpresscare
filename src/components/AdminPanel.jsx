@@ -1102,9 +1102,11 @@ export const AdminPanel = ({
         {/* Admin Header */}
         <div className="bg-slate-900 text-white px-5 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/30 border border-emerald-400/40 flex items-center justify-center text-emerald-400 shadow-inner">
-              <ShieldCheck className="w-6 h-6" />
-            </div>
+            <img 
+              src="/logo-icon.png" 
+              alt="MedXpress Care" 
+              className="w-10 h-10 object-contain rounded-xl bg-white p-0.5 shadow-sm" 
+            />
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] uppercase font-extrabold tracking-wider bg-emerald-950 text-emerald-400 px-2 py-0.5 rounded border border-emerald-800">
