@@ -694,6 +694,8 @@ function getCoverImageForTopic(keyword) {
 
 /**
  * Dược Sĩ AI 24/7 Tư Vấn Chuyên Sâu Lâm Sàng & Đề Xuất Phác Đồ Cá Nhân Hóa
+ * Tôn chỉ: "Lương Y Như Từ Mẫu" - Lắng nghe tận tâm, trả lời đúng trọng tâm câu hỏi,
+ * KHÔNG ép tư vấn sản phẩm khi chưa đạt mục tiêu giải đáp cho khách hàng.
  */
 export const consultWithAiPharmacist = async ({
   userMessage = '',
@@ -712,7 +714,7 @@ export const consultWithAiPharmacist = async ({
   if (apiKey && apiKey.trim()) {
     const cleanKey = apiKey.trim();
     
-    // Tóm tắt danh mục sản phẩm của cửa hàng để AI nắm rõ
+    // Tóm tắt danh mục sản phẩm của cửa hàng để AI nắm rõ khi khách thực sự có nhu cầu
     const catalogSummary = (products && products.length > 0 ? products : [])
       .map(p => {
         const catStr = Array.isArray(p.categories) && p.categories.length > 0 ? p.categories.join(', ') : (p.category || '');
@@ -720,28 +722,45 @@ export const consultWithAiPharmacist = async ({
       })
       .join('\n');
 
-    const systemPrompt = `Bạn là Dược sĩ Lâm sàng Trưởng 24/7 của Hệ Thống Thực Phẩm Bảo Vệ Sức Khỏe MedXpressCare.com.
-Nhiệm vụ của bạn là tư vấn sức khỏe tận tâm, chuẩn xác y khoa, cá nhân hóa cho từng đối tượng (Người cao tuổi, Phụ nữ, Nam giới, Dân văn phòng, Trẻ nhỏ) và mối quan tâm cụ thể của họ.
+    const systemPrompt = `Bạn là Dược sĩ Lâm sàng Trưởng của Hệ Thống Chăm Sóc Sức Khỏe MedXpressCare (medxpresscare.com).
+Tôn chỉ cao nhất của bạn: "LƯƠNG Y NHƯ TỪ MẪU" — Lấy sự an tâm, sức khỏe và quyền lợi của người bệnh làm trọng tâm. Tuyệt đối không hành xử như nhân viên bán hàng chèo kéo.
 
 DANH MỤC SẢN PHẨM CỬA HÀNG HIỆN CÓ:
 ${catalogSummary}
 
-QUY TẮC TƯ VẤN:
-1. Thấu cảm và lắng nghe triệu chứng của khách hàng.
-2. Giải thích cơ chế sinh lý học/bệnh học bằng ngôn ngữ dễ hiểu, chuẩn y khoa.
-3. Luôn kiểm tra và lưu ý tương tác thuốc, bệnh lý nền (như dạ dày, huyết áp, tiểu đường).
-4. Đề xuất phác đồ chuẩn gồm 2 giải pháp song song từ danh mục sản phẩm:
-   - 01 Sản phẩm Hàng Nội Địa Việt Nam chuẩn GMP-WHO
-   - 01 Sản phẩm Hàng Nhập Ngoại chính ngạch
-5. Hướng dẫn liều dùng, thời điểm uống an toàn và lời khuyên sinh hoạt bổ trợ.
+NGUYÊN TẮC TƯ VẤN SỐNG CÒN (BẮT BUỘC TUÂN THỦ):
+1. TRẢ LỜI ĐÚNG TRỌNG TÂM CÂU HỎI TRƯỚC TIÊN:
+   - Khách hỏi điều gì, hãy trả lời trực tiếp, chính xác và giải thích rõ ràng điều đó ngay từ câu đầu tiên. Tuyệt đối không vòng vo né tránh.
+   - Nếu khách chào hỏi: Hãy chào đón ấm áp, xưng "Dược sĩ" và hỏi thăm khách hàng đang gặp khó khăn hay triệu chứng gì để hỗ trợ.
+   - Nếu khách hỏi về dinh dưỡng, kiêng cữ: Hướng dẫn cụ thể món nên ăn, món nên tránh và lý do sinh học đằng sau.
+   - Nếu khách hỏi về cách dùng, thời điểm uống: Giải thích chính xác thời điểm vàng cơ thể hấp thu tốt nhất và lưu ý tương tác thuốc/bữa ăn.
+   - Nếu khách mô tả triệu chứng: Thấu cảm, giải thích cơ chế bình dị, đưa ra lời khuyên xử trí tại nhà và hỏi thăm thêm các thông tin cần thiết (độ tuổi, bị bao lâu rồi, tiền sử dạ dày/huyết áp/tiểu đường).
+
+2. TUYỆT ĐỐI KHÔNG ÉP BÁN HÀNG — CHỈ ĐỀ XUẤT SẢN PHẨM KHI ĐÚNG MỤC TIÊU:
+   - TUYỆT ĐỐI ĐỂ "recommendedProductIds": [] (mảng rỗng) trong các trường hợp:
+     + Khách chỉ chào hỏi, làm quen, cảm ơn.
+     + Khách hỏi kiến thức y tế, sinh hoạt, chế độ ăn uống, tập luyện, kiêng cữ.
+     + Khách hỏi thời điểm uống, cách dùng hoặc kiểm tra tương tác thuốc hiện tại của họ.
+     + Triệu chứng của khách còn sơ sài, cần Dược sĩ hỏi thăm thêm để làm rõ tình trạng.
+     + Khách hỏi thông tin cửa hàng, vận chuyển, đổi trả.
+   - CHỈ ĐỀ XUẤT SẢN PHẨM (tối đa 1-2 mã ID từ danh mục trên) KHI:
+     + Khách chủ động hỏi: "nên uống thuốc/TPCN gì?", "có loại nào tốt?", "tư vấn giúp tôi sản phẩm...", "bên shop có bán...", "mua loại nào hiệu quả?"
+     + Hoặc sau khi đã giải thích rõ cơ chế và khách cần một phác đồ bổ trợ cụ thể để phục hồi.
+   - Khi đề xuất sản phẩm: Trình bày nhẹ nhàng, khách quan, phân tích rõ lý do vì sao sản phẩm đó giúp ích. KHÔNG dùng ngôn từ giục giã mua hàng ("hãy mua ngay", "đặt hỏa tốc").
+
+3. VĂN PHONG TỰ NHIÊN, ẤM ÁP, CHUẨN MỰC:
+   - Nói chuyện như một Dược Sĩ Lâm Sàng gia đình ân cần, giàu chuyên môn, thấu hiểu tâm lý người bệnh.
+   - KHÔNG dùng các tiêu đề khô cứng, rập khuôn máy móc (như "### Chẩn Đoán & Tư Vấn Chuyên Môn... 1. Về vấn đề... 2. Phác đồ...").
+   - Trình bày mạch lạc, ngắn gọn, gạch đầu dòng rõ ràng, dễ đọc trên thiết bị di động.
 
 ĐẦU RA BẮT BUỘC: Trả về MỘT CHUỖI JSON DUY NHẤT (không dùng markdown code blocks):
 {
-  "reply": "Nội dung phản hồi tư vấn chi tiết của Dược sĩ bằng Markdown (chào hỏi, phân tích nguyên nhân, cơ chế, hướng dẫn dùng, lời khuyên sinh hoạt)",
-  "detectedAudience": "elderly | women | men | office | kids",
-  "detectedConcern": "Tiêu đề mối quan tâm",
-  "recommendedProductIds": ["id_sp_noi_dia", "id_sp_nhap_ngoai"],
-  "precautions": "Lưu ý tương tác thuốc hoặc bệnh nền quan trọng (nếu có)"
+  "reply": "Nội dung phản hồi tư vấn tự nhiên, ấm áp, đúng trọng tâm của Dược sĩ bằng Markdown",
+  "intent": "greeting | lifestyle_diet | usage_timing | symptom_inquiry | product_consultation",
+  "detectedAudience": "elderly | women | men | office | kids | general",
+  "detectedConcern": "Mối quan tâm sức khỏe chính",
+  "recommendedProductIds": ["id_sp_1", "id_sp_2"] (HOẶC MẢNG RỖNG [] nếu khách chưa có nhu cầu mua hoặc chỉ đang hỏi thông tin/lối sống!),
+  "precautions": "Lưu ý tương tác thuốc hoặc bệnh nền quan trọng nếu có (hoặc để trống)"
 }`;
 
     const formattedHistory = chatHistory.slice(-4).map(msg => ({
@@ -760,15 +779,15 @@ QUY TẮC TƯ VẤN:
           })),
           {
             role: 'user',
-            parts: [{ text: `${systemPrompt}\n\nThông tin người dùng: Đối tượng=${targetAudience || 'Chưa chọn'}, Mối quan tâm=${selectedConcern?.title || 'Chưa chọn'}, Bệnh nền=${selectedCondition}\nCâu hỏi người dùng: "${query}"` }]
+            parts: [{ text: `${systemPrompt}\n\nThông tin người dùng: Đối tượng=${targetAudience || 'Chưa xác định'}, Mối quan tâm=${selectedConcern?.title || 'Chưa xác định'}, Bệnh nền=${selectedCondition}\nCâu hỏi người dùng: "${query}"` }]
           }
         ];
 
         const payload = {
           contents,
           generationConfig: { 
-            temperature: 0.3, 
-            maxOutputTokens: 3000,
+            temperature: 0.65, 
+            maxOutputTokens: 2500,
             responseMimeType: 'application/json'
           }
         };
@@ -805,7 +824,7 @@ QUY TẮC TƯ VẤN:
             model: model || 'gpt-4o-mini',
             messages,
             response_format: { type: 'json_object' },
-            temperature: 0.3
+            temperature: 0.65
           })
         });
 
@@ -860,17 +879,20 @@ QUY TẮC TƯ VẤN:
       if (cfData.success && cfData.reply) {
         let recIds = [];
         const replyLower = cfData.reply.toLowerCase();
-        for (const p of products) {
-          if (replyLower.includes(p.name.toLowerCase()) || replyLower.includes(p.id.toLowerCase())) {
-            recIds.push(p.id);
+        // Chỉ đính kèm sản phẩm nếu khách có hỏi về sản phẩm
+        const asksForProd = /uống gì|thuốc gì|loại nào|sản phẩm|combo|giới thiệu|mua|bổ sung gì/.test(query.toLowerCase());
+        if (asksForProd) {
+          for (const p of products) {
+            if (replyLower.includes(p.name.toLowerCase()) || replyLower.includes(p.id.toLowerCase())) {
+              recIds.push(p.id);
+            }
           }
         }
-        if (recIds.length === 0) recIds = ['vn-04', 'au-01'];
 
         return {
           reply: cfData.reply,
           detectedAudience: targetAudience || 'general',
-          detectedConcern: 'Dược Sĩ AI Cloudflare',
+          detectedConcern: 'Dược Sĩ AI MedXpressCare',
           recommendedProductIds: recIds.slice(0, 2),
           precautions: ''
         };
@@ -881,12 +903,12 @@ QUY TẮC TƯ VẤN:
   }
 
   // 3. GIẢI THUẬT DƯỢC LÝ HỌC LÂM SÀNG THÔNG MINH DỰ PHÒNG (Clinical Rule Engine)
-  // Tự động phân tích từ khóa, đối tượng, mối quan tâm, tương tác thuốc và trả về lời khuyên y khoa chi tiết
+  // Phân tích Intent thông minh, trả lời đúng trọng tâm câu hỏi và KHÔNG ép sản phẩm khi chưa phù hợp!
   const textLower = query.toLowerCase();
 
   // Nhận diện đối tượng (Audience Detection)
   let audience = targetAudience || '';
-  if (!audience) {
+  if (!audience || audience === 'general') {
     if (/bác|ông|bà|cao tuổi|người già|hưu|60|70|50|thoái hóa|tiểu đêm|tai biến/.test(textLower)) {
       audience = 'elderly';
     } else if (/phụ nữ|chị em|phái đẹp|nữ|mẹ bầu|sau sinh|da|nám|nếp nhăn|bốc hỏa|khô hạn|kinh nguyệt|nội tiết/.test(textLower)) {
@@ -898,134 +920,357 @@ QUY TẮC TƯ VẤN:
     } else if (/văn phòng|máy tính|laptop|mắt|mỏi mắt|khô mắt|vai gáy|cổ|stress|ngồi nhiều|trĩ|táo bón/.test(textLower)) {
       audience = 'office';
     } else {
-      audience = 'elderly';
+      audience = 'general';
     }
   }
 
-  // Nhận diện mối quan tâm chính (Concern Detection)
+  // Phân loại Intent của người dùng:
+  const isGreeting = /^(chào|alo|hello|hi|shop ơi|dược sĩ ơi|admin|có ai|tư vấn giúp|giúp tôi|hỏi chút|xin chào|cảm ơn|thank|cho em hỏi|cho tôi hỏi)/i.test(textLower) && textLower.length < 40;
+  const isDietLifestyle = /kiêng|ăn gì|nên ăn|không nên ăn|thực đơn|uống nước|tập luyện|bài tập|sinh hoạt|thể dục|nguyên nhân|tại sao|do đâu|lý do/i.test(textLower);
+  const isUsageTiming = /(uống|dùng|bổ sung).*(lúc nào|khi nào|sáng hay tối|trước hay sau|thời điểm nào|thời điểm gì|sau ăn|trước ăn)/i.test(textLower) || /(lúc nào|khi nào|thời điểm nào|thời điểm gì).*(uống|dùng|bổ sung)/i.test(textLower) || /cách dùng|uống bao nhiêu|uống mấy lần|uống cùng|uống chung|uống nước ấm|uống cách/i.test(textLower);
+  const isPrecaution = /bà bầu|mang thai|cho con bú|tiểu đường|huyết áp|dạ dày|bao tử|tác dụng phụ|có hại gì|dị ứng|tương tác/i.test(textLower);
+  const isStorePolicy = /giao hàng|ship|vận chuyển|địa chỉ|hotline|chính hãng|tem|hóa đơn|đổi trả/i.test(textLower);
+  const isProductRequest = /uống gì|thuốc gì|có loại nào|sản phẩm nào|giới thiệu|tư vấn giúp mình loại|mua gì|loại nào tốt|combo|tư vấn phác đồ|cho tôi xin giá/i.test(textLower) || /(mua|tư vấn|dùng).*(thuốc|sản phẩm|loại nào|combo)/i.test(textLower);
+
+  // Lưu ý bệnh lý nền / tương tác thuốc
+  let precautionsNote = '';
+  if (selectedCondition === 'stomach' || /dạ dày|bao tử|trào ngược|loét/.test(textLower)) {
+    precautionsNote = '⚠️ Lưu ý dạ dày: Luôn dùng sau bữa ăn no 30 phút cùng 1 ly nước ấm đầy để bảo vệ niêm mạc.';
+  } else if (selectedCondition === 'blood_pressure' || /huyết áp|thuốc áp/.test(textLower)) {
+    precautionsNote = '⚠️ Lưu ý huyết áp: Uống cách cữ thuốc huyết áp theo đơn bác sĩ ít nhất 1.5 - 2 giờ.';
+  } else if (selectedCondition === 'diabetes' || /tiểu đường|đường huyết/.test(textLower)) {
+    precautionsNote = '⚠️ Lưu ý tiểu đường: Ưu tiên dòng sản phẩm không chứa đường tự do Saccarozo để giữ ổn định chỉ số HbA1c.';
+  } else if (selectedCondition === 'calcium_iron' || /sắt|canxi/.test(textLower)) {
+    precautionsNote = '⚠️ Lưu ý vi chất: Uống Canxi và Sắt cách nhau ít nhất 2 giờ để tránh tương tác cản trở hấp thu.';
+  }
+
+  // TRƯỜNG HỢP 1: CHÀO HỎI & BẮT CHUYỆN (TUYỆT ĐỐI KHÔNG BÁN HÀNG)
+  if (isGreeting) {
+    return {
+      reply: `Chào bạn! Tôi là **Dược sĩ Lâm Sàng của MedXpressCare**.
+
+Rất vui được hỗ trợ bạn hôm nay! Tôi sẵn sàng giải đáp mọi thắc mắc về:
+- Các triệu chứng khó chịu bạn hoặc người thân đang gặp phải
+- Chế độ dinh dưỡng, thực phẩm nên ăn và nên kiêng chuẩn y khoa
+- Thời điểm uống, cách dùng và kiểm tra tương tác thuốc, bệnh nền an toàn
+- Phác đồ thảo dược bổ trợ chuyên sâu khi bạn cần giải pháp từ gốc
+
+Bạn có thể chia sẻ cụ thể tình trạng, độ tuổi hoặc câu hỏi bạn đang băn khoăn để Dược sĩ hỗ trợ tư vấn chi tiết nhé!`,
+      detectedAudience: audience,
+      detectedConcern: 'Chào hỏi & Tư vấn ban đầu',
+      recommendedProductIds: [],
+      precautions: ''
+    };
+  }
+
+  // TRƯỜNG HỢP 2: HỎI CHẾ ĐỘ ĂN UỐNG, KIÊNG CỮ, LỐI SỐNG, NGUYÊN NHÂN (TƯ VẤN ĐÚNG TRỌNG TÂM - KHÔNG ÉP SẢN PHẨM)
+  if (isDietLifestyle) {
+    let dietAdvice = '';
+    let topicName = '';
+
+    if (/khớp|gối|lục khục|thoái hóa|xương|cột sống|lưng/.test(textLower)) {
+      topicName = 'Đau Nhức Thoái Hóa Khớp';
+      dietAdvice = `Về chế độ ăn uống và sinh hoạt cho người bị thoái hóa, đau khớp:
+
+**1. Thực phẩm nên ăn (Giúp giảm viêm, nuôi dưỡng sụn):**
+- **Cá béo giàu Omega-3** (cá hồi, cá thu, cá trích): Giúp ức chế các enzym phá hủy sụn khớp tự nhiên.
+- **Nước hầm xương ống, sụn bò**: Bổ sung Collagen tuýp II và Glucosamine sinh học.
+- **Rau có màu xanh thẫm** (súp lơ xanh, rau bina, cải xoăn): Giàu Vitamin K và Canxi thực vật giúp xương chắc khỏe.
+- **Quả mọng & trái cây giàu Vitamin C** (cam, bưởi, dâu tây, việt quất): Kích thích cơ thể tự sản sinh Collagen đệm khớp.
+
+**2. Thực phẩm cần kiêng hoặc hạn chế:**
+- **Thịt đỏ** (thịt bò, thịt cừu) và **nội tạng động vật**: Chứa nhiều đạm Purin dễ gây lắng đọng Acid Uric và tăng phản ứng viêm sưng.
+- **Thức ăn nhiều dầu mỡ chiên rán, đồ ăn quá mặn**: Muối giữ nước gây phù nề bao hoạt dịch quanh khớp.
+- **Đồ muối chua** (dưa muối, cà pháo, măng chua): Dễ gây tích tụ acid lactic làm tăng cảm giác nhức mỏi.
+- **Rượu, bia, thuốc lá**: Làm giảm tưới máu vi mạch nuôi dưỡng sụn khớp.
+
+**3. Lối sống & Vận động:**
+- Hạn chế ngồi xổm, leo cầu thang nhiều tầng hoặc mang vác vật nặng.
+- Tập các bài tập nhẹ nhàng không chịu tải trọng như bơi lội, đạp xe trên không hoặc đi bộ trên nền phẳng 20-30 phút/ngày.
+- Chườm ấm vùng khớp gối khoảng 15-20 phút mỗi tối trước khi ngủ để tăng lưu thông dịch khớp.`;
+    } else if (/mắt|khô mắt|mỏi mắt|nhòe|cận|ánh sáng xanh/.test(textLower)) {
+      topicName = 'Khô Mỏi Mắt Do Màn Hình';
+      dietAdvice = `Về dinh dưỡng và thói quen bảo vệ thị lực:
+
+**1. Dinh dưỡng bổ mắt:**
+- **Thực phẩm giàu Lutein & Zeaxanthin**: Rau bina, cải xoăn, lòng đỏ trứng, quả bơ (tạo màng lọc tia sáng xanh bảo vệ điểm vàng).
+- **Thực phẩm giàu Vitamin A & Beta-Carotene**: Cà rốt, bí đỏ, gấc, cà chua (chống khô giác mạc và quáng gà).
+- **Thực phẩm giàu Omega-3 (DHA/EPA)**: Dầu cá, các loại cá biển, hạt óc chó (duy trì độ ẩm màng phim nước mắt).
+
+**2. Thói quen bảo vệ mắt:**
+- **Quy tắc vàng 20 - 20 - 20**: Cứ 20 phút nhìn màn hình thì chớp mắt và nhìn xa 20 feet (khoảng 6 mét) trong 20 giây để cơ mi được thư giãn.
+- Giữ khoảng cách mắt đến màn hình từ 50 - 60cm, đặt góc nhìn hơi thấp hơn tầm mắt 15-20 độ.
+- Chớp mắt chủ động nhiều hơn và có thể nhỏ nước mắt nhân tạo không chất bảo quản khi làm việc trong phòng máy lạnh kéo dài.`;
+    } else if (/gan|men gan|rượu|bia|ngứa|mề đay|mẩn ngứa/.test(textLower)) {
+      topicName = 'Thanh Lọc Gan & Men Gan Cao';
+      dietAdvice = `Về chế độ giải độc gan và hạ men gan:
+
+**1. Thực phẩm và nước uống mát gan:**
+- **Uống nhiều nước lọc**: 2 đến 2.5 lít/ngày giúp thận và gan đào thải độc tố tốt nhất.
+- **Trà thảo mộc tự nhiên**: Trà Atiso, trà hoa cúc, nhân trần, trà xanh (chứa nhiều chất chống oxy hóa bảo vệ tế bào gan).
+- **Rau họ cải** (súp lơ, bắp cải): Chứa Glucosinolate hỗ trợ gan sản sinh enzym giải độc tự nhiên.
+- **Tỏi và củ dền**: Kích hoạt enzym thanh lọc kim loại nặng và độc tố cồn.
+
+**2. Điều cần tránh tuyệt đối:**
+- Cắt giảm bia rượu, đồ uống có cồn. Nếu bắt buộc phải tiếp khách, hãy uống 1 ly nước đầy sau mỗi ly bia để làm loãng nồng độ cồn trong máu.
+- Tránh ăn đồ chiên xào nhiều dầu mỡ cháy, thức ăn nhanh và các món quá cay nóng.
+- Không thức khuya sau 23h đêm, vì khung giờ từ 23h - 3h sáng là thời điểm vàng gan thực hiện chức năng tái tạo tế bào và thải độc.`;
+    } else if (/mất ngủ|đau đầu|tiền đình|stress|thần kinh/.test(textLower)) {
+      topicName = 'Mất Ngủ & Tuần Hoàn Não';
+      dietAdvice = `Về dinh dưỡng và vệ sinh giấc ngủ khoa học:
+
+**1. Món ăn thức uống hỗ trợ an thần tự nhiên:**
+- **Trà thảo dược dịu thần kinh**: Trà tâm sen, trà hoa cúc, trà lạc tiên ấm trước khi đi ngủ 30-45 phút.
+- **Thực phẩm giàu Tryptophan & Magie**: Hạt sen, chuối chín, sữa ấm, quả hạnh nhân (kích thích cơ thể tự tiết Melatonin tự nhiên).
+- **Thực phẩm hoạt huyết**: Rau ngót, rau đinh lăng, mộc nhĩ giúp cải thiện lưu lượng máu lên não.
+
+**2. Điều cần kiêng:**
+- Tuyệt đối không dùng cà phê, trà xanh đặc, nước ngọt tăng lực sau 14h chiều.
+- Tránh ăn quá no hoặc ăn đồ nhiều dầu mỡ vào bữa tối, vì dạ dày hoạt động quá mức sẽ gây trằn trọc khó vào giấc.
+
+**3. Vệ sinh giấc ngủ (Sleep Hygiene):**
+- Tắt màn hình điện thoại, tivi, laptop trước khi đi ngủ tối thiểu 45 phút.
+- Ngâm chân nước ấm có chút gừng và muối trong 15 phút để hạ hỏa, dẫn huyết xuống dưới giúp dễ ngủ sâu giấc.`;
+    } else {
+      topicName = 'Dinh Dưỡng & Sinh Hoạt Khỏe Mạnh';
+      dietAdvice = `Về chế độ dinh dưỡng và lối sống lành mạnh:
+
+- **Chế độ ăn cân bằng 4 nhóm chất**: Chất đạm nạc, tinh bột chuyển hóa chậm (gạo lứt, yến mạch), chất béo tốt (dầu ô-liu, cá béo) và nhiều chất xơ từ rau củ quả tươi.
+- **Uống đủ nước**: Tối thiểu 1.5 - 2 lít nước ấm mỗi ngày, chia thành nhiều ngụm nhỏ.
+- **Vận động đều đặn**: Dành ra 30 phút mỗi ngày đi bộ, tập yoga hoặc bơi lội nhẹ nhàng để kích thích tuần hoàn máu và hệ miễn dịch.
+- **Giấc ngủ chất lượng**: Cố gắng ngủ đủ 7-8 tiếng/đêm và đi ngủ trước 23h.`;
+    }
+
+    return {
+      reply: `Chào bạn, Dược sĩ xin chia sẻ cặn kẽ về chế độ ăn uống và lối sống cho tình trạng **${topicName}**:
+
+${dietAdvice}
+${precautionsNote ? `\n> **${precautionsNote}**\n` : ''}
+Bạn có đang gặp triệu chứng cụ thể nào khác hoặc đang phải dùng thuốc điều trị nào không ạ? Hãy chia sẻ thêm để Dược sĩ đồng hành cùng bạn nhé!`,
+      detectedAudience: audience,
+      detectedConcern: topicName,
+      recommendedProductIds: [],
+      precautions: precautionsNote
+    };
+  }
+
+  // TRƯỜNG HỢP 3: HỎI CÁCH DÙNG, THỜI ĐIỂM UỐNG, TƯƠNG TÁC THUỐC (TƯ VẤN CHUYÊN MÔN DƯỢC LÝ - KHÔNG ÉP SẢN PHẨM)
+  if (isUsageTiming) {
+    const adviceParts = [];
+    
+    if (/canxi|calcium|d3|k2/.test(textLower)) {
+      adviceParts.push(`**Quy tắc vàng khi uống Canxi & Vitamin D3/K2:**
+- **Thời điểm tốt nhất**: Buổi **SÁNG**, sau bữa ăn khoảng 30 - 60 phút cùng 1 ly nước ấm đầy.
+- **Lý do**: Buổi sáng cơ thể được tiếp xúc với ánh nắng mặt trời giúp tổng hợp Vitamin D tự nhiên, hỗ trợ tối đa việc hấp thu ion Canxi qua ruột vào máu.
+- **LƯU Ý QUAN TRỌNG**: 
+  + Tuyệt đối **KHÔNG uống Canxi vào buổi chiều tối hoặc trước khi ngủ** vì dễ gây lắng đọng tạo sỏi thận và cản trở giấc ngủ.
+  + Nếu có uống viên Sắt, phải uống cách Canxi ít nhất 2 giờ vì Canxi và Sắt cạnh tranh hấp thu trực tiếp tại thụ thể ruột non.`);
+    }
+    
+    if (/dầu cá|omega|fish oil|epa|dha/.test(textLower)) {
+      adviceParts.push(`**Quy tắc vàng khi uống Dầu Cá Omega-3:**
+- **Thời điểm tốt nhất**: Uống **CÙNG HOẶC NGAY SAU BỮA ĂN** (bữa sáng hoặc bữa trưa).
+- **Lý do**: Omega-3 là acid béo tan trong dầu. Khi bạn ăn bữa ăn có chất béo tự nhiên (dầu ăn, thịt, cá, trứng), dịch mật sẽ được kích thích tiết ra giúp nhũ hóa và hấp thu tối đa lượng EPA/DHA tinh khiết vào máu, đồng thời giảm hẳn tình trạng ợ hơi mùi cá.
+- Người có dạ dày nhạy cảm nên chia làm 2 cữ uống sau bữa ăn sáng và trưa.`);
+    }
+    
+    if (/glucosamine|khớp|sụn/.test(textLower)) {
+      adviceParts.push(`**Quy tắc vàng khi uống Glucosamine & Bổ khớp:**
+- **Thời điểm tốt nhất**: Uống **NGAY SAU BỮA ĂN NO** cùng một cốc nước đầy (200-250ml).
+- **Lý do**: Uống sau ăn no giúp tránh tình trạng kích ứng nhẹ niêm mạc dạ dày và giúp các thảo dược kháng viêm phát huy công dụng êm dịu nhất.
+- Nên uống đều đặn mỗi ngày vào khung giờ cố định trong liệu trình tối thiểu 2-3 tháng để sụn khớp có đủ thời gian tái tạo dịch nhờn sinh học.`);
+    }
+    
+    if (/sâm|hồng sâm|đông trùng|ngọc linh/.test(textLower)) {
+      adviceParts.push(`**Quy tắc vàng khi dùng Sâm & Đông Trùng Hạ Thảo:**
+- **Thời điểm tốt nhất**: Buổi **SÁNG hoặc ĐẦU GIỜ CHIỀU** sau bữa ăn khoảng 30 phút.
+- **LƯU Ý QUAN TRỌNG**: 
+  + **Tuyệt đối không uống sau 17h chiều hoặc buổi tối** vì sâm làm đại bổ nguyên khí, tăng hưng phấn hệ thần kinh trung ương và tăng tuần hoàn máu khiến bạn bị tỉnh táo, mất ngủ.
+  + Người đang bị tiêu chảy hoặc sốt cao tạm thời không dùng sâm. Uống cách thuốc huyết áp ít nhất 1.5 giờ.`);
+    }
+    
+    if (adviceParts.length === 0) {
+      adviceParts.push(`**Quy tắc chung về thời điểm sử dụng các nhóm thực phẩm bổ vệ sức khỏe:**
+- **Nhóm tan trong dầu (Omega-3, Vitamin D3, E, A, K2)**: Luôn uống cùng hoặc ngay sau bữa ăn chính có chất béo.
+- **Nhóm khoáng chất (Canxi, Kẽm)**: Uống buổi sáng sau ăn, uống nhiều nước; uống cách viên Sắt 2 giờ.
+- **Nhóm bồi bổ năng lượng & hoạt huyết não (Sâm, Ginkgo, Cebraton)**: Dùng vào ban ngày (sáng/trưa), tránh dùng khuya.
+- **Nhóm thảo dược tiêu hóa & lợi khuẩn**: Men vi sinh uống trước ăn 30 phút hoặc lúc bụng rỗng; Tinh nghệ Curcumin uống sau ăn 30 phút cùng nước ấm.`);
+    }
+
+    const usageAdvice = adviceParts.join('\n\n');
+
+    return {
+      reply: `Chào bạn, về câu hỏi **cách dùng và thời điểm uống chuẩn y khoa**, Dược sĩ xin hướng dẫn chi tiết như sau:
+
+${usageAdvice}
+${precautionsNote ? `\n> **${precautionsNote}**\n` : ''}
+Nếu bạn đang dùng đồng thời nhiều loại thuốc hoặc có bệnh nền cần kiểm tra tương tác, bạn cứ nhắn chi tiết tên các sản phẩm cho Dược sĩ để được rà soát an toàn nhé!`,
+      detectedAudience: audience,
+      detectedConcern: 'Hướng dẫn cách dùng & Thời điểm uống',
+      recommendedProductIds: [],
+      precautions: precautionsNote
+    };
+  }
+
+  // TRƯỜNG HỢP 4: HỎI THÔNG TIN CỬA HÀNG, CHÍNH SÁCH, GIAO HÀNG (KHÔNG ÉP SẢN PHẨM)
+  if (isStorePolicy) {
+    return {
+      reply: `Chào bạn! Dược sĩ xin cung cấp thông tin về **Chính sách & Dịch vụ của Hệ Thống MedXpressCare**:
+
+🚚 **Chính Sách Giao Hàng & Đóng Gói:**
+- Giao hàng hỏa tốc toàn quốc, miễn phí vận chuyển cho đơn hàng đủ điều kiện.
+- Đóng gói bảo quản chuẩn GSP (nhiệt độ mát, hộp chống sốc chuyên dụng cho dược phẩm).
+- Quý khách được **đồng kiểm khi nhận hàng**, kiểm tra đúng sản phẩm, nguyên vẹn tem niêm phong mới thanh toán.
+
+🛡️ **Cam Kết Chất Lượng:**
+- 100% sản phẩm có **Số ĐKSP của Bộ Y Tế**, tem phụ tiếng Việt và hóa đơn chứng từ đầy đủ.
+- Tuyệt đối không bán hàng xách tay trôi nổi không rõ nguồn gốc.
+- Đổi trả miễn phí trong 7 ngày nếu có lỗi từ nhà sản xuất hoặc vận chuyển.
+
+📞 **Tổng Đài Dược Sĩ Trực Tuyến:**
+- Hotline miễn cước: **1800 6868** (Hỗ trợ 24/7).
+
+Bạn đang cần tìm hiểu thông tin cho sản phẩm nào hoặc cần hỗ trợ giao hàng về khu vực nào ạ?`,
+      detectedAudience: audience,
+      detectedConcern: 'Chính sách cửa hàng & Giao hàng',
+      recommendedProductIds: [],
+      precautions: ''
+    };
+  }
+
+  // TRƯỜNG HỢP 5: KHÁCH MÔ TẢ TRIỆU CHỨNG NHƯNG CHƯA HỎI MUA SẢN PHẨM (ĐỒNG CẢM, PHÂN TÍCH, HƯỚNG DẪN TẠI NHÀ, CHƯA ÉP BÁN HÀNG)
+  if (!isProductRequest) {
+    let symptomAnalysis = '';
+    let concernTitle = '';
+    let homeCare = '';
+
+    if (/khớp|gối|lục khục|thoái hóa|xương|cột sống|lưng/.test(textLower)) {
+      concernTitle = 'Đau Nhức Thoái Hóa Khớp';
+      symptomAnalysis = 'Lớp sụn bọc đầu xương bị bào mòn mỏng đi theo tuổi tác hoặc do tư thế sai kéo dài, làm giảm tiết dịch nhờn bôi trơn. Khi vận động, hai đầu xương cọ xát gây cảm giác cứng khớp vào buổi sáng và phát ra tiếng lạo xạo.';
+      homeCare = 'Trước mắt, bạn nên chườm ấm vị trí đau 15 phút vào buổi tối, tránh mang vác nặng hay ngồi xổm. Bạn có thể tập động tác co duỗi nhẹ nhàng trên giường khi vừa thức dậy.';
+    } else if (/mắt|khô mắt|mỏi mắt|nhòe|cận/.test(textLower)) {
+      concernTitle = 'Khô Mỏi Mắt';
+      symptomAnalysis = 'Khi nhìn màn hình hoặc tập trung cao độ, tần suất chớp mắt giảm từ 15-20 lần/phút xuống còn 4-5 lần/phút, khiến màng phim nước mắt bị bốc hơi nhanh chóng, kết hợp ánh sáng xanh làm thoái hóa điểm vàng hoàng điểm.';
+      homeCare = 'Bạn hãy nhắm mắt nghỉ ngơi 3-5 phút, rửa mặt bằng nước mát và áp dụng quy tắc nhìn xa 20-20-20. Có thể nhỏ vài giọt nước mắt nhân tạo để cấp ẩm tức thì cho mắt.';
+    } else if (/gan|men gan|rượu|bia|ngứa/.test(textLower)) {
+      concernTitle = 'Nóng Gan & Mệt Mỏi Do Bia Rượu';
+      symptomAnalysis = 'Chất cồn và các độc tố chuyển hóa làm quá tải chức năng khử độc của tế bào gan Kupffer, khiến enzym gan ALT/AST bị rò rỉ vào máu và nhiệt độc tích tụ gây mẩn ngứa, bứt rứt.';
+      homeCare = 'Bạn nên uống ngay 1 ly nước ấm đầy hoặc nước dừa tươi, ăn cháo loãng hoặc súp thanh đạm, tránh hoàn toàn các đồ chiên xào và bia rượu trong vài ngày tới để gan được nghỉ ngơi.';
+    } else if (/mất ngủ|đau đầu|tiền đình|chóng mặt/.test(textLower)) {
+      concernTitle = 'Mất Ngủ & Tuần Hoàn Máu Não Kém';
+      symptomAnalysis = 'Máu mang oxy và dưỡng chất lên vỏ não bị suy giảm (thường do co cứng cơ cổ vai gáy hoặc xơ cứng thành mạch), kết hợp căng thẳng làm thụ thể Melatonin bị ức chế, khiến bạn trằn trọc khó vào giấc hoặc hay tỉnh giữa đêm.';
+      homeCare = 'Tối nay bạn hãy thử ngâm chân nước ấm với chút gừng đập dập và muối trong 15 phút, massage nhẹ vùng sau gáy và tắt hoàn toàn điện thoại trước khi lên giường nhé.';
+    } else {
+      concernTitle = 'Tư Vấn Triệu Chứng Sức Khỏe';
+      symptomAnalysis = 'Các biểu hiện mệt mỏi khó chịu thường phản ánh sự mất cân bằng vi chất, áp lực căng thẳng hoặc suy giảm sức đề kháng tự nhiên của cơ thể.';
+      homeCare = 'Bạn nên uống đủ nước ấm, nghỉ ngơi hợp lý, tránh thức khuya và theo dõi sát các biểu hiện của cơ thể.';
+    }
+
+    return {
+      reply: `Chào bạn, Dược sĩ rất hiểu và đồng cảm với cảm giác khó chịu bạn đang trải qua về tình trạng **${concernTitle}**:
+
+- **Cơ chế:** ${symptomAnalysis}
+- **Cách chăm sóc tại nhà ngay lúc này:** ${homeCare}
+${precautionsNote ? `\n> **${precautionsNote}**\n` : ''}
+Để Dược sĩ đánh giá chính xác mức độ và tư vấn giải pháp thích hợp nhất cho bạn, bạn cho Dược sĩ hỏi thêm một chút nhé:
+1. Bạn đã bị tình trạng này bao lâu rồi, mức độ khó chịu nhiều vào thời điểm nào trong ngày?
+2. Hiện tại bạn có đang dùng thuốc điều trị nào khác (như huyết áp, dạ dày, tiểu đường) không?
+
+*(Nếu bạn muốn tìm hiểu các dòng thực phẩm bảo vệ sức khỏe hoặc phác đồ thảo dược hỗ trợ phục hồi từ gốc, hãy cho Dược sĩ biết nhé!)*`,
+      detectedAudience: audience,
+      detectedConcern: concernTitle,
+      recommendedProductIds: [], // KHÔNG ÉP SẢN PHẨM KHI KHÁCH CHƯA HỎI MUA!
+      precautions: precautionsNote
+    };
+  }
+
+  // TRƯỜNG HỢP 6: KHÁCH CHỦ ĐỘNG HỎI MUA SẢN PHẨM / THUỐC / PHÁC ĐỒ ĐIỀU TRỊ (LÚC NÀY MỚI GỢI Ý ĐÚNG TRỌNG TÂM)
   let matchedConcernTitle = selectedConcern?.title || '';
   let domesticId = 'vn-01';
   let importedId = 'us-01';
-  let mechanism = '';
-  let lifestyleAdvice = '';
-  let recommendedCategory = 'bone_joint';
+  let prodExplanation = '';
 
   if (/khớp|gối|lục khục|thoái hóa|xương|cột sống|đau lưng/.test(textLower) || selectedConcern?.id?.includes('joint')) {
     matchedConcernTitle = 'Thoái hóa sụn khớp & Viêm đau khớp';
     domesticId = 'vn-01'; // Khớp Bách Niên Kiện
     importedId = 'us-01'; // Glucosamine MSM Kirkland Mỹ
-    recommendedCategory = 'bone_joint';
-    mechanism = 'Lớp sụn khớp bị bào mòn theo thời gian, bao hoạt dịch giảm tiết dịch nhờn dẫn tới cọ xát đầu xương gây viêm, cứng khớp vào buổi sáng và phát ra tiếng lạo xạo khi vận động.';
-    lifestyleAdvice = 'Hạn chế mang vác vật nặng, tập bài tập đạp xe trên không hoặc bơi lội nhẹ nhàng 20 phút mỗi ngày. Chườm ấm vùng khớp vào mỗi buổi tối trước khi đi ngủ.';
+    prodExplanation = `Để phục hồi sụn khớp an toàn từ gốc mà không ảnh hưởng dạ dày, Dược sĩ gợi ý 2 giải pháp chuẩn hóa cho bạn lựa chọn:
+- 🇻🇳 **Phương án Nội Địa:** **Viên Khớp Bách Niên Kiện** — Chiết xuất Cây Móng Quỷ và Vỏ Liễu Trắng đạt chuẩn GMP-WHO, hỗ trợ giảm đau nhức tự nhiên, an toàn cho dạ dày người Việt.
+- 🌐 **Phương án Nhập Khẩu:** **Glucosamine HCL with MSM Kirkland (Mỹ)** — Hộp lớn chuẩn FDA Hoa Kỳ, cung cấp hàm lượng cao 1500mg Glucosamine kết hợp hoạt chất chống viêm khớp MSM tái tạo bao hoạt dịch dẻo dai.`;
   } else if (/mắt|khô mắt|mỏi mắt|nhòe|ánh sáng xanh|cận/.test(textLower) || selectedConcern?.id?.includes('eyes')) {
     matchedConcernTitle = 'Khô mỏi mắt & Suy giảm thị lực do màn hình';
     domesticId = 'vn-04'; // Cebraton Traphaco
     importedId = 'jp-03'; // DHC Lutein Nhật
-    recommendedCategory = 'eye_care';
-    mechanism = 'Ánh sáng xanh từ màn hình điện tử thâm nhập sâu vào đáy mắt, làm suy giảm lượng sắc tố Lutein tại điểm vàng và khiến cơ thể mi mắt phải co thắt liên tục.';
-    lifestyleAdvice = 'Áp dụng quy tắc vàng 20-20-20: Cứ 20 phút nhìn màn hình thì hướng mắt nhìn xa 20 feet (6 mét) trong 20 giây. Giữ khoảng cách màn hình tối thiểu 50cm.';
+    prodExplanation = `Để bảo vệ mắt khỏi ánh sáng xanh và chấm dứt tình trạng khô cay nhức mắt:
+- 🇻🇳 **Phương án Nội Địa:** **Hoạt Huyết Dưỡng Não Cebraton Traphaco** — Tăng cường lưu thông tuần hoàn vi mạch đáy mắt và nuôi dưỡng tế bào thần kinh thị giác.
+- 🌐 **Phương án Nhập Khẩu:** **Viên Uống Bổ Mắt DHC Lutein Quang Học (Nhật Bản)** — Chứa 16mg Lutein chiết xuất từ hoa cúc vạn thọ tự nhiên, tái lập màng lọc ánh sáng xanh cho điểm vàng võng mạc.`;
   } else if (/gan|men gan|rượu|bia|mẩn ngứa|mề đay|nóng trong/.test(textLower) || selectedConcern?.id?.includes('liver')) {
     matchedConcernTitle = 'Nóng gan, Men gan cao & Tổn thương gan do bia rượu';
     domesticId = 'vn-03'; // Curcumin OIC New
-    importedId = 'us-02'; // Silymarin Milk Thistle 1000mg Now Foods
-    recommendedCategory = 'digestive_liver';
-    mechanism = 'Ethanol và acetaldehyde từ bia rượu oxy hóa màng tế bào gan Kupffer, khiến enzym gan ALT/AST rò rỉ vào máu và tích tụ nhiệt độc gây mẩn ngứa bứt rứt.';
-    lifestyleAdvice = 'Uống tối thiểu 2 đến 2.5 lít nước lọc mỗi ngày. Uống 1 viên Silymarin trước và sau các buổi tiệc tiếp khách để tạo màng bảo vệ tế bào gan cấp tốc.';
+    importedId = 'us-02'; // Silymarin Milk Thistle Now Foods
+    prodExplanation = `Để bảo vệ màng tế bào gan và hạ men gan hiệu quả:
+- 🇻🇳 **Phương án Nội Địa:** **Tinh Nghệ Nano Curcumin OIC New** — Hạt nano siêu nhỏ thẩm thấu trực tiếp, hỗ trợ chống oxy hóa và bảo vệ niêm mạc tiêu hóa, giải độc gan.
+- 🌐 **Phương án Nhập Khẩu:** **Silymarin Kế Sữa Milk Thistle 1000mg Now Foods (Mỹ)** — Chiết xuất Cây Kế Sữa chuẩn hóa giúp hạ men gan và tạo lớp màng bảo vệ tế bào gan trước độc tố bia rượu.`;
   } else if (/da|nám|tàn nhang|collagen|sạm|chảy xệ|lão hóa/.test(textLower) || selectedConcern?.id?.includes('skin')) {
-    matchedConcernTitle = 'Sạm nám, lão hóa sớm & suy giảm Collagen';
+    matchedConcernTitle = 'Sạm nám, lão hóa sớm & Suy giảm Collagen';
     domesticId = 'vn-03'; // Nano Curcumin OIC New
     importedId = 'jp-01'; // Viên Trắng Da DHC Coix Nhật
-    recommendedCategory = 'beauty_skin';
-    mechanism = 'Tia UV và gốc tự do kích hoạt enzym Tyrosinase sản sinh ồ ạt hắc sắc tố Melanin dưới lớp đáy biểu bì, đồng thời các sợi nâng đỡ collagen bị phân rã đứt gãy.';
-    lifestyleAdvice = 'Luôn thoa kem chống nắng chỉ số SPF 50+ trước khi ra ngoài 20 phút. Uống nhiều nước và bổ sung thêm trái cây giàu Vitamin C như cam, bưởi, ổi.';
+    prodExplanation = `Để cải thiện làn da sáng khỏe, mờ thâm sạm từ bên trong:
+- 🇻🇳 **Phương án Nội Địa:** **Tinh Nghệ Nano Curcumin OIC New** — Hỗ trợ ức chế enzyme hắc sắc tố Melanin và làm sáng đều màu da.
+- 🌐 **Phương án Nhập Khẩu:** **Viên Trắng Da DHC Coix Chiết Xuất Ý Dĩ (Nhật Bản)** — Tinh chất Ý Dĩ cô đặc gấp 13 lần giúp da mềm mượt và ức chế nám sạm do ánh nắng.`;
   } else if (/nội tiết|bốc hỏa|khô hạn|mãn kinh|kinh nguyệt/.test(textLower) || selectedConcern?.id?.includes('hormone')) {
     matchedConcernTitle = 'Rối loạn nội tiết tố nữ & Tiền mãn kinh';
     domesticId = 'vn-05'; // Sâm Ngọc Linh K5
-    importedId = 'au-03'; // Tinh dầu Hoa Anh Thảo Blackmores EPO Úc
-    recommendedCategory = 'womens_health';
-    mechanism = 'Sự sụt giảm tự nhiên của Estrogen nội sinh làm mất cân bằng thụ thể thần kinh thực vật, dẫn đến cơn bốc hỏa, đổ mồ hôi đêm, tâm trạng thất thường và khô hạn.';
-    lifestyleAdvice = 'Bổ sung axit béo thiết yếu GLA từ Hoa Anh Thảo sau bữa ăn chính. Giữ tinh thần thoải mái, tập Yoga nhẹ nhàng và hạn chế đồ uống có cồn, cay nóng.';
-  } else if (/sinh lý|yếu|xuất tinh|thận yếu|đau lưng mỏi gối|tiểu đêm/.test(textLower) || selectedConcern?.id?.includes('vitality') || selectedConcern?.id?.includes('kidney')) {
-    matchedConcernTitle = 'Suy giảm sinh lực nam giới, Thận âm hư & Tiểu đêm';
+    importedId = 'au-03'; // Hoa Anh Thảo Blackmores EPO Úc
+    prodExplanation = `Để điều hòa nội tiết và chấm dứt các cơn bốc hỏa, khô hạn:
+- 🇻🇳 **Phương án Nội Địa:** **Sâm Ngọc Linh K5** — Dược liệu Quốc bảo Việt Nam chứa hàm lượng Saponin MR2 cực cao, giúp cân bằng trục Não bộ - Tuyến yên - Buồng trứng.
+- 🌐 **Phương án Nhập Khẩu:** **Tinh Dầu Hoa Anh Thảo Blackmores Evening Primrose Oil (Úc)** — Giàu axit béo GLA tự nhiên hỗ trợ cân bằng nội tiết tố nữ và giữ ẩm cơ thể.`;
+  } else if (/sinh lý|yếu|xuất tinh|thận yếu|đau lưng mỏi gối|tiểu đêm/.test(textLower) || selectedConcern?.id?.includes('vitality')) {
+    matchedConcernTitle = 'Suy giảm sinh lực, Thận âm hư & Tiểu đêm';
     domesticId = 'vn-06'; // Bổ Thận Âm Nam Dược
-    importedId = 'kr-01'; // Nước Hồng Sâm KGC 6 năm tuổi
-    recommendedCategory = 'mens_health';
-    mechanism = 'Testosterone suy giảm kèm chức năng lọc cầu thận suy yếu khiến cơ thể mệt mỏi, chân tay lạnh, đau thắt lưng và tăng tần suất tiểu tiện về đêm.';
-    lifestyleAdvice = 'Không nhịn tiểu, không uống quá nhiều nước sau 20h tối. Tập bài tập Kegel và duy trì lối sống điều độ, ngủ đủ giấc trước 23h đêm.';
-  } else if (/chiều cao|thấp còi|canxi|d3k2|chậm lớn/.test(textLower) || selectedConcern?.id?.includes('height')) {
-    matchedConcernTitle = 'Chậm phát triển chiều cao & Thiếu hụt Canxi - D3K2';
-    domesticId = 'vn-01'; // Hỗ trợ xương khớp
-    importedId = 'au-02'; // Canxi Sữa Tảo Biển Bio Island Úc
-    recommendedCategory = 'bone_joint';
-    mechanism = 'Khung xương thiếu hụt ion canxi sinh học và đặc biệt là Vitamin K2 (MK-7) - vi chất quyết định kích hoạt Osteocalcin gắn canxi vào sụn tăng trưởng.';
-    lifestyleAdvice = 'Khuyến khích bé bơi lội, chơi bóng rổ, nhảy dây 30 phút mỗi ngày. Cho bé đi ngủ sớm trước 22h để tuyến yên giải phóng tối đa Hormone tăng trưởng GH.';
-  } else if (/biếng ăn|hấp thu|tiêu hóa|chậm tăng cân|lười ăn/.test(textLower) || selectedConcern?.id?.includes('appetite')) {
-    matchedConcernTitle = 'Biếng ăn, tiêu hóa kém & Chậm hấp thu dưỡng chất';
-    domesticId = 'vn-02'; // Đông Trùng Hạ Thảo Sapa Traphaco
-    importedId = 'jp-02'; // Tảo Vàng Spirulina EX Nhật
-    recommendedCategory = 'immunity';
-    mechanism = 'Men tiêu hóa đường ruột non yếu kết hợp thiếu hụt các vi chất kẽm và acid amin khiến gai vị giác kém nhạy bén, giảm cảm giác thèm ăn tự nhiên.';
-    lifestyleAdvice = 'Chia nhỏ bữa ăn, tạo không khí vui vẻ không ép buộc khi ăn. Bổ sung acid amin và 2 tỷ bào tử lợi khuẩn để tái tạo nhung mao ruột non.';
-  } else if (/đề kháng|hay ốm|ho|sổ mũi|viêm phế quản|hắt hơi/.test(textLower) || selectedConcern?.id?.includes('immunity')) {
-    matchedConcernTitle = 'Đề kháng yếu, hay ốm vặt & Viêm đường hô hấp khi giao mùa';
-    domesticId = 'vn-08'; // Siro Bổ Phổi Bạch Bộ DHG
-    importedId = 'de-01'; // Doppelherz Kinder Thymo Đức
-    recommendedCategory = 'kids_mom';
-    mechanism = 'Hệ miễn dịch dịch thể và tuyến ức chưa trưởng thành hoàn thiện, dễ bị virus và vi khuẩn đường hô hấp tấn công khi nhiệt độ độ ẩm thay đổi đột ngột.';
-    lifestyleAdvice = 'Giữ ấm cổ họng và bàn chân khi ngủ phòng điều hòa. Vệ sinh mũi họng bằng nước muối sinh lý hàng ngày và bổ sung Thymomodulin tăng sinh tế bào miễn dịch.';
+    importedId = 'kr-01'; // Nước Hồng Sâm KGC Hàn Quốc
+    prodExplanation = `Để bồi bổ thận khí và tăng cường sinh lực bền vững:
+- 🇻🇳 **Phương án Nội Địa:** **Bổ Thận Âm Nam Dược** — Thảo dược cổ truyền giúp dưỡng thận âm, giảm tiểu đêm và đau mỏi thắt lưng.
+- 🌐 **Phương án Nhập Khẩu:** **Nước Hồng Sâm 6 Năm Tuổi KGC Cheong Kwan Jang (Hàn Quốc)** — Đại bổ nguyên khí, tăng sức bền thể lực và lưu thông khí huyết.`;
+  } else if (/chiều cao|thấp còi|canxi|d3k2/.test(textLower) || selectedConcern?.id?.includes('height')) {
+    matchedConcernTitle = 'Bứt phá chiều cao cho trẻ & Bổ sung Canxi D3K2';
+    domesticId = 'vn-01'; // Canxi sụn khớp
+    importedId = 'au-02'; // Canxi Sữa Bio Island Úc
+    prodExplanation = `Để cung cấp canxi sinh học cho khung xương chắc khỏe:
+- 🇻🇳 **Phương án Nội Địa:** Các dòng sản phẩm bổ sung khoáng chất canxi nano đạt chuẩn GMP-WHO.
+- 🌐 **Phương án Nhập Khẩu:** **Canxi Sữa Tảo Biển Bio Island Milk Calcium (Úc)** — Chiết xuất từ sữa bò tươi nguyên chất, tỷ lệ Canxi:Phospho 2:1 hấp thu tối ưu vào xương.`;
   } else if (/tim mạch|huyết áp|mỡ máu|xơ vữa|cholesterol/.test(textLower) || selectedConcern?.id?.includes('cardio')) {
-    matchedConcernTitle = 'Huyết áp, Mỡ máu cao & Xơ vữa mạch vành';
+    matchedConcernTitle = 'Huyết áp, Mỡ máu cao & Bảo vệ thành mạch';
     domesticId = 'vn-04'; // Cebraton Traphaco
     importedId = 'au-01'; // Blackmores Fish Oil 1000mg Úc
-    recommendedCategory = 'cardio';
-    mechanism = 'Mảng bám cholesterol LDL oxy hóa làm hẹp lòng động mạch, tăng sức cản ngoại vi khiến huyết áp tăng vọt và tim phải co bóp gắng sức.';
-    lifestyleAdvice = 'Ăn nhạt (giảm muối dưới 5g/ngày), hạn chế mỡ động vật và nội tạng. Bổ sung EPA/DHA tinh khiết để làm sạch thành mạch và chống kết tập tiểu cầu.';
+    prodExplanation = `Để làm sạch mảng bám mỡ máu và bảo vệ sự dẻo dai của thành mạch:
+- 🇻🇳 **Phương án Nội Địa:** **Cebraton Traphaco** — Tăng tuần hoàn máu não, giảm hoa mắt chóng mặt và giảm nguy cơ tai biến mạch máu.
+- 🌐 **Phương án Nhập Khẩu:** **Blackmores Dầu Cá Không Mùi Fish Oil 1000mg (Úc)** — Nguồn EPA/DHA tinh khiết đã loại bỏ thủy ngân, hỗ trợ giảm Triglycerid và cholesterol xấu trong máu.`;
   } else if (/mất ngủ|đau đầu|tiền đình|chóng mặt|thần kinh|stress/.test(textLower) || selectedConcern?.id?.includes('sleep')) {
-    matchedConcernTitle = 'Mất ngủ kinh niên, Rối loạn tiền đình & Suy nhược thần kinh';
+    matchedConcernTitle = 'Mất ngủ kinh niên, Rối loạn tiền đình & Suy nhược';
     domesticId = 'vn-04'; // Cebraton Traphaco
     importedId = 'de-02'; // Doppelherz Magie + Canxi + D3 Đức
-    recommendedCategory = 'brain_nerve';
-    mechanism = 'Lưu lượng máu lên não bị suy giảm làm tế bào nơ-ron thiếu dưỡng khí, kết hợp nồng độ Cortisol căng thẳng làm ức chế chu kỳ tiết Melatonin tự nhiên.';
-    lifestyleAdvice = 'Tắt điện thoại và thiết bị màn hình trước khi ngủ 45 phút. Ngâm chân nước ấm với chút gừng muối để kích thích tuần hoàn kinh lạc hạ khí.';
+    prodExplanation = `Để thư giãn hệ thần kinh và khôi phục nhịp ngủ sinh học tự nhiên:
+- 🇻🇳 **Phương án Nội Địa:** **Hoạt Huyết Dưỡng Não Cebraton Traphaco** — Tăng tưới máu vi mạch não, tạo giấc ngủ êm dịu, sáng dậy đầu óc tỉnh táo không bị nặng nề.
+- 🌐 **Phương án Nhập Khẩu:** **Doppelherz Magie + Canxi + D3 (Đức)** — Bổ sung Magie hữu cơ giúp thư giãn trương lực cơ bắp, giải tỏa căng thẳng thần kinh giúp ngủ sâu giấc.`;
   } else {
-    // Mặc định bồi bổ toàn diện
-    matchedConcernTitle = 'Bồi bổ thể lực, Tăng cường miễn dịch & Phục hồi sức khỏe';
+    matchedConcernTitle = 'Bồi bổ sức khỏe toàn diện & Tăng cường miễn dịch';
     domesticId = 'vn-05'; // Sâm Ngọc Linh K5
-    importedId = 'kr-01'; // Nước Hồng Sâm KGC Hàn Quốc
-    recommendedCategory = 'immunity';
-    mechanism = 'Cơ thể suy nhược sau ốm hoặc chịu áp lực làm việc quá tải, suy giảm năng lượng tế bào ATP và giảm sút đề kháng tự nhiên.';
-    lifestyleAdvice = 'Ăn uống đa dạng, uống đủ nước và duy trì giấc ngủ đủ 7-8 tiếng mỗi đêm để cơ thể tự tái sinh năng lượng sinh học.';
+    importedId = 'kr-01'; // Hồng sâm KGC
+    prodExplanation = `Để phục hồi thể lực và củng cố hệ miễn dịch:
+- 🇻🇳 **Phương án Nội Địa:** **Sâm Ngọc Linh K5** — Thảo dược bản địa thượng hạng phục hồi thể lực và đề kháng.
+- 🌐 **Phương án Nhập Khẩu:** **Nước Hồng Sâm KGC 6 năm tuổi (Hàn Quốc)** — Bồi bổ cơ thể sau ốm, tăng tuần hoàn và giảm mệt mỏi.`;
   }
 
-  // Cảnh báo tương tác thuốc & Bệnh lý nền (Precautions)
-  let precautionsNote = '';
-  if (selectedCondition === 'stomach' || /dạ dày|bao tử|trào ngược|loét/.test(textLower)) {
-    precautionsNote = '⚠️ LƯU Ý DẠ DÀY: Luôn uống các sản phẩm bổ sung sau bữa ăn no khoảng 30 phút cùng 1 ly nước ấm đầy. Tuyệt đối không uống lúc bụng đói để bảo vệ niêm mạc.';
-  } else if (selectedCondition === 'blood_pressure' || /huyết áp|thuốc áp/.test(textLower)) {
-    precautionsNote = '⚠️ LƯU Ý HUYẾT ÁP: Uống TPCN cách cữ thuốc huyết áp theo đơn của bác sĩ ít nhất 1.5 - 2 giờ. Tuyệt đối không tự ý ngưng thuốc điều trị kê đơn.';
-  } else if (selectedCondition === 'diabetes' || /tiểu đường|đường huyết/.test(textLower)) {
-    precautionsNote = '⚠️ LƯU Ý TIỂU ĐƯỜNG: Các phác đồ Dược sĩ gợi ý không chứa đường tự do Saccarozo, rất an toàn cho người kiểm soát chỉ số HbA1c.';
-  } else if (selectedCondition === 'calcium_iron' || /sắt|canxi/.test(textLower)) {
-    precautionsNote = '⚠️ LƯU Ý VI CHẤT: Uống cách viên Canxi hoặc Sắt khoáng chất khoảng 2 giờ để tránh tương tác tạo phức chelate cản trở hấp thu.';
-  }
+  const replyMarkdown = `Chào bạn, theo nhu cầu tìm hiểu sản phẩm hỗ trợ cho tình trạng **${matchedConcernTitle}**, Dược sĩ xin tư vấn chi tiết phác đồ khoa học:
 
-  // Tạo lời khuyên chi tiết từ Dược sĩ
-  const replyMarkdown = `### 🩺 Chẩn Đoán & Tư Vấn Chuyên Môn Cho Quý Khách
+${prodExplanation}
 
-Chào quý khách, Dược sĩ Lâm sàng của **MedXpressCare** đã phân tích kỹ tình trạng của quý khách:
-
-**1. Về vấn đề:** **${matchedConcernTitle}**
-- **Cơ chế sinh học:** ${mechanism}
-
-**2. Phác đồ điều trị khuyến nghị:**
-Dược sĩ xây dựng cho quý khách 2 lựa chọn song song có cùng công năng vượt trội để quý khách tiện cân nhắc:
-- 🇻🇳 **Phương án 1 (Hàng Nội Địa):** Sử dụng thảo dược Việt Nam chuẩn hóa công nghệ cao đạt chuẩn **GMP-WHO**. Dược tính tương thích hoàn hảo với cơ địa người Việt và chi phí tiết kiệm.
-- 🌐 **Phương án 2 (Hàng Nhập Ngoại):** Sản phẩm nhập khẩu chính ngạch từ các quốc gia hàng đầu (Mỹ, Úc, Nhật, Đức) với chứng nhận quốc tế nghiêm ngặt như **FDA, TGA, GMP-WHO**.
-
-**3. Lời khuyên chế độ sinh hoạt & ăn uống:**
-- ${lifestyleAdvice}
+**Cách dùng an toàn:**
+- Uống sau bữa ăn khoảng 30 phút cùng một ly nước ấm đầy.
+- Duy trì liệu trình tối thiểu 1-2 tháng để hoạt chất phát huy hiệu quả tái tạo bền vững.
 ${precautionsNote ? `\n> **${precautionsNote}**\n` : ''}
-*Quý khách có thể xem chi tiết 2 sản phẩm đề xuất chuẩn hóa bên dưới hoặc bấm trực tiếp để thêm vào giỏ hàng và đặt giao hỏa tốc tận nhà.*`;
+*Bạn có thể xem chi tiết thông tin thành phần, số ĐKSP Bộ Y Tế của 2 sản phẩm đề xuất bên dưới để tham khảo và lựa chọn phương án phù hợp với mình nhé.*`;
 
   return {
     reply: replyMarkdown,

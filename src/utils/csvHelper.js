@@ -27,7 +27,24 @@ export const cleanPrice = (val, defaultVal = 0) => {
 };
 
 // Tạo file CSV với tiền tố UTF-8 BOM (\uFEFF) để Excel mở tiếng Việt không bị lỗi font
-export const downloadCSV = (filename, headers, rows) => {
+export const downloadCSV = (arg1, arg2, arg3) => {
+  let filename = 'export.csv';
+  let headers = [];
+  let rows = [];
+
+  // Hỗ trợ linh hoạt cả 2 chuẩn gọi:
+  // Chuẩn 1: downloadCSV(filename, headers, rows)
+  // Chuẩn 2: downloadCSV(headers, rows, filename)
+  if (typeof arg1 === 'string') {
+    filename = arg1;
+    headers = Array.isArray(arg2) ? arg2 : [];
+    rows = Array.isArray(arg3) ? arg3 : [];
+  } else if (Array.isArray(arg1)) {
+    headers = arg1;
+    rows = Array.isArray(arg2) ? arg2 : [];
+    filename = typeof arg3 === 'string' ? arg3 : 'export.csv';
+  }
+
   const escapeCell = (val) => {
     if (val === null || val === undefined) return '""';
     let str = String(val);
@@ -38,12 +55,20 @@ export const downloadCSV = (filename, headers, rows) => {
     return `"${str.replace(/"/g, '""')}"`;
   };
 
-  const headerRow = headers.map(h => escapeCell(h.label || h.key || h)).join(',');
+  const headerRow = headers.map(h => escapeCell(h?.label || h?.key || h)).join(',');
   const dataRows = rows.map(row => {
-    return headers.map(h => {
-      const key = h.key || h;
-      return escapeCell(row[key]);
-    }).join(',');
+    // Nếu row là mảng con (array of arrays):
+    if (Array.isArray(row)) {
+      return row.map(cell => escapeCell(cell)).join(',');
+    }
+    // Nếu row là object:
+    if (row && typeof row === 'object') {
+      return headers.map(h => {
+        const key = h?.key || h;
+        return escapeCell(row[key]);
+      }).join(',');
+    }
+    return escapeCell(row);
   });
 
   const csvContent = '\uFEFF' + [headerRow, ...dataRows].join('\r\n');

@@ -372,14 +372,14 @@ export const HealthAdvisorModal = ({
     {
       id: 'welcome',
       sender: 'pharmacist',
-      text: `Xin kính chào quý khách! Tôi là **Dược sĩ Lâm Sàng AI 24/7** của MedXpressCare.
+      text: `Xin chào quý khách! Tôi là **Dược sĩ Lâm Sàng MedXpressCare**.
 
-Tôi sẵn sàng hỗ trợ quý khách:
-- Tư vấn đúng phác đồ theo từng thể trạng (Người cao tuổi, Phụ nữ, Nam giới, Dân văn phòng, Trẻ em)
-- Kiểm tra tương tác thuốc, bệnh lý nền an toàn chuẩn Y khoa
-- Đề xuất giải pháp kép: **Hàng Nội Địa GMP-WHO** & **Hàng Nhập Ngoại Chính Ngạch**
+Tôi ở đây để lắng nghe và đồng hành cùng quý khách về mọi vấn đề sức khỏe:
+🌿 Giải đáp thắc mắc về triệu chứng, cơ chế bệnh học và chế độ ăn uống, kiêng cữ
+💊 Hướng dẫn thời điểm uống, cách dùng và kiểm tra tương tác thuốc, bệnh nền an toàn
+🩺 Tư vấn phác đồ bổ trợ chuyên sâu (kết hợp giải pháp thảo dược nội địa & nhập khẩu chính ngạch khi quý khách cần)
 
-Quý khách đang tìm giải pháp cho ai hoặc đang gặp triệu chứng gì khó chịu ạ?`,
+Quý khách đang gặp tình trạng khó chịu nào hoặc cần Dược sĩ hỗ trợ thông tin gì ạ?`,
       recommendedProducts: [],
       precautions: '',
       time: 'Vừa xong'
@@ -488,16 +488,16 @@ Quý khách đang tìm giải pháp cho ai hoặc đang gặp triệu chứng g�
         chatHistory: chatMessages
       });
 
-      // Lấy danh sách sản phẩm khớp từ ID trả về
-      const matchedProds = (response.recommendedProductIds || [])
-        .map(id => products.find(p => p.id === id))
-        .filter(Boolean);
+      // Lấy danh sách sản phẩm khớp từ ID trả về (CHỈ khi AI có đề xuất)
+      const matchedProds = (Array.isArray(response.recommendedProductIds) && response.recommendedProductIds.length > 0)
+        ? response.recommendedProductIds.map(id => products.find(p => p.id === id)).filter(Boolean)
+        : [];
 
       const aiMsg = {
         id: 'msg-' + (Date.now() + 1),
         sender: 'pharmacist',
         text: response.reply,
-        recommendedProducts: matchedProds.length > 0 ? matchedProds : [domesticProduct, importedProduct],
+        recommendedProducts: matchedProds, // Tuyệt đối không tự ý ép sản phẩm khi khách chưa cần!
         precautions: response.precautions,
         time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
       };
@@ -510,8 +510,8 @@ Quý khách đang tìm giải pháp cho ai hoặc đang gặp triệu chứng g�
         {
           id: 'msg-' + (Date.now() + 1),
           sender: 'pharmacist',
-          text: `Dược sĩ MedXpressCare đã ghi nhận câu hỏi của quý khách: "${textToSend}". Xin mời quý khách tham khảo 2 sản phẩm chuẩn hóa nội địa & nhập khẩu phù hợp bên dưới hoặc gọi hotline miễn cước để được tư vấn trực tiếp.`,
-          recommendedProducts: [domesticProduct, importedProduct],
+          text: `Dược sĩ MedXpressCare đã nhận được câu hỏi của bạn: "${textToSend}". Hiện tại kênh tư vấn trực tuyến đang bận trong giây lát. Để được tư vấn chi tiết và chuẩn xác nhất cho tình trạng của mình, bạn có thể gọi trực tiếp đến Tổng đài Dược sĩ Lâm Sàng miễn cước **${storeConfig?.hotline || '1800 6868'}** để được hỗ trợ ngay nhé!`,
+          recommendedProducts: [],
           precautions: '',
           time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
         }
@@ -521,13 +521,13 @@ Quý khách đang tìm giải pháp cho ai hoặc đang gặp triệu chứng g�
     }
   };
 
-  // Câu hỏi gợi ý nhanh theo đối tượng
+  // Câu hỏi gợi ý nhanh đa dạng theo nhu cầu thực tế
   const QUICK_PROMPTS = [
-    { label: '🧓 Bác 60+ tuổi đau khớp gối & huyết áp', query: 'Bác năm nay 62 tuổi, bị thoái hóa khớp gối đau nhức và đang uống thuốc huyết áp hàng ngày, nên dùng sản phẩm nào an toàn và cách uống thế nào?' },
-    { label: '👩 Chị em 32 tuổi nám da & rụng tóc', query: 'Tôi 32 tuổi sau sinh da bị nám mảng hai bên gò má, hay rụng tóc và bốc hỏa khô hạn, nên dùng combo nội tiết tố nào hiệu quả nhất?' },
-    { label: '👨 Nam giới tiếp khách bia rượu bổ gan', query: 'Tôi thường xuyên phải đi tiếp khách uống bia rượu, men gan cao, người mẩn ngứa và đầy bụng, có loại nào giải độc gan tốt?' },
-    { label: '💼 Dân văn phòng mỏi mắt & đau vai gáy', query: 'Em làm văn phòng ngồi máy tính 9 tiếng/ngày, mắt rất mỏi khô rát và đau cứng cổ vai gáy thì nên bổ sung vi chất gì?' },
-    { label: '👶 Bé 8 tuổi thấp còi & lười ăn', query: 'Bé nhà em 8 tuổi thấp hơn các bạn cùng lớp và biếng ăn, muốn bứt phá chiều cao thì bổ sung canxi và đề kháng loại nào tốt?' }
+    { label: '🌿 Đau khớp gối nên kiêng ăn gì & tập bài gì?', query: 'Cho tôi hỏi người bị đau khớp gối và thoái hóa khớp thì nên kiêng ăn những món gì và có bài tập nào tập tại nhà không?' },
+    { label: '⏰ Uống Canxi và Dầu cá vào lúc nào tốt nhất?', query: 'Dược sĩ cho tôi hỏi Canxi và Dầu cá Omega-3 nên uống vào thời điểm nào trong ngày để hấp thu tốt nhất?' },
+    { label: '💊 Đang uống thuốc huyết áp dùng TPCN được không?', query: 'Bác đang uống thuốc điều trị huyết áp hàng ngày, nếu muốn dùng thêm thảo dược bổ não thì có cần lưu ý gì không?' },
+    { label: '🧓 Bác 65 tuổi bị thoái hóa khớp gối, tư vấn phác đồ', query: 'Bác năm nay 65 tuổi bị thoái hóa khớp gối đau nhức đi lại lục cục, tư vấn giúp bác sản phẩm hỗ trợ tái tạo sụn khớp an toàn cho dạ dày' },
+    { label: '💼 Dân văn phòng ngồi máy tính hay bị khô mỏi mắt', query: 'Em làm văn phòng ngồi máy tính 8-10 tiếng mỗi ngày, mắt hay bị khô rát mỏi nhòe thì nên cải thiện thế nào?' }
   ];
 
   return (
@@ -1084,9 +1084,9 @@ Quý khách đang tìm giải pháp cho ai hoặc đang gặp triệu chứng g�
                       {/* Hiển thị Card các sản phẩm đề xuất (nếu có) */}
                       {msg.recommendedProducts && msg.recommendedProducts.length > 0 && (
                         <div className="mt-3 pt-3 border-t border-slate-200/80 space-y-2">
-                          <div className="text-[11px] font-black uppercase tracking-wider text-slate-600 flex items-center gap-1">
-                            <Sparkles className="w-3 h-3 text-amber-500" />
-                            <span>Sản Phẩm Khuyên Dùng Cho Tình Trạng Này:</span>
+                          <div className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200/60 inline-flex items-center gap-1.5 mb-1">
+                            <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                            <span>Gợi ý phác đồ bổ trợ theo nhu cầu của bạn:</span>
                           </div>
 
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">

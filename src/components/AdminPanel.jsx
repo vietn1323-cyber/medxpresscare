@@ -1475,11 +1475,16 @@ export const AdminPanel = ({
 
   // Xuất toàn bộ Số ĐKSP ra file CSV
   const handleExportRegistrationsCSV = () => {
+    const list = Object.entries(registrations || {});
+    if (list.length === 0) {
+      alert('Chưa có dữ liệu Số ĐKSP nào để xuất file CSV.');
+      return;
+    }
     const headers = [
       'Số ĐKSP', 'Tên sản phẩm', 'Tổ chức/Doanh nghiệp chịu trách nhiệm',
       'Trạng thái công bố', 'Năm cấp phép', 'Loại hình', 'Tiêu chuẩn kiểm nghiệm', 'Xuất xứ'
     ];
-    const rows = Object.entries(registrations || {}).map(([regNumber, item]) => [
+    const rows = list.map(([regNumber, item]) => [
       regNumber,
       item.name || '',
       item.applicant || '',
