@@ -21,14 +21,21 @@ export const Footer = ({ onOpenVerifier, onOpenAdvisor, onOpenAdmin }) => {
           
           {/* Col 1: About MedXpressCare */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center text-white shadow-md">
-                <ShieldCheck className="w-6 h-6" />
+            <div className="flex items-center gap-2.5">
+              <img 
+                src="/logo-icon.png" 
+                alt="MedXpress Care" 
+                className="w-10 h-10 object-contain rounded-xl bg-white p-0.5 shadow-sm" 
+              />
+              <div>
+                <span className="text-xl font-black text-white">
+                  Med<span className="text-emerald-400">Xpress</span> <span className="text-blue-400">Care</span>
+                  <span className="text-xs text-emerald-400 ml-1 font-mono">.com</span>
+                </span>
+                <p className="text-[10px] text-emerald-400 font-bold">
+                  Sức khỏe thật – Giá trị thật
+                </p>
               </div>
-              <span className="text-xl font-black text-white">
-                Med<span className="text-emerald-400">Xpress</span><span className="text-teal-400">Care</span>
-                <span className="text-xs text-emerald-400 ml-1 font-mono">.com</span>
-              </span>
             </div>
 
             <p className="text-xs text-slate-400 leading-relaxed">
