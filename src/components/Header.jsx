@@ -111,24 +111,20 @@ export const Header = ({
         <div className="flex items-center justify-between gap-3 sm:gap-6">
           {/* Logo & Brand Slogan */}
           <div className="flex items-center gap-2 sm:gap-3 cursor-pointer shrink-0" onClick={() => { setSelectedCategory('all'); setOriginFilter('all'); setSearchQuery(''); if (onGoHome) onGoHome(); }}>
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
-              <div className="relative">
-                <ShieldCheck className="w-6 h-6 sm:w-7 sm:h-7" />
-                <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-300"></span>
-                </span>
-              </div>
-            </div>
+            <img 
+              src="/logo-icon.png" 
+              alt="MedXpress Care Logo" 
+              className="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-2xl shadow-xs hover:scale-105 transition-transform" 
+            />
             <div>
               <div className="flex items-baseline gap-1">
-                <span className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
-                  Med<span className="text-emerald-600">Xpress</span><span className="text-teal-600">Care</span>
+                <span className="text-xl sm:text-2xl font-black tracking-tight text-blue-900">
+                  Med<span className="text-emerald-600">Xpress</span> <span className="text-blue-600">Care</span>
                 </span>
-                <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">.COM</span>
+                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">.COM</span>
               </div>
-              <p className="text-[11px] text-slate-500 font-medium hidden sm:block">
-                Hệ Thống Thực Phẩm Chức Năng Chuẩn Y Khoa
+              <p className="text-[11px] text-emerald-800 font-bold tracking-tight hidden sm:block">
+                — Sức khỏe thật – Giá trị thật —
               </p>
             </div>
           </div>
