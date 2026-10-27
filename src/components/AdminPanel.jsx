@@ -8,7 +8,8 @@ import {
   UploadCloud, Image as ImageIcon, Link2, RefreshCw, Award,
   FileCheck2, FileSpreadsheet, Printer, Send, Calendar, Truck, Bell,
   Tag, Globe, Eye, Share2, ThumbsUp, Star, MessageSquare, Copy, Gift,
-  Camera, Stethoscope, Check, ArrowRight
+  Camera, Stethoscope, Check, ArrowRight,
+  Layers, Percent, Sliders, FolderPlus, Square, Filter
 } from 'lucide-react';
 import { CATEGORIES, DOSAGE_FORMS, TARGET_AUDIENCES } from '../data/products';
 import { downloadCSV, downloadJSON } from '../utils/csvHelper';
@@ -27,10 +28,13 @@ export const AdminPanel = ({
   d1Status = 'connecting',
   orders, 
   onUpdateOrderStatus, 
+  onBulkUpdateOrdersStatus,
   products, 
   onAddProduct, 
   onDeleteProduct,
   onUpdateProduct,
+  onBulkDeleteProducts,
+  onBulkUpdateProducts,
   onBulkImportProducts,
   registrations = {},
   onAddRegistration,
@@ -46,6 +50,8 @@ export const AdminPanel = ({
   onAddArticle,
   onUpdateArticle,
   onDeleteArticle,
+  onBulkDeleteArticles,
+  onBulkUpdateArticles,
   vouchers = DEFAULT_VOUCHERS,
   onAddVoucher,
   onUpdateVoucher,
@@ -64,6 +70,345 @@ export const AdminPanel = ({
   const [activeTab, setActiveTab] = useState('products'); // products | orders | vouchers | reviews | customers | reorder | articles | registrations | stats | shipping | settings
   const [orderFilter, setOrderFilter] = useState('all');
   const [searchOrder, setSearchOrder] = useState('');
+
+  // --- QUẢN LÝ HÀNG LOẠT & NHÓM DANH MỤC STATES ---
+  const [selectedProductIds, setSelectedProductIds] = useState([]);
+  const [selectedArticleIds, setSelectedArticleIds] = useState([]);
+  const [selectedOrderIds, setSelectedOrderIds] = useState([]);
+
+  // Phân hệ Sản phẩm: Chế độ hiển thị & Bộ lọc
+  const [productSubTab, setProductSubTab] = useState('list'); // 'list' | 'categories'
+  const [productSearchQuery, setProductSearchQuery] = useState('');
+  const [productCategoryFilter, setProductCategoryFilter] = useState('all');
+  const [productOriginFilter, setProductOriginFilter] = useState('all');
+
+  // Modal điều chỉnh hàng loạt Sản phẩm
+  const [showBulkPriceModal, setShowBulkPriceModal] = useState(false);
+  const [bulkPriceType, setBulkPriceType] = useState('percent_decrease'); // 'percent_decrease' | 'percent_increase' | 'fixed_decrease' | 'fixed_increase'
+  const [bulkPriceValue, setBulkPriceValue] = useState(10);
+  const [showBulkStockModal, setShowBulkStockModal] = useState(false);
+  const [bulkStockValue, setBulkStockValue] = useState(50);
+  const [showBulkCategoryModal, setShowBulkCategoryModal] = useState(false);
+  const [bulkTargetCategory, setBulkTargetCategory] = useState(CATEGORIES[1]?.id || 'bone_joint');
+  const [bulkCategoryAction, setBulkCategoryAction] = useState('replace'); // 'replace' | 'append'
+
+  // Modal hàng loạt Bài viết
+  const [showBulkArticleCatModal, setShowBulkArticleCatModal] = useState(false);
+  const [bulkArticleCategory, setBulkArticleCategory] = useState('Kiến thức y khoa');
+
+  // Modal tạo nhóm danh mục mới
+  const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
+  const [newCategoryData, setNewCategoryData] = useState({
+    name: '',
+    id: '',
+    icon: 'Activity',
+    description: ''
+  });
+
+  // Hợp nhất danh mục cố định và danh mục tùy chỉnh
+  const allCategories = useMemo(() => {
+    const custom = (storeConfig && storeConfig.customCategories) ? storeConfig.customCategories : [];
+    const map = new Map();
+    CATEGORIES.forEach(c => map.set(c.id, c));
+    custom.forEach(c => map.set(c.id, c));
+    return Array.from(map.values());
+  }, [storeConfig]);
+
+  // Thống kê số lượng sản phẩm trên từng nhóm danh mục
+  const categoryCounts = useMemo(() => {
+    const counts = {};
+    products.forEach(p => {
+      const cats = Array.isArray(p.categories) && p.categories.length > 0 ? p.categories : [p.category].filter(Boolean);
+      cats.forEach(c => {
+        counts[c] = (counts[c] || 0) + 1;
+      });
+    });
+    return counts;
+  }, [products]);
+
+  // Lọc sản phẩm trong Admin Panel theo tìm kiếm, danh mục và xuất xứ
+  const filteredAdminProducts = useMemo(() => {
+    return products.filter(p => {
+      if (productCategoryFilter !== 'all') {
+        const cats = Array.isArray(p.categories) && p.categories.length > 0 ? p.categories : [p.category].filter(Boolean);
+        if (!cats.includes(productCategoryFilter)) return false;
+      }
+      if (productOriginFilter !== 'all') {
+        if (productOriginFilter === 'domestic' && p.originType !== 'domestic') return false;
+        if (productOriginFilter === 'imported' && p.originType !== 'imported') return false;
+      }
+      if (productSearchQuery.trim()) {
+        const q = productSearchQuery.toLowerCase().trim();
+        const matchName = (p.name || '').toLowerCase().includes(q);
+        const matchBrand = (p.brand || '').toLowerCase().includes(q);
+        const matchReg = (p.regNumber || '').toLowerCase().includes(q);
+        if (!matchName && !matchBrand && !matchReg) return false;
+      }
+      return true;
+    });
+  }, [products, productCategoryFilter, productOriginFilter, productSearchQuery]);
+
+  // --- BULK PRODUCT HANDLERS ---
+  const handleToggleSelectAllProducts = () => {
+    const visibleIds = filteredAdminProducts.map(p => p.id);
+    const allSelected = visibleIds.length > 0 && visibleIds.every(id => selectedProductIds.includes(id));
+    if (allSelected) {
+      setSelectedProductIds(prev => prev.filter(id => !visibleIds.includes(id)));
+    } else {
+      setSelectedProductIds(prev => Array.from(new Set([...prev, ...visibleIds])));
+    }
+  };
+
+  const handleToggleProductSelection = (id) => {
+    setSelectedProductIds(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleExecuteBulkPrice = () => {
+    if (!onBulkUpdateProducts || selectedProductIds.length === 0) return;
+    const val = Number(bulkPriceValue) || 0;
+    if (val <= 0) {
+      alert('Vui lòng nhập giá trị hợp lệ lớn hơn 0');
+      return;
+    }
+    const updated = products
+      .filter(p => selectedProductIds.includes(p.id))
+      .map(p => {
+        let newPrice = p.price;
+        let origPrice = p.originalPrice || p.price;
+        if (bulkPriceType === 'percent_decrease') {
+          newPrice = Math.max(1000, Math.round((p.price * (1 - val / 100)) / 1000) * 1000);
+          origPrice = Math.max(origPrice, p.price);
+        } else if (bulkPriceType === 'percent_increase') {
+          newPrice = Math.round((p.price * (1 + val / 100)) / 1000) * 1000;
+          origPrice = Math.max(newPrice, origPrice);
+        } else if (bulkPriceType === 'fixed_decrease') {
+          newPrice = Math.max(1000, p.price - val);
+          origPrice = Math.max(origPrice, p.price);
+        } else if (bulkPriceType === 'fixed_increase') {
+          newPrice = p.price + val;
+          origPrice = Math.max(newPrice, origPrice);
+        }
+        const discPercent = origPrice > newPrice ? Math.round(((origPrice - newPrice) / origPrice) * 100) : 0;
+        return {
+          ...p,
+          price: newPrice,
+          originalPrice: origPrice,
+          discountPercent: discPercent
+        };
+      });
+    onBulkUpdateProducts(updated);
+    setShowBulkPriceModal(false);
+    setSelectedProductIds([]);
+  };
+
+  const handleExecuteBulkStock = () => {
+    if (!onBulkUpdateProducts || selectedProductIds.length === 0) return;
+    const stockQty = Math.max(0, parseInt(bulkStockValue, 10) || 0);
+    const updated = products
+      .filter(p => selectedProductIds.includes(p.id))
+      .map(p => ({
+        ...p,
+        stock: stockQty,
+        inStock: stockQty > 0
+      }));
+    onBulkUpdateProducts(updated);
+    setShowBulkStockModal(false);
+    setSelectedProductIds([]);
+  };
+
+  const handleExecuteBulkCategory = () => {
+    if (!onBulkUpdateProducts || selectedProductIds.length === 0) return;
+    const updated = products
+      .filter(p => selectedProductIds.includes(p.id))
+      .map(p => {
+        const curCats = Array.isArray(p.categories) && p.categories.length > 0 ? p.categories : [p.category].filter(Boolean);
+        const newCats = bulkCategoryAction === 'append'
+          ? Array.from(new Set([...curCats, bulkTargetCategory]))
+          : [bulkTargetCategory];
+        return {
+          ...p,
+          category: newCats[0] || bulkTargetCategory,
+          categories: newCats
+        };
+      });
+    onBulkUpdateProducts(updated);
+    setShowBulkCategoryModal(false);
+    setSelectedProductIds([]);
+  };
+
+  const handleExecuteBulkFlashSale = (enable) => {
+    if (!onBulkUpdateProducts || selectedProductIds.length === 0) return;
+    const updated = products
+      .filter(p => selectedProductIds.includes(p.id))
+      .map(p => ({
+        ...p,
+        isFlashSale: enable,
+        discountPercent: enable ? Math.max(15, p.discountPercent || 15) : p.discountPercent
+      }));
+    onBulkUpdateProducts(updated);
+    setSelectedProductIds([]);
+  };
+
+  const handleExecuteBulkDeleteProducts = () => {
+    if (!onBulkDeleteProducts || selectedProductIds.length === 0) return;
+    if (window.confirm(`⚠️ Bạn có chắc chắn muốn xóa vĩnh viễn ${selectedProductIds.length} sản phẩm đã chọn khỏi kho? Thao tác này sẽ đồng bộ lên Cloudflare D1.`)) {
+      onBulkDeleteProducts(selectedProductIds);
+      setSelectedProductIds([]);
+    }
+  };
+
+  const handleExportSelectedProductsCSV = () => {
+    const selected = products.filter(p => selectedProductIds.includes(p.id));
+    if (selected.length === 0) return;
+    const headers = ['Mã ID', 'Tên sản phẩm', 'Thương hiệu', 'Giá bán (VNĐ)', 'Giá gốc (VNĐ)', 'Giảm %', 'Nhóm sức khỏe', 'Xuất xứ', 'Số ĐKSP', 'Quy cách', 'Đã bán'];
+    const rows = selected.map(p => [
+      p.id,
+      p.name,
+      p.brand || '',
+      p.price,
+      p.originalPrice || p.price,
+      p.discountPercent || 0,
+      (Array.isArray(p.categories) ? p.categories.join('; ') : p.category) || '',
+      p.originType === 'domestic' ? 'Nội Địa' : p.countryName || 'Nhập Khẩu',
+      p.regNumber || '',
+      p.packaging || '',
+      p.soldCount || 0
+    ]);
+    downloadCSV(headers, rows, `xuat-hang-loat-${selected.length}-san-pham-${new Date().toISOString().slice(0, 10)}.csv`);
+  };
+
+  // --- CATEGORY MANAGEMENT HANDLERS ---
+  const handleAddNewCategory = (e) => {
+    e.preventDefault();
+    if (!newCategoryData.name.trim()) return;
+    const slug = newCategoryData.id.trim() || slugify(newCategoryData.name);
+    const newCat = {
+      id: slug,
+      name: newCategoryData.name.trim(),
+      icon: newCategoryData.icon || 'Activity',
+      description: newCategoryData.description.trim()
+    };
+    const currentCustom = storeConfig?.customCategories || [];
+    if (allCategories.some(c => c.id === slug)) {
+      alert(`Mã nhóm '${slug}' đã tồn tại! Vui lòng chọn tên hoặc mã khác.`);
+      return;
+    }
+    const updatedCustom = [...currentCustom, newCat];
+    if (onUpdateStoreConfig) {
+      onUpdateStoreConfig({
+        ...storeConfig,
+        customCategories: updatedCustom
+      });
+    }
+    setNewCategoryData({ name: '', id: '', icon: 'Activity', description: '' });
+    setShowAddCategoryModal(false);
+  };
+
+  const handleDeleteCustomCategory = (catId) => {
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa nhóm danh mục '${catId}'? Sản phẩm trong nhóm sẽ không bị xóa.`)) return;
+    const currentCustom = storeConfig?.customCategories || [];
+    const updatedCustom = currentCustom.filter(c => c.id !== catId);
+    if (onUpdateStoreConfig) {
+      onUpdateStoreConfig({
+        ...storeConfig,
+        customCategories: updatedCustom
+      });
+    }
+  };
+
+  // --- BULK ARTICLE HANDLERS ---
+  const handleToggleSelectAllArticles = (visibleArticles) => {
+    const visibleIds = visibleArticles.map(a => a.id);
+    const allSelected = visibleIds.length > 0 && visibleIds.every(id => selectedArticleIds.includes(id));
+    if (allSelected) {
+      setSelectedArticleIds(prev => prev.filter(id => !visibleIds.includes(id)));
+    } else {
+      setSelectedArticleIds(prev => Array.from(new Set([...prev, ...visibleIds])));
+    }
+  };
+
+  const handleToggleArticleSelection = (id) => {
+    setSelectedArticleIds(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkSetArticleStatus = (status) => {
+    if (!onBulkUpdateArticles || selectedArticleIds.length === 0) return;
+    const updated = articles
+      .filter(a => selectedArticleIds.includes(a.id))
+      .map(a => ({ ...a, status }));
+    onBulkUpdateArticles(updated);
+    setSelectedArticleIds([]);
+  };
+
+  const handleBulkAssignArticleCategory = () => {
+    if (!onBulkUpdateArticles || selectedArticleIds.length === 0) return;
+    const updated = articles
+      .filter(a => selectedArticleIds.includes(a.id))
+      .map(a => ({ ...a, category: bulkArticleCategory }));
+    onBulkUpdateArticles(updated);
+    setShowBulkArticleCatModal(false);
+    setSelectedArticleIds([]);
+  };
+
+  const handleBulkDeleteSelectedArticles = () => {
+    if (!onBulkDeleteArticles || selectedArticleIds.length === 0) return;
+    if (window.confirm(`⚠️ Bạn có chắc chắn muốn xóa vĩnh viễn ${selectedArticleIds.length} bài viết đã chọn?`)) {
+      onBulkDeleteArticles(selectedArticleIds);
+      setSelectedArticleIds([]);
+    }
+  };
+
+  // --- BULK ORDER HANDLERS ---
+  const handleToggleSelectAllOrders = (visibleOrders) => {
+    const visibleIds = visibleOrders.map(o => o.id);
+    const allSelected = visibleIds.length > 0 && visibleIds.every(id => selectedOrderIds.includes(id));
+    if (allSelected) {
+      setSelectedOrderIds(prev => prev.filter(id => !visibleIds.includes(id)));
+    } else {
+      setSelectedOrderIds(prev => Array.from(new Set([...prev, ...visibleIds])));
+    }
+  };
+
+  const handleToggleOrderSelection = (id) => {
+    setSelectedOrderIds(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkChangeOrdersStatus = (newStatus) => {
+    if (!onBulkUpdateOrdersStatus || selectedOrderIds.length === 0) return;
+    onBulkUpdateOrdersStatus(selectedOrderIds, newStatus);
+    setSelectedOrderIds([]);
+  };
+
+  const handleExportSelectedOrdersCSV = () => {
+    const selected = orders.filter(o => selectedOrderIds.includes(o.id));
+    if (selected.length === 0) return;
+    const headers = [
+      'Mã đơn', 'Ngày đặt', 'Khách hàng', 'Số điện thoại', 'Địa chỉ giao hàng',
+      'Sản phẩm & SL', 'Tổng tiền (VNĐ)', 'Tiền COD thu hộ', 'Phương thức thanh toán',
+      'Đơn vị vận chuyển', 'Mã vận đơn', 'Trạng thái'
+    ];
+    const rows = selected.map(o => [
+      o.id,
+      new Date(o.createdAt).toLocaleString('vi-VN'),
+      o.customerName || '',
+      o.customerPhone || '',
+      `"${(o.shippingAddress || '').replace(/"/g, '""')}"`,
+      `"${(o.items || []).map(i => `${i.name} (x${i.quantity})`).join(', ').replace(/"/g, '""')}"`,
+      o.total || 0,
+      o.paymentMethod === 'cod' ? (o.total || 0) : 0,
+      o.paymentMethod === 'vietqr' ? 'VietQR Đã Chuyển' : 'COD Thu Hộ',
+      o.carrierName || o.shippingMethod || 'Tiêu chuẩn',
+      o.trackingCode || '',
+      o.status || ''
+    ]);
+    downloadCSV(headers, rows, `bang-ke-van-chuyen-${selected.length}-don-${new Date().toISOString().slice(0, 10)}.csv`);
+  };
 
   // State for Return Inspection & Delivery Failure Modals
   const [inspectingReturnOrder, setInspectingReturnOrder] = useState(null);
@@ -1518,6 +1863,16 @@ export const AdminPanel = ({
                   <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
                 </div>
 
+                <button
+                  type="button"
+                  onClick={() => handleToggleSelectAllOrders(filteredOrders)}
+                  className="px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 flex items-center gap-1.5 transition-colors shrink-0 shadow-2xs"
+                  title="Chọn tất cả đơn hàng đang hiển thị theo bộ lọc"
+                >
+                  <CheckSquare className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>{filteredOrders.length > 0 && filteredOrders.every(o => selectedOrderIds.includes(o.id)) ? 'Bỏ chọn tất cả' : `Chọn tất cả (${filteredOrders.length})`}</span>
+                </button>
+
                 <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
                   {[
                     { id: 'all', label: 'Tất cả' },
@@ -1575,6 +1930,66 @@ export const AdminPanel = ({
                 </div>
               )}
 
+              {/* Floating Bulk Actions Bar cho Đơn hàng */}
+              {selectedOrderIds.length > 0 && (
+                <div className="sticky top-2 z-30 bg-slate-900 text-white p-3.5 rounded-2xl shadow-xl border border-slate-700 flex flex-wrap items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center font-black text-xs">
+                      {selectedOrderIds.length}
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-white">Đã chọn {selectedOrderIds.length} đơn hàng</div>
+                      <div className="text-[10px] text-slate-400">Thao tác trạng thái đồng loạt và xuất vận đơn</div>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleBulkChangeOrdersStatus('confirmed')}
+                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1 shadow-xs"
+                      title="Xác nhận đơn và tự động khởi tạo mã vận đơn"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Xác nhận ({selectedOrderIds.length})</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleBulkChangeOrdersStatus('shipping')}
+                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1 shadow-xs"
+                      title="Chuyển sang Đang giao và điều phối bưu tá"
+                    >
+                      <Truck className="w-3.5 h-3.5" />
+                      <span>Giao hàng ({selectedOrderIds.length})</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleBulkChangeOrdersStatus('completed')}
+                      className="px-3 py-1.5 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1 shadow-xs"
+                      title="Hoàn tất đơn hàng thành công"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Hoàn tất ({selectedOrderIds.length})</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleExportSelectedOrdersCSV}
+                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1 border border-slate-600 shadow-xs"
+                      title="Xuất danh sách vận chuyển ra file Excel CSV"
+                    >
+                      <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Bảng Kê Vận Đơn (CSV)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedOrderIds([])}
+                      className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl text-xs font-bold transition-colors"
+                    >
+                      Bỏ chọn
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Orders Table */}
               {filteredOrders.length === 0 ? (
                 <div className="bg-white rounded-2xl p-10 text-center border border-slate-200">
@@ -1591,9 +2006,17 @@ export const AdminPanel = ({
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
                         <div className="flex items-center gap-3">
-                          <span className="font-mono font-black text-sm text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
-                            {order.id}
-                          </span>
+                          <label className="flex items-center gap-2 cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              checked={selectedOrderIds.includes(order.id)}
+                              onChange={() => handleToggleOrderSelection(order.id)}
+                              className="w-4 h-4 rounded text-emerald-600 border-slate-300 focus:ring-emerald-500 cursor-pointer"
+                            />
+                            <span className="font-mono font-black text-sm text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                              {order.id}
+                            </span>
+                          </label>
                           <span className="text-xs text-slate-400">
                             {new Date(order.createdAt).toLocaleString('vi-VN')}
                           </span>
@@ -1942,7 +2365,165 @@ export const AdminPanel = ({
           {activeTab === 'products' && (
             <div className="space-y-4">
               
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              {/* Phân hệ điều hướng: Danh sách sản phẩm vs Quản lý nhóm danh mục */}
+              <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-2xl w-fit">
+                <button
+                  type="button"
+                  onClick={() => setProductSubTab('list')}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all ${
+                    productSubTab === 'list'
+                      ? 'bg-white text-emerald-800 shadow-xs border border-slate-200/80 font-black'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Package className="w-4 h-4 text-emerald-600" />
+                  <span>Kho Sản Phẩm ({products.length})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setProductSubTab('categories')}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all ${
+                    productSubTab === 'categories'
+                      ? 'bg-white text-emerald-800 shadow-xs border border-slate-200/80 font-black'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Layers className="w-4 h-4 text-emerald-600" />
+                  <span>Quản Lý Nhóm & Danh Mục ({allCategories.length})</span>
+                </button>
+              </div>
+
+              {/* VIEW 1: QUẢN LÝ NHÓM & DANH MỤC SẢN PHẨM */}
+              {productSubTab === 'categories' && (
+                <div className="space-y-4 animate-in fade-in">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+                    <div>
+                      <h3 className="font-extrabold text-slate-900 text-sm sm:text-base flex items-center gap-2">
+                        <Layers className="w-5 h-5 text-emerald-600" />
+                        <span>Hệ Thống Phân Loại Nhóm Sức Khỏe & Danh Mục ({allCategories.length} nhóm)</span>
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Quản lý các nhóm bệnh lý điều trị, phân loại thực phẩm chức năng và liên kết với bộ lọc trang chủ.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNewCategoryData({ name: '', id: '', icon: 'Activity', description: '' });
+                        setShowAddCategoryModal(true);
+                      }}
+                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-xs transition-all shrink-0"
+                    >
+                      <FolderPlus className="w-4 h-4" />
+                      <span>Thêm Nhóm Danh Mục Mới</span>
+                    </button>
+                  </div>
+
+                  {/* Thống kê nhanh danh mục */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs">
+                      <div className="text-slate-400 text-xs font-semibold">Tổng Số Nhóm</div>
+                      <div className="text-2xl font-black text-slate-900 mt-1">{allCategories.length}</div>
+                      <div className="text-[11px] text-slate-500 mt-0.5">Bao gồm {storeConfig?.customCategories?.length || 0} nhóm tùy chỉnh</div>
+                    </div>
+                    <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs">
+                      <div className="text-slate-400 text-xs font-semibold">Tổng Sản Phẩm Đã Phân Nhóm</div>
+                      <div className="text-2xl font-black text-emerald-600 mt-1">{products.length}</div>
+                      <div className="text-[11px] text-emerald-700 mt-0.5">100% đã gán mã bệnh lý</div>
+                    </div>
+                    <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs">
+                      <div className="text-slate-400 text-xs font-semibold">Đa Danh Mục (Multi-cat)</div>
+                      <div className="text-2xl font-black text-blue-600 mt-1">
+                        {products.filter(p => Array.isArray(p.categories) && p.categories.length > 1).length}
+                      </div>
+                      <div className="text-[11px] text-blue-700 mt-0.5">Hỗ trợ kết hợp nhiều chuyên khoa</div>
+                    </div>
+                    <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs">
+                      <div className="text-slate-400 text-xs font-semibold">Nhóm Nhiều Sản Phẩm Nhất</div>
+                      <div className="text-base font-black text-slate-900 mt-1 truncate">
+                        {(() => {
+                          let maxCat = null;
+                          let maxCount = -1;
+                          allCategories.filter(c => c.id !== 'all').forEach(c => {
+                            const cnt = categoryCounts[c.id] || 0;
+                            if (cnt > maxCount) {
+                              maxCount = cnt;
+                              maxCat = c;
+                            }
+                          });
+                          return maxCat ? `${maxCat.name} (${maxCount})` : 'Chưa có';
+                        })()}
+                      </div>
+                      <div className="text-[11px] text-slate-500 mt-0.5">Nhu cầu mua hàng cao nhất</div>
+                    </div>
+                  </div>
+
+                  {/* Lưới các nhóm danh mục */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                    {allCategories.filter(c => c.id !== 'all').map(cat => {
+                      const count = categoryCounts[cat.id] || 0;
+                      const isCustom = (storeConfig?.customCategories || []).some(c => c.id === cat.id);
+                      return (
+                        <div
+                          key={cat.id}
+                          className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs hover:border-emerald-300 transition-all flex flex-col justify-between"
+                        >
+                          <div>
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-100 flex items-center justify-center font-bold text-sm">
+                                  🏷️
+                                </div>
+                                <div>
+                                  <h4 className="font-bold text-slate-900 text-xs sm:text-sm">{cat.name}</h4>
+                                  <div className="text-[10px] text-slate-400 font-mono">id: {cat.id}</div>
+                                </div>
+                              </div>
+                              <span className="text-xs font-black px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">
+                                {count} SP
+                              </span>
+                            </div>
+                            {cat.description && (
+                              <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
+                                {cat.description}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="flex items-center justify-between gap-2 pt-3 mt-3 border-t border-slate-100">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setProductCategoryFilter(cat.id);
+                                setProductSubTab('list');
+                              }}
+                              className="text-xs font-bold text-emerald-700 hover:text-emerald-800 hover:underline flex items-center gap-1"
+                            >
+                              <span>Xem {count} sản phẩm</span>
+                              <ArrowRight className="w-3 h-3" />
+                            </button>
+
+                            {isCustom && (
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteCustomCategory(cat.id)}
+                                className="text-[11px] font-semibold text-rose-500 hover:text-rose-700 transition-colors"
+                              >
+                                Xóa nhóm
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* VIEW 2: DANH SÁCH SẢN PHẨM VỚI BỘ LỌC & CÔNG CỤ HÀNG LOẠT */}
+              {productSubTab === 'list' && (
+                <div className="space-y-4 animate-in fade-in">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <h3 className="font-extrabold text-slate-900 text-base">
                     Kho Thực Phẩm Chức Năng ({products.length} sản phẩm)
@@ -2425,12 +3006,167 @@ export const AdminPanel = ({
                 </form>
               )}
 
-              {/* Product List Table */}
-              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
+              {/* Bộ Lọc & Tìm Kiếm Sản Phẩm */}
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
+                    <div className="relative flex-1">
+                      <input
+                        type="text"
+                        placeholder="Tìm theo tên sản phẩm, thương hiệu, số ĐKSP..."
+                        value={productSearchQuery}
+                        onChange={(e) => setProductSearchQuery(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      />
+                      <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      {/* Lọc theo Nhóm Danh Mục */}
+                      <select
+                        value={productCategoryFilter}
+                        onChange={(e) => setProductCategoryFilter(e.target.value)}
+                        className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      >
+                        <option value="all">Tất cả nhóm sức khỏe ({products.length})</option>
+                        {allCategories.filter(c => c.id !== 'all').map(c => (
+                          <option key={c.id} value={c.id}>
+                            {c.name} ({categoryCounts[c.id] || 0} SP)
+                          </option>
+                        ))}
+                      </select>
+
+                      {/* Lọc theo Xuất Xứ */}
+                      <select
+                        value={productOriginFilter}
+                        onChange={(e) => setProductOriginFilter(e.target.value)}
+                        className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      >
+                        <option value="all">Tất cả xuất xứ</option>
+                        <option value="domestic">🇻🇳 Hàng Nội Địa ({domesticProductsCount})</option>
+                        <option value="imported">🌐 Hàng Nhập Khẩu ({importedProductsCount})</option>
+                      </select>
+
+                      {(productCategoryFilter !== 'all' || productOriginFilter !== 'all' || productSearchQuery) && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProductCategoryFilter('all');
+                            setProductOriginFilter('all');
+                            setProductSearchQuery('');
+                          }}
+                          className="px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition-colors"
+                        >
+                          Xóa bộ lọc
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Thanh công cụ quản lý hàng loạt Sản phẩm (Floating Sticky Bar) */}
+                  {selectedProductIds.length > 0 && (
+                    <div className="sticky top-2 z-30 bg-slate-900 text-white p-3.5 rounded-2xl shadow-xl border border-slate-700 flex flex-wrap items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center font-black text-xs">
+                          {selectedProductIds.length}
+                        </div>
+                        <div>
+                          <div className="text-xs font-bold text-white">Đã chọn {selectedProductIds.length} sản phẩm</div>
+                          <div className="text-[10px] text-slate-400">Thao tác chỉnh giá, tồn kho, nhóm hoặc xóa đồng loạt</div>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {/* 1. Chỉnh giá hàng loạt */}
+                        <button
+                          type="button"
+                          onClick={() => setShowBulkPriceModal(true)}
+                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1 shadow-xs"
+                          title="Tăng/Giảm giá theo % hoặc số tiền cố định"
+                        >
+                          <DollarSign className="w-3.5 h-3.5" />
+                          <span>Điều chỉnh giá</span>
+                        </button>
+
+                        {/* 2. Cập nhật tồn kho */}
+                        <button
+                          type="button"
+                          onClick={() => setShowBulkStockModal(true)}
+                          className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1 shadow-xs"
+                          title="Cập nhật số lượng tồn kho đồng loạt"
+                        >
+                          <Package className="w-3.5 h-3.5" />
+                          <span>Cập nhật kho</span>
+                        </button>
+
+                        {/* 3. Gán nhóm / Danh mục */}
+                        <button
+                          type="button"
+                          onClick={() => setShowBulkCategoryModal(true)}
+                          className="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1 shadow-xs"
+                          title="Đổi hoặc gán thêm nhóm danh mục"
+                        >
+                          <Layers className="w-3.5 h-3.5" />
+                          <span>Gán nhóm</span>
+                        </button>
+
+                        {/* 4. Flash Sale */}
+                        <button
+                          type="button"
+                          onClick={() => handleExecuteBulkFlashSale(true)}
+                          className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1 shadow-xs"
+                          title="Kích hoạt Flash Sale cho các sản phẩm đã chọn"
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>Bật Flash Sale</span>
+                        </button>
+
+                        {/* 5. Xuất Excel danh sách đã chọn */}
+                        <button
+                          type="button"
+                          onClick={handleExportSelectedProductsCSV}
+                          className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1 border border-slate-600 shadow-xs"
+                          title="Xuất file CSV danh sách đã chọn"
+                        >
+                          <Download className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Xuất Excel ({selectedProductIds.length})</span>
+                        </button>
+
+                        {/* 6. Xóa hàng loạt */}
+                        <button
+                          type="button"
+                          onClick={handleExecuteBulkDeleteProducts}
+                          className="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1 shadow-xs"
+                          title="Xóa vĩnh viễn các sản phẩm đã chọn"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Xóa ({selectedProductIds.length})</span>
+                        </button>
+
+                        {/* 7. Bỏ chọn */}
+                        <button
+                          type="button"
+                          onClick={() => setSelectedProductIds([])}
+                          className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl text-xs font-bold transition-colors"
+                        >
+                          Bỏ chọn
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Product List Table */}
+                  <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs text-slate-600">
                     <thead className="bg-slate-100 text-slate-800 font-bold border-b border-slate-200 uppercase tracking-wider text-[10px]">
                       <tr>
+                        <th className="p-3.5 w-10 text-center">
+                          <input
+                            type="checkbox"
+                            checked={filteredAdminProducts.length > 0 && filteredAdminProducts.every(p => selectedProductIds.includes(p.id))}
+                            onChange={handleToggleSelectAllProducts}
+                            className="w-4 h-4 rounded text-emerald-600 border-slate-300 focus:ring-emerald-500 cursor-pointer"
+                            title="Chọn / Bỏ chọn toàn bộ sản phẩm hiển thị"
+                          />
+                        </th>
                         <th className="p-3.5">Sản Phẩm</th>
                         <th className="p-3.5">Xuất Xứ</th>
                         <th className="p-3.5">Số ĐKSP</th>
@@ -2440,8 +3176,16 @@ export const AdminPanel = ({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {products.map(p => (
+                      {filteredAdminProducts.map(p => (
                         <tr key={p.id} className="hover:bg-slate-50 transition-colors">
+                          <td className="p-3 text-center">
+                            <input
+                              type="checkbox"
+                              checked={selectedProductIds.includes(p.id)}
+                              onChange={() => handleToggleProductSelection(p.id)}
+                              className="w-4 h-4 rounded text-emerald-600 border-slate-300 focus:ring-emerald-500 cursor-pointer"
+                            />
+                          </td>
                           <td className="p-3 flex items-center gap-3">
                             <img src={p.image} alt={p.name} className="w-10 h-10 rounded-lg object-cover border" />
                             <div>
@@ -2502,7 +3246,15 @@ export const AdminPanel = ({
                     </tbody>
                   </table>
                 </div>
+                {filteredAdminProducts.length === 0 && (
+                  <div className="p-10 text-center text-slate-400 text-xs">
+                    Không tìm thấy sản phẩm nào phù hợp với bộ lọc tìm kiếm.
+                  </div>
+                )}
               </div>
+
+                </div>
+              )}
 
             </div>
           )}
@@ -2794,12 +3546,81 @@ export const AdminPanel = ({
                 </div>
               </div>
 
+              {/* Floating Bulk Actions Bar cho Bài viết */}
+              {selectedArticleIds.length > 0 && (
+                <div className="sticky top-2 z-30 bg-slate-900 text-white p-3.5 rounded-2xl shadow-xl border border-slate-700 flex flex-wrap items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center font-black text-xs">
+                      {selectedArticleIds.length}
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-white">Đã chọn {selectedArticleIds.length} bài viết</div>
+                      <div className="text-[10px] text-slate-400">Xuất bản, lưu nháp hoặc chuyển đổi chuyên mục đồng loạt</div>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleBulkSetArticleStatus('published')}
+                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1 shadow-xs"
+                      title="Xuất bản công khai lên website"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Xuất bản ({selectedArticleIds.length})</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleBulkSetArticleStatus('draft')}
+                      className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1 shadow-xs"
+                      title="Chuyển về trạng thái lưu nháp"
+                    >
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>Lưu nháp ({selectedArticleIds.length})</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowBulkArticleCatModal(true)}
+                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1 shadow-xs"
+                      title="Đổi chuyên mục bài viết hàng loạt"
+                    >
+                      <Layers className="w-3.5 h-3.5" />
+                      <span>Đổi chuyên mục</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleBulkDeleteSelectedArticles}
+                      className="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1 shadow-xs"
+                      title="Xóa vĩnh viễn các bài viết đã chọn"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Xóa ({selectedArticleIds.length})</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedArticleIds([])}
+                      className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl text-xs font-bold transition-colors"
+                    >
+                      Bỏ chọn
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Bảng Danh Sách Bài Viết */}
               <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse text-xs">
                     <thead className="bg-slate-100 text-slate-800 font-bold border-b border-slate-200 uppercase tracking-wider text-[10px]">
                       <tr>
+                        <th className="p-3.5 w-10 text-center">
+                          <input
+                            type="checkbox"
+                            checked={articles.length > 0 && articles.every(a => selectedArticleIds.includes(a.id))}
+                            onChange={() => handleToggleSelectAllArticles(articles)}
+                            className="w-4 h-4 rounded text-emerald-600 border-slate-300 focus:ring-emerald-500 cursor-pointer"
+                            title="Chọn / Bỏ chọn toàn bộ bài viết"
+                          />
+                        </th>
                         <th className="p-3.5">Bài Viết & Đường Dẫn Slug</th>
                         <th className="p-3.5">Chuyên Mục & Tác Giả</th>
                         <th className="p-3.5">Từ Khóa & Điểm SEO</th>
@@ -2823,6 +3644,15 @@ export const AdminPanel = ({
                           const seoScore = art.seoScore || calculateSeoScore(art).score;
                           return (
                             <tr key={art.id} className="hover:bg-slate-50 transition-colors">
+                              {/* Cột chọn checkbox */}
+                              <td className="p-3.5 text-center">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedArticleIds.includes(art.id)}
+                                  onChange={() => handleToggleArticleSelection(art.id)}
+                                  className="w-4 h-4 rounded text-emerald-600 border-slate-300 focus:ring-emerald-500 cursor-pointer"
+                                />
+                              </td>
                               {/* Cột 1: Ảnh, Tiêu đề, Slug */}
                               <td className="p-3.5 max-w-sm">
                                 <div className="flex items-start gap-3">
@@ -7331,6 +8161,392 @@ export const AdminPanel = ({
         )}
 
       </div>
+
+      
+      {/* MODAL 1: ĐIỀU CHỈNH GIÁ BÁN HÀNG LOẠT */}
+      {showBulkPriceModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="font-black text-slate-900 text-base flex items-center gap-2">
+                <DollarSign className="w-5 h-5 text-emerald-600" />
+                <span>Điều Chỉnh Giá Hàng Loạt</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowBulkPriceModal(false)}
+                className="p-1 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="py-4 space-y-4">
+              <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-xs text-emerald-900">
+                Áp dụng thay đổi giá cho <strong className="font-bold">{selectedProductIds.length} sản phẩm</strong> đang chọn. Hệ thống tự động làm tròn đến nghìn đồng và cập nhật % giảm giá.
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Hình Thức Điều Chỉnh:</label>
+                <select
+                  value={bulkPriceType}
+                  onChange={(e) => setBulkPriceType(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+                  <option value="percent_decrease">Giảm theo phần trăm (Chiết khấu % Khuyến mãi)</option>
+                  <option value="percent_increase">Tăng theo phần trăm (Điều chỉnh trượt giá %)</option>
+                  <option value="fixed_decrease">Giảm số tiền cố định (VNĐ)</option>
+                  <option value="fixed_increase">Tăng số tiền cố định (VNĐ)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  {bulkPriceType.startsWith('percent') ? 'Mức Phần Trăm (%):' : 'Số Tiền Điều Chỉnh (VNĐ):'}
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    min="1"
+                    value={bulkPriceValue}
+                    onChange={(e) => setBulkPriceValue(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    placeholder={bulkPriceType.startsWith('percent') ? 'VD: 10' : 'VD: 20000'}
+                  />
+                  <span className="absolute right-3 top-2 text-xs font-bold text-slate-400">
+                    {bulkPriceType.startsWith('percent') ? '%' : 'VNĐ'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Minh họa trực quan */}
+              <div className="p-3 bg-slate-50 rounded-xl text-[11px] text-slate-600 space-y-1">
+                <div className="font-semibold text-slate-700">Ví dụ minh họa cho sản phẩm giá 500.000₫:</div>
+                <div className="text-emerald-700 font-bold">
+                  {bulkPriceType === 'percent_decrease' && `-> Giá mới: ${Math.round(500000 * (1 - (Number(bulkPriceValue) || 0)/100)).toLocaleString('vi-VN')}₫ (Giảm ${bulkPriceValue}%)`}
+                  {bulkPriceType === 'percent_increase' && `-> Giá mới: ${Math.round(500000 * (1 + (Number(bulkPriceValue) || 0)/100)).toLocaleString('vi-VN')}₫ (Tăng ${bulkPriceValue}%)`}
+                  {bulkPriceType === 'fixed_decrease' && `-> Giá mới: ${Math.max(1000, 500000 - (Number(bulkPriceValue) || 0)).toLocaleString('vi-VN')}₫ (Giảm ${Number(bulkPriceValue || 0).toLocaleString('vi-VN')}₫)`}
+                  {bulkPriceType === 'fixed_increase' && `-> Giá mới: ${(500000 + (Number(bulkPriceValue) || 0)).toLocaleString('vi-VN')}₫ (Tăng ${Number(bulkPriceValue || 0).toLocaleString('vi-VN')}₫)`}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setShowBulkPriceModal(false)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                onClick={handleExecuteBulkPrice}
+                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-600/20"
+              >
+                Áp Dụng Cho {selectedProductIds.length} Sản Phẩm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: CẬP NHẬT TỒN KHO HÀNG LOẠT */}
+      {showBulkStockModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="font-black text-slate-900 text-base flex items-center gap-2">
+                <Package className="w-5 h-5 text-blue-600" />
+                <span>Cập Nhật Tồn Kho Hàng Loạt</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowBulkStockModal(false)}
+                className="p-1 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="py-4 space-y-4">
+              <p className="text-xs text-slate-600">
+                Gán lại số lượng lưu kho cho <strong className="text-blue-700 font-bold">{selectedProductIds.length} sản phẩm</strong> đã chọn:
+              </p>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Số Lượng Tồn Kho Mới (Hộp/Chai/Gói):</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={bulkStockValue}
+                  onChange={(e) => setBulkStockValue(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="VD: 50"
+                />
+              </div>
+
+              <div className="p-3 bg-blue-50 rounded-xl text-[11px] text-blue-900 leading-relaxed">
+                ℹ️ Nếu nhập giá trị &gt; 0, hệ thống sẽ tự động gán trạng thái <strong>Còn Hàng (inStock = true)</strong> để khách hàng có thể đặt mua ngay lập tức.
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setShowBulkStockModal(false)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                onClick={handleExecuteBulkStock}
+                className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-600/20"
+              >
+                Cập Nhật Cho {selectedProductIds.length} Sản Phẩm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 3: GÁN NHÓM / DANH MỤC HÀNG LOẠT */}
+      {showBulkCategoryModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="font-black text-slate-900 text-base flex items-center gap-2">
+                <Layers className="w-5 h-5 text-purple-600" />
+                <span>Gán Nhóm / Danh Mục Hàng Loạt</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowBulkCategoryModal(false)}
+                className="p-1 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="py-4 space-y-4">
+              <p className="text-xs text-slate-600">
+                Gán danh mục sức khỏe mục tiêu cho <strong className="text-purple-700 font-bold">{selectedProductIds.length} sản phẩm</strong>:
+              </p>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Chọn Nhóm Mục Tiêu:</label>
+                <select
+                  value={bulkTargetCategory}
+                  onChange={(e) => setBulkTargetCategory(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                >
+                  {allCategories.filter(c => c.id !== 'all').map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Phương Thức Gán Danh Mục:</label>
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="bulkCatAction"
+                      value="replace"
+                      checked={bulkCategoryAction === 'replace'}
+                      onChange={() => setBulkCategoryAction('replace')}
+                      className="text-purple-600 focus:ring-purple-500"
+                    />
+                    <div className="text-xs">
+                      <span className="font-bold text-slate-800">Thay thế hoàn toàn</span>
+                      <p className="text-[10px] text-slate-500">Xóa các nhóm cũ và chỉ giữ lại nhóm mới được chọn</p>
+                    </div>
+                  </label>
+                  <label className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="bulkCatAction"
+                      value="append"
+                      checked={bulkCategoryAction === 'append'}
+                      onChange={() => setBulkCategoryAction('append')}
+                      className="text-purple-600 focus:ring-purple-500"
+                    />
+                    <div className="text-xs">
+                      <span className="font-bold text-slate-800">Thêm vào nhóm hiện có (Đa danh mục)</span>
+                      <p className="text-[10px] text-slate-500">Giữ nguyên các nhóm cũ và thêm nhóm này vào danh sách</p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setShowBulkCategoryModal(false)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                onClick={handleExecuteBulkCategory}
+                className="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow-md shadow-purple-600/20"
+              >
+                Gán Cho {selectedProductIds.length} Sản Phẩm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 4: TẠO NHÓM DANH MỤC SẢN PHẨM MỚI */}
+      {showAddCategoryModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <form
+            onSubmit={handleAddNewCategory}
+            className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in zoom-in-95 space-y-4"
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="font-black text-slate-900 text-base flex items-center gap-2">
+                <FolderPlus className="w-5 h-5 text-emerald-600" />
+                <span>Thêm Nhóm Danh Mục Mới</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowAddCategoryModal(false)}
+                className="p-1 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Tên Nhóm Sức Khỏe / Bệnh Lý *</label>
+              <input
+                type="text"
+                required
+                placeholder="VD: Chăm sóc Mắt & Thị Lực Chuyên Sâu"
+                value={newCategoryData.name}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setNewCategoryData({
+                    ...newCategoryData,
+                    name: val,
+                    id: newCategoryData.id ? newCategoryData.id : slugify(val)
+                  });
+                }}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Mã Định Danh (Slug ID) *</label>
+              <input
+                type="text"
+                required
+                placeholder="VD: eye_premium"
+                value={newCategoryData.id}
+                onChange={(e) => setNewCategoryData({ ...newCategoryData, id: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+              <span className="text-[10px] text-slate-400 mt-1 block">Dùng trong URL lọc và cấu trúc cơ sở dữ liệu D1</span>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Mô Tả Nhóm (Tùy chọn)</label>
+              <textarea
+                rows="2"
+                placeholder="VD: Bổ sung Lutein, Zeaxanthin, Omega 3 bảo vệ võng mạc và chống ánh sáng xanh..."
+                value={newCategoryData.description}
+                onChange={(e) => setNewCategoryData({ ...newCategoryData, description: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setShowAddCategoryModal(false)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-600/20"
+              >
+                Lưu Nhóm Danh Mục
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* MODAL: ĐỔI CHUYÊN MỤC BÀI VIẾT HÀNG LOẠT */}
+      {showBulkArticleCatModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="font-black text-slate-900 text-base flex items-center gap-2">
+                <Layers className="w-5 h-5 text-blue-600" />
+                <span>Đổi Chuyên Mục Hàng Loạt</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowBulkArticleCatModal(false)}
+                className="p-1 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="py-4 space-y-3">
+              <p className="text-xs text-slate-600">
+                Gán lại chuyên mục hiển thị cho <strong className="text-blue-700 font-bold">{selectedArticleIds.length} bài viết</strong> đã chọn:
+              </p>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Chọn Chuyên Mục Mục Tiêu:</label>
+                <select
+                  value={bulkArticleCategory}
+                  onChange={(e) => setBulkArticleCategory(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="Kiến thức y khoa">Kiến thức y khoa</option>
+                  <option value="Sức khỏe tim mạch">Sức khỏe tim mạch</option>
+                  <option value="Xương khớp & Gout">Xương khớp & Gout</option>
+                  <option value="Dinh dưỡng & Bổ sung">Dinh dưỡng & Bổ sung</option>
+                  <option value="Tiêu hóa & Gan mật">Tiêu hóa & Gan mật</option>
+                  <option value="Nội tiết & Sinh lý">Nội tiết & Sinh lý</option>
+                  <option value="Mẹ và bé">Mẹ và bé</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setShowBulkArticleCatModal(false)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkAssignArticleCategory}
+                className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-600/20"
+              >
+                Áp Dụng Cho {selectedArticleIds.length} Bài Viết
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
