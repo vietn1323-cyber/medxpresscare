@@ -106,6 +106,29 @@ export const AdminPanel = ({
     description: ''
   });
 
+  // State đồng bộ thủ công Cloudflare D1
+  const [syncingCloud, setSyncingCloud] = useState(false);
+  const [syncCloudSuccess, setSyncCloudSuccess] = useState(false);
+
+  const handleTriggerSyncCloud = async () => {
+    if (syncingCloud) return;
+    setSyncingCloud(true);
+    setSyncCloudSuccess(false);
+    try {
+      if (onManualSyncD1) {
+        await onManualSyncD1();
+      }
+      setSyncCloudSuccess(true);
+      setTimeout(() => {
+        setSyncCloudSuccess(false);
+      }, 4000);
+    } catch (e) {
+      console.error('Sync cloud error:', e);
+    } finally {
+      setSyncingCloud(false);
+    }
+  };
+
   // Hợp nhất danh mục cố định và danh mục tùy chỉnh
   const allCategories = useMemo(() => {
     const custom = (storeConfig && storeConfig.customCategories) ? storeConfig.customCategories : [];
@@ -1470,12 +1493,21 @@ export const AdminPanel = ({
                 {onManualSyncD1 && (
                   <button
                     type="button"
-                    onClick={onManualSyncD1}
-                    className="text-[10px] font-bold px-2.5 py-0.5 rounded-lg border flex items-center gap-1.5 bg-blue-900/80 hover:bg-blue-800 text-blue-200 border-blue-500 cursor-pointer transition-colors shadow-xs"
-                    title="Đồng bộ thủ công toàn bộ dữ liệu lên Cloudflare D1"
+                    disabled={syncingCloud}
+                    onClick={handleTriggerSyncCloud}
+                    className={`text-[10px] font-bold px-2.5 py-0.5 rounded-lg border flex items-center gap-1.5 transition-all shadow-xs cursor-pointer ${
+                      syncCloudSuccess
+                        ? 'bg-emerald-600 text-white border-emerald-400 font-black'
+                        : syncingCloud
+                          ? 'bg-blue-950 text-blue-300 border-blue-600 opacity-80 cursor-wait'
+                          : 'bg-blue-900/80 hover:bg-blue-800 text-blue-200 border-blue-500'
+                    }`}
+                    title="Nhấn để đồng bộ dữ liệu Sản phẩm, Đơn hàng, Bài viết lên Cloudflare D1"
                   >
-                    <RefreshCw className="w-3 h-3 text-blue-300" />
-                    <span>Sync D1 Cloud</span>
+                    <RefreshCw className={`w-3 h-3 ${syncingCloud ? 'animate-spin text-white' : syncCloudSuccess ? 'text-white' : 'text-blue-300'}`} />
+                    <span>
+                      {syncingCloud ? 'Đang đồng bộ D1...' : syncCloudSuccess ? '✓ Đã đồng bộ Live D1!' : 'Sync D1 Cloud'}
+                    </span>
                   </button>
                 )}
                 <span className="text-xs text-slate-400 hidden sm:inline">Chuẩn GSP - MedXpressCare.com</span>
