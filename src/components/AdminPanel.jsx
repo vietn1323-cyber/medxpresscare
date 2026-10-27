@@ -26,6 +26,7 @@ export const AdminPanel = ({
   isOpen, 
   onClose, 
   d1Status = 'connecting',
+  onManualSyncD1,
   orders, 
   onUpdateOrderStatus, 
   onBulkUpdateOrdersStatus,
@@ -1466,6 +1467,17 @@ export const AdminPanel = ({
                   <span className={`w-1.5 h-1.5 rounded-full ${d1Status === 'connected' ? 'bg-blue-400 animate-pulse' : 'bg-emerald-400'}`}></span>
                   Cloudflare D1: {d1Status === 'connected' ? 'Live DB' : 'Sẵn sàng'}
                 </span>
+                {onManualSyncD1 && (
+                  <button
+                    type="button"
+                    onClick={onManualSyncD1}
+                    className="text-[10px] font-bold px-2.5 py-0.5 rounded-lg border flex items-center gap-1.5 bg-blue-900/80 hover:bg-blue-800 text-blue-200 border-blue-500 cursor-pointer transition-colors shadow-xs"
+                    title="Đồng bộ thủ công toàn bộ dữ liệu lên Cloudflare D1"
+                  >
+                    <RefreshCw className="w-3 h-3 text-blue-300" />
+                    <span>Sync D1 Cloud</span>
+                  </button>
+                )}
                 <span className="text-xs text-slate-400 hidden sm:inline">Chuẩn GSP - MedXpressCare.com</span>
               </div>
               <h2 className="text-base sm:text-lg font-black text-white">
