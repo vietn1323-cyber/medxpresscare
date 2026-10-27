@@ -41,145 +41,7 @@ import {
   PhoneCall, CheckCircle2, ChevronRight, ArrowRight, RotateCcw
 } from 'lucide-react';
 
-const INITIAL_ORDERS = [
-  {
-    id: 'MXC-892410',
-    createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-    customer: {
-      fullName: 'Trần Văn Minh',
-      phone: '0988 123 456',
-      email: 'minhtran@gmail.com',
-      province: 'Hà Nội',
-      district: 'Quận Cầu Giấy',
-      address: 'Số 45 Trần Thái Tông',
-      note: 'Giao trong giờ hành chính, gọi trước 10 phút'
-    },
-    items: [
-      { id: 'vn-01', name: 'Viên Khớp Bách Niên Kiện', price: 699000, quantity: 2, image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=600&auto=format&fit=crop&q=80' }
-    ],
-    subtotal: 1398000,
-    shippingFee: 0,
-    discountAmount: 0,
-    grandTotal: 1398000,
-    shippingMethod: 'ghtk',
-    shippingCarrierName: 'Giao Hàng Nhanh (GHTK)',
-    trackingNumber: 'S22.HN1.B4.892410',
-    paymentMethod: 'vietqr',
-    status: 'pending',
-    autoTracking: true
-  },
-  {
-    id: 'MXC-741285',
-    createdAt: new Date(Date.now() - 3600000 * 6).toISOString(),
-    customer: {
-      fullName: 'Nguyễn Thị Hồng',
-      phone: '0912 888 999',
-      email: 'hongnguyen@gmail.com',
-      province: 'TP. Hồ Chí Minh',
-      district: 'Quận 1',
-      address: 'Số 12 Lê Duẩn',
-      note: 'Cần tư vấn thêm liều dùng cho mẹ 62 tuổi'
-    },
-    items: [
-      { id: 'us-01', name: 'Glucosamine HCL 1500mg with MSM Kirkland USA', price: 680000, quantity: 1, image: 'https://images.unsplash.com/photo-1584017911766-d451b3d0e843?w=600&auto=format&fit=crop&q=80' },
-      { id: 'au-01', name: 'Dầu Cá Blackmores Fish Oil 1000mg', price: 520000, quantity: 1, image: 'https://images.unsplash.com/photo-1576073719676-aa95576db207?w=600&auto=format&fit=crop&q=80' }
-    ],
-    subtotal: 1200000,
-    shippingFee: 0,
-    discountAmount: 20000,
-    grandTotal: 1180000,
-    shippingMethod: 'express',
-    shippingCarrierName: 'Giao Hỏa Tốc (Nội thành Hà Nội)',
-    trackingNumber: 'MPX-2H-741285',
-    paymentMethod: 'cod',
-    status: 'confirmed',
-    confirmedAt: new Date(Date.now() - 3600000 * 5).toISOString(),
-    carrierProgress: 35,
-    autoTracking: true,
-    isPrinted: true,
-    trackingTimeline: [
-      {
-        time: new Date(Date.now() - 3600000 * 6).toLocaleString('vi-VN'),
-        status: 'pending',
-        stage: 'order_created',
-        title: 'Đơn hàng được khởi tạo thành công',
-        desc: 'Khách hàng đặt hàng COD qua website MedXpressCare.',
-        location: 'Hệ thống online'
-      },
-      {
-        time: new Date(Date.now() - 3600000 * 5).toLocaleString('vi-VN'),
-        status: 'confirmed',
-        stage: 'printed_and_packed',
-        title: 'Dược sĩ đã in phiếu gửi & đóng gói cẩn thận',
-        desc: 'DS. CKI Nguyễn Thu Trang đã kiểm tra đơn, đóng gói niêm phong cẩn thận.',
-        location: 'Tổng kho MedXpressCare Cầu Giấy, Hà Nội'
-      }
-    ]
-  },
-  {
-    id: 'MXC-339182',
-    createdAt: new Date(Date.now() - 3600000 * 24).toISOString(),
-    customer: {
-      fullName: 'Hoàng Quốc Việt',
-      phone: '0904 555 777',
-      email: 'viet.hoang@gmail.com',
-      province: 'Hà Nội',
-      district: 'Quận Đống Đa',
-      address: 'Số 88 Tôn Đức Thắng',
-      note: 'Giao giờ hành chính'
-    },
-    items: [
-      { id: 'vn-02', name: 'Hoạt Huyết Dưỡng Não Cerecaps Mediplantex', price: 95000, quantity: 3, image: 'https://images.unsplash.com/photo-1550572017-ed211516e812?w=600&auto=format&fit=crop&q=80' }
-    ],
-    subtotal: 285000,
-    shippingFee: 22000,
-    discountAmount: 0,
-    grandTotal: 307000,
-    shippingMethod: 'ghtk',
-    shippingCarrierName: 'Giao Hàng Nhanh (GHTK)',
-    trackingNumber: 'S22.HN1.B4.339182',
-    paymentMethod: 'cod',
-    status: 'returned_pending_check', // Đã về kho, chờ Dược sĩ kiểm nhận thủ công
-    failureReason: 'Không liên lạc được người nhận sau 3 lần gọi',
-    carrierProgress: 95,
-    autoTracking: false,
-    isPrinted: true,
-    trackingTimeline: [
-      {
-        time: new Date(Date.now() - 3600000 * 24).toLocaleString('vi-VN'),
-        status: 'pending',
-        stage: 'order_created',
-        title: 'Đơn hàng được khởi tạo thành công',
-        desc: 'Khách hàng đặt hàng COD qua website MedXpressCare.',
-        location: 'Hệ thống online'
-      },
-      {
-        time: new Date(Date.now() - 3600000 * 20).toLocaleString('vi-VN'),
-        status: 'confirmed',
-        stage: 'printed_and_packed',
-        title: 'Dược sĩ đã in phiếu gửi & đóng gói cẩn thận',
-        desc: 'DS. CKI Nguyễn Thu Trang đã kiểm tra đơn và đóng gói kiện hàng.',
-        location: 'Tổng kho MedXpressCare Cầu Giấy, Hà Nội'
-      },
-      {
-        time: new Date(Date.now() - 3600000 * 12).toLocaleString('vi-VN'),
-        status: 'returning',
-        stage: 'delivery_failed_returning',
-        title: '⚠️ Giao thất bại - GHTK chuyển hoàn về kho',
-        desc: 'Lý do: "Không liên lạc được người nhận sau 3 lần gọi". Bưu tá đang hoàn hàng về kho.',
-        location: 'Bưu cục GHTK Đống Đa'
-      },
-      {
-        time: new Date(Date.now() - 3600000 * 2).toLocaleString('vi-VN'),
-        status: 'returned_pending_check',
-        stage: 'arrived_at_warehouse',
-        title: '📦 Kiện hàng hoàn đã về tới kho - Chờ Dược sĩ kiểm nhận',
-        desc: 'Bưu tá đã bàn giao bưu kiện tại Tổng kho Dược. YÊU CẦU DƯỢC SĨ KIỂM TRA TEM NIÊM PHONG & XÁC NHẬN THỦ CÔNG ĐỂ NHẬP LẠI KHO.',
-        location: 'Cửa nhận hàng hoàn - Tổng kho Dược MedXpressCare'
-      }
-    ]
-  }
-];
+const INITIAL_ORDERS = [];
 
 const DEFAULT_CONFIG = {
   hotline: '1800 6868',
@@ -231,22 +93,20 @@ export default function App() {
     }
   });
 
-  // Admin Orders state (Đơn hàng khách đặt)
+  // Admin Orders state (Đơn hàng khách đặt thực tế)
   const [orders, setOrders] = useState(() => {
     try {
       const saved = localStorage.getItem('medxpress_admin_orders');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          // Bảo toàn và tự động bổ sung các đơn hàng mẫu (ví dụ MXC-339182 mô phỏng hàng hoàn) nếu chưa có trong cache
-          const existingIds = new Set(parsed.map(o => o.id));
-          const missing = INITIAL_ORDERS.filter(o => !existingIds.has(o.id));
-          return missing.length > 0 ? [...parsed, ...missing] : parsed;
+        if (Array.isArray(parsed)) {
+          // Lọc sạch toàn bộ các đơn hàng thử nghiệm cũ nếu còn sót lại trong cache trình duyệt
+          return parsed.filter(o => !['MXC-892410', 'MXC-741285', 'MXC-339182', 'MXC-883921'].includes(o.id));
         }
       }
-      return INITIAL_ORDERS;
+      return [];
     } catch {
-      return INITIAL_ORDERS;
+      return [];
     }
   });
 
@@ -297,18 +157,29 @@ export default function App() {
       const saved = localStorage.getItem('medxpress_customers_db');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) {
+          // Lọc sạch toàn bộ tài khoản khách hàng mẫu
+          return parsed.filter(c => !['cust-101', 'cust-102', 'cust-103'].includes(c.id));
+        }
       }
-      return INITIAL_CUSTOMERS;
+      return [];
     } catch {
-      return INITIAL_CUSTOMERS;
+      return [];
     }
   });
 
   const [currentCustomer, setCurrentCustomer] = useState(() => {
     try {
       const saved = localStorage.getItem('medxpress_current_customer');
-      return saved ? JSON.parse(saved) : null;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && ['cust-101', 'cust-102', 'cust-103'].includes(parsed.id)) {
+          localStorage.removeItem('medxpress_current_customer');
+          return null;
+        }
+        return parsed;
+      }
+      return null;
     } catch {
       return null;
     }
@@ -1180,6 +1051,21 @@ export default function App() {
     showToast(`Đã lưu cấu hình cửa hàng thành công!`);
   };
 
+  // Xóa sạch toàn bộ dữ liệu đơn hàng & khách hàng thử nghiệm
+  const handleClearAllTestData = () => {
+    setOrders([]);
+    localStorage.removeItem('medxpress_admin_orders');
+    setCustomersList([]);
+    localStorage.removeItem('medxpress_customers_db');
+    setCurrentCustomer(null);
+    localStorage.removeItem('medxpress_current_customer');
+    setCart([]);
+    localStorage.removeItem('medxpress_cart');
+    setWishlist([]);
+    localStorage.removeItem('medxpress_wishlist');
+    showToast(`✅ Đã xóa sạch toàn bộ dữ liệu đơn hàng và khách hàng thử nghiệm!`);
+  };
+
   // Quản lý Cẩm Nang & Bài Viết Y Khoa Chuẩn SEO
   const handleAddArticle = (newArt) => {
     setArticlesList(prev => {
@@ -1720,6 +1606,7 @@ export default function App() {
           onBulkImportRegistrations={handleBulkImportRegistrations}
           storeConfig={storeConfig}
           onUpdateStoreConfig={handleUpdateStoreConfig}
+          onClearTestData={handleClearAllTestData}
           customers={customersList}
           onBonusPoints={handleAdminBonusPoints}
           articles={articlesList}
