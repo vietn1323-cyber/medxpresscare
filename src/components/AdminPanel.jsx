@@ -9,7 +9,8 @@ import {
   FileCheck2, FileSpreadsheet, Printer, Send, Calendar, Truck, Bell,
   Tag, Globe, Eye, Share2, ThumbsUp, Star, MessageSquare, Copy, Gift,
   Camera, Stethoscope, Check, ArrowRight,
-  Layers, Percent, Sliders, FolderPlus, Square, Filter
+  Layers, Percent, Sliders, FolderPlus, Square, Filter,
+  ChevronRight, ChevronUp, ChevronDown
 } from 'lucide-react';
 import { CATEGORIES, DOSAGE_FORMS, TARGET_AUDIENCES } from '../data/products';
 import { downloadCSV, downloadJSON } from '../utils/csvHelper';
@@ -18,6 +19,7 @@ import { DEFAULT_SHIPPING_CARRIERS, testCarrierConnection } from '../data/shippi
 import { slugify, calculateSeoScore } from '../data/articles';
 import { testAiConnection, rewriteArticleWithAi } from '../utils/aiHelper';
 import { DEFAULT_VOUCHERS } from '../data/vouchers';
+import { DEFAULT_HERO_BANNERS } from '../data/banners';
 import { INITIAL_REVIEWS } from '../data/reviews';
 import { BulkImportModal } from './BulkImportModal';
 import { RETURN_REASONS } from '../utils/logisticsHelper';
@@ -105,6 +107,157 @@ export const AdminPanel = ({
     icon: 'Activity',
     description: ''
   });
+
+  // --- QUẢN LÝ BANNER TRÌNH CHIẾU TRANG CHỦ ---
+  const heroBanners = useMemo(() => {
+    if (storeConfig && Array.isArray(storeConfig.heroBanners) && storeConfig.heroBanners.length > 0) {
+      return storeConfig.heroBanners;
+    }
+    return DEFAULT_HERO_BANNERS;
+  }, [storeConfig]);
+
+  const [showAddBannerModal, setShowAddBannerModal] = useState(false);
+  const [editingBanner, setEditingBanner] = useState(null);
+  const [bannerImageInputMode, setBannerImageInputMode] = useState('url'); // 'url' | 'upload'
+  const [uploadingBannerImage, setUploadingBannerImage] = useState(false);
+  const bannerFileInputRef = useRef(null);
+  const [bannerFormData, setBannerFormData] = useState({
+    id: '',
+    title: '',
+    subtitle: '',
+    badge: '✨ Khuyến Mãi Hot',
+    image: '',
+    actionType: 'domestic',
+    actionLink: '#catalog-section',
+    buttonText: 'Khám Phá Ngay',
+    isActive: true
+  });
+
+  const handleOpenAddBanner = () => {
+    setEditingBanner(null);
+    setBannerFormData({
+      id: '',
+      title: '',
+      subtitle: '',
+      badge: '✨ Khuyến Mãi Hot',
+      image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=1000&auto=format&fit=crop&q=80',
+      actionType: 'domestic',
+      actionLink: '#catalog-section',
+      buttonText: 'Khám Phá Ngay',
+      isActive: true
+    });
+    setBannerImageInputMode('url');
+    setShowAddBannerModal(true);
+  };
+
+  const handleOpenEditBanner = (banner) => {
+    setEditingBanner(banner);
+    setBannerFormData({
+      id: banner.id,
+      title: banner.title || '',
+      subtitle: banner.subtitle || '',
+      badge: banner.badge || '✨ Nổi Bật',
+      image: banner.image || '',
+      actionType: banner.actionType || 'domestic',
+      actionLink: banner.actionLink || '#catalog-section',
+      buttonText: banner.buttonText || 'Khám Phá Ngay',
+      isActive: banner.isActive !== false
+    });
+    setBannerImageInputMode(banner.image && banner.image.startsWith('data:') ? 'upload' : 'url');
+    setShowAddBannerModal(true);
+  };
+
+  const handleSaveBannerSubmit = (e) => {
+    e.preventDefault();
+    if (!bannerFormData.title.trim() || !bannerFormData.image.trim()) {
+      alert('Vui lòng nhập đầy đủ tiêu đề và hình ảnh cho banner!');
+      return;
+    }
+
+    let updatedList;
+    if (editingBanner) {
+      updatedList = heroBanners.map(b => b.id === editingBanner.id ? { ...bannerFormData, id: editingBanner.id } : b);
+    } else {
+      const newBanner = {
+        ...bannerFormData,
+        id: 'banner-' + Date.now()
+      };
+      updatedList = [...heroBanners, newBanner];
+    }
+
+    if (onUpdateStoreConfig) {
+      onUpdateStoreConfig({
+        ...storeConfig,
+        heroBanners: updatedList
+      });
+    }
+    setShowAddBannerModal(false);
+  };
+
+  const handleDeleteBanner = (bannerId) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa banner này khỏi trang chủ?')) return;
+    const updatedList = heroBanners.filter(b => b.id !== bannerId);
+    if (onUpdateStoreConfig) {
+      onUpdateStoreConfig({
+        ...storeConfig,
+        heroBanners: updatedList
+      });
+    }
+  };
+
+  const handleToggleBannerActive = (bannerId) => {
+    const updatedList = heroBanners.map(b => b.id === bannerId ? { ...b, isActive: !b.isActive } : b);
+    if (onUpdateStoreConfig) {
+      onUpdateStoreConfig({
+        ...storeConfig,
+        heroBanners: updatedList
+      });
+    }
+  };
+
+  const handleMoveBannerOrder = (index, direction) => {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= heroBanners.length) return;
+    const newList = [...heroBanners];
+    const [moved] = newList.splice(index, 1);
+    newList.splice(targetIndex, 0, moved);
+    if (onUpdateStoreConfig) {
+      onUpdateStoreConfig({
+        ...storeConfig,
+        heroBanners: newList
+      });
+    }
+  };
+
+  const handleResetBannersToDefault = () => {
+    if (!window.confirm('Khôi phục danh sách banner về mặc định ban đầu?')) return;
+    if (onUpdateStoreConfig) {
+      onUpdateStoreConfig({
+        ...storeConfig,
+        heroBanners: DEFAULT_HERO_BANNERS
+      });
+    }
+  };
+
+  const handleBannerFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Kích thước ảnh tối đa là 2MB. Vui lòng chọn ảnh dung lượng nhỏ hơn hoặc dán link URL.');
+      return;
+    }
+    setUploadingBannerImage(true);
+    const reader = new FileReader();
+    reader.onload = (uploadEvent) => {
+      setBannerFormData(prev => ({ ...prev, image: uploadEvent.target.result }));
+      setUploadingBannerImage(false);
+    };
+    reader.onerror = () => {
+      alert('Không thể đọc file ảnh.');
+      setUploadingBannerImage(false);
+    };
+    reader.readAsDataURL(file);
+  };
 
   // State đồng bộ thủ công Cloudflare D1
   const [syncingCloud, setSyncingCloud] = useState(false);
@@ -1627,6 +1780,26 @@ export const AdminPanel = ({
                     </span>
                   </button>
 
+                  {/* 4. Quản Lý Banner Trang Chủ */}
+                  <button
+                    onClick={() => setActiveTab('banners')}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all text-left ${
+                      activeTab === 'banners'
+                        ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-950/40 border border-emerald-500/40'
+                        : 'text-slate-300 hover:text-white hover:bg-slate-800/80'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <ImageIcon className={`w-4 h-4 shrink-0 ${activeTab === 'banners' ? 'text-white' : 'text-purple-400'}`} />
+                      <span className="truncate">Banner Trang Chủ</span>
+                    </div>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold shrink-0 ${
+                      activeTab === 'banners' ? 'bg-emerald-700/90 text-white' : 'bg-slate-800 text-slate-400'
+                    }`}>
+                      {heroBanners.length} ảnh
+                    </span>
+                  </button>
+
                   {/* 4. Quản Lý Đánh Giá (UGC) */}
                   <button
                     onClick={() => setActiveTab('reviews')}
@@ -1850,6 +2023,7 @@ export const AdminPanel = ({
                   {activeTab === 'products' && <Package className="w-5 h-5 text-emerald-600" />}
                   {activeTab === 'orders' && <ShoppingBag className="w-5 h-5 text-blue-600" />}
                   {activeTab === 'vouchers' && <Tag className="w-5 h-5 text-amber-500" />}
+                  {activeTab === 'banners' && <ImageIcon className="w-5 h-5 text-purple-600" />}
                   {activeTab === 'reviews' && <Star className="w-5 h-5 text-yellow-500" />}
                   {activeTab === 'customers' && <Award className="w-5 h-5 text-amber-500" />}
                   {activeTab === 'reorder' && <Calendar className="w-5 h-5 text-rose-500" />}
@@ -1864,6 +2038,7 @@ export const AdminPanel = ({
                     {activeTab === 'products' && 'Kho Sản Phẩm & Dược Phẩm'}
                     {activeTab === 'orders' && 'Quản Lý Đơn Hàng & Vận Đơn'}
                     {activeTab === 'vouchers' && 'Quản Lý Mã Giảm Giá & Voucher Khuyến Mãi'}
+                    {activeTab === 'banners' && 'Quản Lý Banner & Hình Ảnh Trình Chiếu Trang Chủ'}
                     {activeTab === 'reviews' && 'Quản Lý Đánh Giá Khách Hàng & Phản Hồi Dược Sĩ'}
                     {activeTab === 'customers' && 'Khách Hàng & Điểm Thưởng Tích Lũy'}
                     {activeTab === 'reorder' && 'Nhắc Tái Đặt Hàng Định Kỳ'}
@@ -1877,6 +2052,7 @@ export const AdminPanel = ({
                     {activeTab === 'products' && 'Thêm mới, chỉnh sửa thông tin, bảng giá, thành phần dược liệu và tồn kho'}
                     {activeTab === 'orders' && 'Kiểm duyệt đơn, cập nhật trạng thái vận chuyển và in phiếu gửi bưu điện'}
                     {activeTab === 'vouchers' && 'Tạo mã voucher giảm giá, chiết khấu phần trăm, freeship và kiểm soát điều kiện đơn tối thiểu'}
+                    {activeTab === 'banners' && 'Thêm mới, thay đổi hình ảnh từ máy hoặc URL, tùy biến thông điệp và liên kết cho slider trang chủ'}
                     {activeTab === 'reviews' && 'Kiểm duyệt đánh giá, ảnh chụp mở hộp thực tế và Dược sĩ phản hồi tư vấn y khoa'}
                     {activeTab === 'customers' && 'Danh sách khách hàng, điểm tích lũy (100k = 1đ) và lịch sử giao dịch'}
                     {activeTab === 'reorder' && 'Dự báo hết thuốc theo phác đồ, nhắc chăm sóc và gia hạn đơn hàng'}
@@ -4255,6 +4431,178 @@ export const AdminPanel = ({
                 </div>
               )}
 
+            </div>
+          )}
+
+          {/* TAB: QUẢN LÝ BANNER TRÌNH CHIẾU TRANG CHỦ */}
+          {activeTab === 'banners' && (
+            <div className="space-y-4 animate-in fade-in">
+              
+              {/* Header Thao Tác Banners */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+                <div>
+                  <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
+                    <ImageIcon className="w-5 h-5 text-purple-600" />
+                    <span>Bộ Sưu Tập Banner Slider ({heroBanners.length} ảnh)</span>
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Các banner đang kích hoạt sẽ tự động trượt luân phiên mỗi 4.5 giây ở đầu trang chủ.
+                  </p>
+                </div>
+                
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleResetBannersToDefault}
+                    className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl flex items-center gap-1.5 border border-slate-200 transition-all cursor-pointer"
+                    title="Khôi phục danh sách banner về thiết lập ban đầu"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Khôi Phục Mặc Định</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleOpenAddBanner}
+                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-md shadow-purple-600/20 transition-all cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Thêm Banner Mới</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Danh sách các Banner */}
+              <div className="space-y-3">
+                {heroBanners.map((banner, idx) => (
+                  <div
+                    key={banner.id || idx}
+                    className={`bg-white rounded-2xl border p-4 sm:p-5 shadow-xs transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4 ${
+                      banner.isActive !== false ? 'border-slate-200 hover:border-purple-300' : 'border-slate-200 bg-slate-50/70 opacity-60'
+                    }`}
+                  >
+                    {/* Ảnh Preview */}
+                    <div className="relative w-full md:w-60 h-36 rounded-2xl overflow-hidden border border-slate-200 bg-slate-900 shrink-0 shadow-xs group">
+                      <img
+                        src={banner.image}
+                        alt={banner.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute top-2 left-2">
+                        <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-slate-900/80 text-white border border-white/20 backdrop-blur-xs">
+                          {banner.badge || '✨ Nổi Bật'}
+                        </span>
+                      </div>
+                      <div className="absolute bottom-2 right-2">
+                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-slate-900/90 text-purple-300 border border-purple-500/30">
+                          #{idx + 1}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Nội Dung Banner */}
+                    <div className="flex-1 min-w-0 space-y-1.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-extrabold text-slate-900 text-sm sm:text-base leading-snug">
+                          {banner.title}
+                        </h4>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          banner.isActive !== false ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'
+                        }`}>
+                          {banner.isActive !== false ? '● Đang hiển thị' : '○ Đã ẩn'}
+                        </span>
+                      </div>
+
+                      {banner.subtitle && (
+                        <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                          {banner.subtitle}
+                        </p>
+                      )}
+
+                      <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] text-slate-500">
+                        <span className="font-semibold bg-slate-100 px-2 py-0.5 rounded-md text-slate-700">
+                          Nút: "{banner.buttonText || 'Khám Phá'}"
+                        </span>
+                        <span className="text-slate-400">•</span>
+                        <span className="font-mono bg-purple-50 text-purple-700 px-2 py-0.5 rounded-md border border-purple-200">
+                          Hành động: {
+                            banner.actionType === 'domestic' ? '🇻🇳 Gian Hàng Nội Địa' :
+                            banner.actionType === 'imported' ? '🌐 Gian Hàng Nhập Ngoại' :
+                            banner.actionType === 'advisor' ? '🩺 Dược Sĩ AI Tư Vấn' :
+                            `🔗 ${banner.actionLink || 'Trang chủ'}`
+                          }
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Thao tác Điều Khiển */}
+                    <div className="flex md:flex-col items-center gap-1.5 self-end md:self-center shrink-0">
+                      {/* Sắp xếp thứ tự */}
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          disabled={idx === 0}
+                          onClick={() => handleMoveBannerOrder(idx, -1)}
+                          className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                          title="Chuyển lên vị trí trước"
+                        >
+                          <ChevronUp className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={idx === heroBanners.length - 1}
+                          onClick={() => handleMoveBannerOrder(idx, 1)}
+                          className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                          title="Chuyển xuống vị trí sau"
+                        >
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      {/* Nút Bật/Tắt */}
+                      <button
+                        type="button"
+                        onClick={() => handleToggleBannerActive(banner.id)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                          banner.isActive !== false
+                            ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                            : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                        }`}
+                      >
+                        {banner.isActive !== false ? 'Ẩn banner' : 'Hiện banner'}
+                      </button>
+
+                      {/* Nút Sửa & Xóa */}
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditBanner(banner)}
+                          className="px-3 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs rounded-lg transition-colors cursor-pointer flex items-center gap-1"
+                        >
+                          <Edit className="w-3 h-3" />
+                          <span>Thay ảnh/Sửa</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteBanner(banner.id)}
+                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                          title="Xóa banner"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {heroBanners.length === 0 && (
+                <div className="bg-white rounded-3xl p-10 text-center border border-slate-200">
+                  <ImageIcon className="w-12 h-12 text-slate-300 mx-auto mb-2" />
+                  <h4 className="font-bold text-slate-700 text-sm">Chưa có banner nào</h4>
+                  <p className="text-xs text-slate-400 mt-1">Bấm "Thêm Banner Mới" hoặc "Khôi Phục Mặc Định" để bắt đầu.</p>
+                </div>
+              )}
             </div>
           )}
 
@@ -7782,7 +8130,7 @@ export const AdminPanel = ({
                     <div>
                       <div className="font-black text-lg text-emerald-700 tracking-wider">MEDXPRESSCARE</div>
                       <div className="text-[10px] text-slate-500 font-semibold uppercase">Tổng Kho Dược Phẩm & TPCN Chuẩn GSP</div>
-                      <div className="text-[11px] text-slate-600 mt-1">Hotline: <strong>1800 6868</strong> • Web: medxpresscare.com</div>
+                      <div className="text-[11px] text-slate-600 mt-1">Hotline: <strong>{storeConfig?.hotline || '1800 6868'}</strong> • Web: medxpresscare.com</div>
                     </div>
                     <div className="text-right">
                       <div className="font-mono font-black text-sm text-slate-900">
@@ -8528,6 +8876,238 @@ export const AdminPanel = ({
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      
+      {/* MODAL: THÊM / CHỈNH SỬA BANNER TRANG CHỦ */}
+      {showAddBannerModal && (
+        <div className="fixed inset-0 z-60 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 animate-in fade-in">
+          <div 
+            className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden border border-slate-200 flex flex-col max-h-[92vh] animate-in zoom-in-95"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header Modal */}
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
+              <h3 className="font-black text-slate-900 text-base flex items-center gap-2">
+                <ImageIcon className="w-5 h-5 text-purple-600" />
+                <span>{editingBanner ? 'Chỉnh Sửa & Thay Ảnh Banner Trang Chủ' : 'Thêm Banner Mới Vào Trang Chủ'}</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowAddBannerModal(false)}
+                className="p-1 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Body Form */}
+            <form onSubmit={handleSaveBannerSubmit} className="p-6 overflow-y-auto space-y-4">
+              
+              {/* Tiêu đề & Huy hiệu */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                <div className="sm:col-span-2">
+                  <label className="block text-slate-700 font-bold mb-1">Tiêu Đề Banner *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="VD: Hàng Nội Địa Uy Tín Chuẩn GMP-WHO..."
+                    value={bannerFormData.title}
+                    onChange={(e) => setBannerFormData({ ...bannerFormData, title: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">Huy Hiệu (Badge Tag)</label>
+                  <input
+                    type="text"
+                    placeholder="VD: ✨ Khuyến Mãi Hot"
+                    value={bannerFormData.badge}
+                    onChange={(e) => setBannerFormData({ ...bannerFormData, badge: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+              </div>
+
+              {/* Mô tả ngắn */}
+              <div className="text-xs">
+                <label className="block text-slate-700 font-bold mb-1">Mô Tả Ngắn (Subtitle)</label>
+                <textarea
+                  rows="2"
+                  placeholder="VD: Dược liệu Sâm Ngọc Linh K5, Đông trùng Traphaco Sapa, Nano Curcumin chính ngạch..."
+                  value={bannerFormData.subtitle}
+                  onChange={(e) => setBannerFormData({ ...bannerFormData, subtitle: e.target.value })}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+
+              {/* PHẦN CHỌN HÌNH ẢNH BANNER */}
+              <div className="p-4 bg-purple-50/50 rounded-2xl border border-purple-200/80 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="block text-purple-950 font-bold text-xs flex items-center gap-1.5">
+                    <Camera className="w-4 h-4 text-purple-600" />
+                    <span>Hình Ảnh Banner *</span>
+                  </label>
+                  
+                  {/* Chế độ chọn ảnh: URL vs Tải File từ máy */}
+                  <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-purple-200 text-xs font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setBannerImageInputMode('url')}
+                      className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                        bannerImageInputMode === 'url' ? 'bg-purple-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      Dán Link URL
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBannerImageInputMode('upload')}
+                      className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                        bannerImageInputMode === 'upload' ? 'bg-purple-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      Tải File Từ Máy
+                    </button>
+                  </div>
+                </div>
+
+                {bannerImageInputMode === 'url' ? (
+                  <div>
+                    <input
+                      type="url"
+                      placeholder="https://images.unsplash.com/... hoặc link ảnh bất kỳ"
+                      value={bannerFormData.image}
+                      onChange={(e) => setBannerFormData({ ...bannerFormData, image: e.target.value })}
+                      className="w-full px-3 py-2 bg-white border border-purple-200 rounded-xl text-xs text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                    <span className="text-[10px] text-slate-500 mt-1 block">
+                      Gợi ý: Dán link ảnh tỉ lệ ngang 16:9 hoặc 16:10 với độ phân giải từ 800px trở lên để hiển thị sắc nét nhất.
+                    </span>
+                  </div>
+                ) : (
+                  <div>
+                    <input
+                      type="file"
+                      ref={bannerFileInputRef}
+                      onChange={handleBannerFileUpload}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                    <div
+                      onClick={() => bannerFileInputRef.current?.click()}
+                      className="w-full border-2 border-dashed border-purple-300 hover:border-purple-500 rounded-2xl p-6 text-center bg-white cursor-pointer transition-colors"
+                    >
+                      <UploadCloud className="w-8 h-8 text-purple-500 mx-auto mb-2 animate-bounce" />
+                      <div className="text-xs font-bold text-purple-900">
+                        {uploadingBannerImage ? 'Đang nạp file ảnh...' : 'Nhấn vào đây để tải ảnh từ máy tính (PNG, JPG, WebP)'}
+                      </div>
+                      <div className="text-[10px] text-slate-400 mt-1">Dung lượng tối đa 2MB. Ảnh sẽ được chuyển đổi hiển thị tức thì.</div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Live Preview Box */}
+                {bannerFormData.image && (
+                  <div className="pt-2">
+                    <div className="text-[11px] font-bold text-purple-900 mb-1">Xem trước trực quan:</div>
+                    <div className="relative w-full h-36 rounded-2xl overflow-hidden border border-purple-300 bg-slate-900 shadow-md">
+                      <img
+                        src={bannerFormData.image}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                        onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=1000'; }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
+                      <div className="absolute top-2 left-3">
+                        <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500 text-white">
+                          {bannerFormData.badge || '✨ Nổi Bật'}
+                        </span>
+                      </div>
+                      <div className="absolute bottom-2 left-3 right-3 text-white">
+                        <div className="font-extrabold text-sm truncate">{bannerFormData.title || 'Tiêu đề banner'}</div>
+                        <div className="text-[10px] text-slate-300 truncate">{bannerFormData.subtitle}</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Hành Động & Liên Kết */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">Hành Động Khi Click Banner</label>
+                  <select
+                    value={bannerFormData.actionType}
+                    onChange={(e) => setBannerFormData({ ...bannerFormData, actionType: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="domestic">🇻🇳 Chuyển tới Gian Hàng Nội Địa</option>
+                    <option value="imported">🌐 Chuyển tới Gian Hàng Nhập Khẩu</option>
+                    <option value="advisor">🩺 Mở Trắc Nghiệm Dược Sĩ AI</option>
+                    <option value="custom">🔗 Đường dẫn / Section tùy chỉnh</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">Chữ Trên Nút Bấm</label>
+                  <input
+                    type="text"
+                    placeholder="VD: Khám Phá Ngay, Xem Gian Hàng..."
+                    value={bannerFormData.buttonText}
+                    onChange={(e) => setBannerFormData({ ...bannerFormData, buttonText: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+              </div>
+
+              {bannerFormData.actionType === 'custom' && (
+                <div className="text-xs">
+                  <label className="block text-slate-700 font-bold mb-1">Đường Dẫn Tùy Chỉnh (URL hoặc #section)</label>
+                  <input
+                    type="text"
+                    placeholder="VD: #catalog-section hoặc https://medxpresscare.com"
+                    value={bannerFormData.actionLink}
+                    onChange={(e) => setBannerFormData({ ...bannerFormData, actionLink: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+              )}
+
+              {/* Checkbox Trạng Thái */}
+              <div className="flex items-center gap-2 pt-2">
+                <input
+                  type="checkbox"
+                  id="bannerActiveCheckbox"
+                  checked={bannerFormData.isActive}
+                  onChange={(e) => setBannerFormData({ ...bannerFormData, isActive: e.target.checked })}
+                  className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500 cursor-pointer"
+                />
+                <label htmlFor="bannerActiveCheckbox" className="text-xs font-bold text-slate-800 cursor-pointer select-none">
+                  Kích hoạt hiển thị banner này ngay trên Slider Trang Chủ
+                </label>
+              </div>
+
+              {/* Footer Nút Bấm */}
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowAddBannerModal(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                >
+                  Hủy Bỏ
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow-md shadow-purple-600/20 cursor-pointer"
+                >
+                  {editingBanner ? 'Lưu Thay Đổi Banner' : 'Thêm Vào Slider Trang Chủ'}
+                </button>
+              </div>
+
+            </form>
+          </div>
         </div>
       )}
 

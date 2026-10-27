@@ -4,7 +4,7 @@ import {
   Truck, RefreshCw, FileText, Heart, Stethoscope 
 } from 'lucide-react';
 
-export const Footer = ({ onOpenVerifier, onOpenAdvisor, onOpenAdmin }) => {
+export const Footer = ({ onOpenVerifier, onOpenAdvisor, onOpenAdmin, hotline = '1800 6868' }) => {
   return (
     <footer className="bg-slate-900 text-slate-300 mt-20 pt-14 pb-8 border-t border-slate-800">
       <div className="max-w-7xl mx-auto px-4">
@@ -129,11 +129,11 @@ export const Footer = ({ onOpenVerifier, onOpenAdvisor, onOpenAdmin }) => {
                 Tư vấn chuyên môn miễn phí
               </div>
               <a 
-                href="tel:18006868"
+                href={`tel:${(hotline || '1800 6868').replace(/\s+/g, '')}`}
                 className="text-xl font-extrabold text-amber-400 hover:text-white transition-colors flex items-center gap-2"
               >
                 <PhoneCall className="w-5 h-5 animate-pulse" />
-                1800 6868
+                {hotline || '1800 6868'}
               </a>
               <div className="text-[10px] text-slate-400">8:00 - 22:00 tất cả các ngày trong tuần</div>
             </div>

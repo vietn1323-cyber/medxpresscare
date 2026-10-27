@@ -13,7 +13,8 @@ export const ArticleDetailPage = ({
   onBack, 
   onSelectArticle, 
   onSelectProduct,
-  onAddToCart 
+  onAddToCart,
+  hotline = '1800 6868' 
 }) => {
   const [copiedLink, setCopiedLink] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -584,10 +585,10 @@ export const ArticleDetailPage = ({
 
               <div className="pt-1">
                 <a
-                  href="#hotline"
+                  href={`tel:${(hotline || '1800 6868').replace(/\s+/g, '')}`}
                   className="w-full py-2.5 px-4 rounded-xl bg-white text-emerald-900 font-bold text-xs flex items-center justify-center gap-2 shadow-sm hover:bg-emerald-50 transition-colors"
                 >
-                  <span>Gọi Hotline 1800 6868 (Miễn cước)</span>
+                  <span>Gọi Hotline {hotline || '1800 6868'} (Miễn cước)</span>
                 </a>
               </div>
             </div>

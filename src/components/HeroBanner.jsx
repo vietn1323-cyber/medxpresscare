@@ -1,10 +1,68 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ShieldCheck, Truck, Stethoscope, Award, ArrowRight, 
-  Sparkles, CheckCircle2, ChevronRight, HeartHandshake, Flame
+  Sparkles, CheckCircle2, ChevronRight, ChevronLeft, HeartHandshake, Flame
 } from 'lucide-react';
+import { DEFAULT_HERO_BANNERS } from '../data/banners';
 
-export const HeroBanner = ({ onSelectOrigin, onOpenAdvisor, onOpenVerifier }) => {
+export const HeroBanner = ({ 
+  onSelectOrigin, 
+  onOpenAdvisor, 
+  onOpenVerifier,
+  banners = DEFAULT_HERO_BANNERS,
+  hotline = '1800 6868'
+}) => {
+  // Filter active banners
+  const activeBanners = (Array.isArray(banners) && banners.length > 0)
+    ? banners.filter(b => b.isActive !== false)
+    : DEFAULT_HERO_BANNERS;
+
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+
+  // Auto slide every 4.5 seconds
+  useEffect(() => {
+    if (activeBanners.length <= 1 || isPaused) return;
+
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % activeBanners.length);
+    }, 4500);
+
+    return () => clearInterval(timer);
+  }, [activeBanners.length, isPaused]);
+
+  const handlePrev = (e) => {
+    e.stopPropagation();
+    setCurrentIndex((prev) => (prev === 0 ? activeBanners.length - 1 : prev - 1));
+  };
+
+  const handleNext = (e) => {
+    e.stopPropagation();
+    setCurrentIndex((prev) => (prev + 1) % activeBanners.length);
+  };
+
+  const currentBanner = activeBanners[currentIndex] || activeBanners[0] || DEFAULT_HERO_BANNERS[0];
+
+  const handleBannerAction = () => {
+    if (!currentBanner) return;
+    if (currentBanner.actionType === 'domestic') {
+      onSelectOrigin('domestic');
+    } else if (currentBanner.actionType === 'imported') {
+      onSelectOrigin('imported');
+    } else if (currentBanner.actionType === 'advisor') {
+      onOpenAdvisor();
+    } else if (currentBanner.actionLink) {
+      if (currentBanner.actionLink.startsWith('#')) {
+        const el = document.querySelector(currentBanner.actionLink);
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        window.open(currentBanner.actionLink, '_blank');
+      }
+    } else {
+      onSelectOrigin('all');
+    }
+  };
+
   return (
     <div className="relative overflow-hidden bg-gradient-to-b from-emerald-900 via-teal-900 to-slate-900 text-white py-10 lg:py-14 px-4">
       {/* Background ambient medical glows */}
@@ -14,7 +72,7 @@ export const HeroBanner = ({ onSelectOrigin, onOpenAdvisor, onOpenVerifier }) =>
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           
-          {/* Main Headline */}
+          {/* Main Headline (Left Column) */}
           <div className="lg:col-span-7 space-y-5 text-center lg:text-left">
             <div className="inline-flex items-center gap-2 bg-emerald-500/20 border border-emerald-400/30 px-3.5 py-1.5 rounded-full text-emerald-300 text-xs font-semibold backdrop-blur-sm">
               <Sparkles className="w-4 h-4 text-emerald-300 animate-spin" style={{ animationDuration: '6s' }} />
@@ -37,7 +95,7 @@ export const HeroBanner = ({ onSelectOrigin, onOpenAdvisor, onOpenVerifier }) =>
             <div className="pt-2 flex flex-wrap items-center justify-center lg:justify-start gap-3">
               <button
                 onClick={() => onSelectOrigin('domestic')}
-                className="group flex items-center gap-3 px-5 py-3 rounded-xl bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-500 hover:to-red-600 text-white font-bold text-sm shadow-lg shadow-rose-900/40 transition-all hover:-translate-y-0.5 active:translate-y-0"
+                className="group flex items-center gap-3 px-5 py-3 rounded-xl bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-500 hover:to-red-600 text-white font-bold text-sm shadow-lg shadow-rose-900/40 transition-all hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
               >
                 <span className="text-xl">🇻🇳</span>
                 <div className="text-left">
@@ -49,9 +107,9 @@ export const HeroBanner = ({ onSelectOrigin, onOpenAdvisor, onOpenVerifier }) =>
 
               <button
                 onClick={() => onSelectOrigin('imported')}
-                className="group flex items-center gap-3 px-5 py-3 rounded-xl bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-500 hover:to-blue-600 text-white font-bold text-sm shadow-lg shadow-blue-900/40 transition-all hover:-translate-y-0.5 active:translate-y-0"
+                className="group flex items-center gap-3 px-5 py-3 rounded-xl bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-500 hover:to-blue-600 text-white font-bold text-sm shadow-lg shadow-blue-900/40 transition-all hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
               >
-                <span className="text-xl">🌍</span>
+                <span className="text-xl">🌐</span>
                 <div className="text-left">
                   <div className="text-[11px] text-sky-200 font-normal leading-none">Chính Ngạch Tem Phụ</div>
                   <div className="font-bold">Gian Hàng Nhập Ngoại</div>
@@ -61,7 +119,7 @@ export const HeroBanner = ({ onSelectOrigin, onOpenAdvisor, onOpenVerifier }) =>
 
               <button
                 onClick={onOpenAdvisor}
-                className="flex items-center gap-2 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-emerald-200 hover:text-white font-semibold text-sm backdrop-blur-sm transition-all"
+                className="flex items-center gap-2 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-emerald-200 hover:text-white font-semibold text-sm backdrop-blur-sm transition-all cursor-pointer"
               >
                 <Stethoscope className="w-4 h-4 text-emerald-400" />
                 <span>Trắc Nghiệm Sức Khỏe AI</span>
@@ -85,127 +143,121 @@ export const HeroBanner = ({ onSelectOrigin, onOpenAdvisor, onOpenVerifier }) =>
             </div>
           </div>
 
-          {/* Dual Origin Comparison Showcase Cards */}
-          <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            
-            {/* Box 1: Gian Hàng Nội Địa */}
+          {/* Ô BANNER NHIỀU ẢNH (SLIDER / CAROUSEL) - RIGHT COLUMN */}
+          <div className="lg:col-span-5 space-y-3">
             <div 
-              onClick={() => onSelectOrigin('domestic')}
-              className="group cursor-pointer bg-gradient-to-b from-rose-950/40 to-slate-900/80 border border-rose-500/30 hover:border-rose-400/70 rounded-2xl p-4 transition-all duration-300 hover:scale-[1.02] backdrop-blur-md shadow-xl"
+              onMouseEnter={() => setIsPaused(true)}
+              onMouseLeave={() => setIsPaused(false)}
+              onClick={handleBannerAction}
+              className="relative w-full h-[320px] sm:h-[350px] rounded-3xl overflow-hidden border-2 border-emerald-500/30 shadow-2xl bg-slate-950 group cursor-pointer transition-all duration-300 hover:border-emerald-400/70 hover:shadow-emerald-950/50"
             >
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-2xl">🇻🇳</span>
-                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
-                  Chuẩn GMP-WHO
+              {/* Background Slide Image with smooth animation */}
+              <img 
+                key={currentBanner.id || currentIndex}
+                src={currentBanner.image} 
+                alt={currentBanner.title}
+                className="w-full h-full object-cover transition-all duration-700 group-hover:scale-105 animate-in fade-in"
+              />
+
+              {/* Gradient Scrim Overlay for Readability */}
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/55 to-slate-950/20 pointer-events-none" />
+
+              {/* Top Bar on Banner: Badge + Slide Indicator Counter */}
+              <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10 pointer-events-none">
+                <span className="text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full bg-emerald-500/90 text-white shadow-md backdrop-blur-md border border-emerald-300/40">
+                  {currentBanner.badge || '✨ Nổi Bật'}
+                </span>
+                <span className="text-[11px] font-bold font-mono px-2.5 py-1 rounded-full bg-slate-900/80 text-slate-300 border border-slate-700/80 backdrop-blur-md">
+                  {currentIndex + 1} / {activeBanners.length}
                 </span>
               </div>
-              <h3 className="font-extrabold text-white text-base group-hover:text-rose-300 transition-colors">
-                Hàng Nội Địa Uy Tín
-              </h3>
-              <p className="text-xs text-slate-300 mt-1 line-clamp-2">
-                Dược liệu Sâm Ngọc Linh K5, Đông trùng Traphaco, Khớp Thái Minh, Nano Curcumin...
-              </p>
-              <div className="mt-3 pt-3 border-t border-rose-500/20 flex items-center justify-between text-xs text-rose-300 font-semibold">
-                <span>Xem 6+ sản phẩm tiêu biểu</span>
-                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+
+              {/* Navigation Arrows */}
+              {activeBanners.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={handlePrev}
+                    aria-label="Banner trước"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-slate-900/70 hover:bg-emerald-600 text-white flex items-center justify-center transition-all opacity-80 sm:opacity-0 sm:group-hover:opacity-100 backdrop-blur-md border border-white/20 shadow-lg z-20 cursor-pointer"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNext}
+                    aria-label="Banner tiếp theo"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-slate-900/70 hover:bg-emerald-600 text-white flex items-center justify-center transition-all opacity-80 sm:opacity-0 sm:group-hover:opacity-100 backdrop-blur-md border border-white/20 shadow-lg z-20 cursor-pointer"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </>
+              )}
+
+              {/* Content Card at the bottom of the banner */}
+              <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6 z-10 flex flex-col justify-end">
+                <h3 className="font-black text-white text-lg sm:text-xl leading-snug drop-shadow-md group-hover:text-emerald-300 transition-colors">
+                  {currentBanner.title}
+                </h3>
+                {currentBanner.subtitle && (
+                  <p className="text-xs sm:text-sm text-slate-200 mt-1.5 line-clamp-2 leading-relaxed drop-shadow">
+                    {currentBanner.subtitle}
+                  </p>
+                )}
+
+                <div className="mt-4 flex items-center justify-between pt-3 border-t border-white/15">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-400 group-hover:text-emerald-300 group-hover:translate-x-1 transition-all">
+                    <span>{currentBanner.buttonText || 'Khám Phá Ngay'}</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </span>
+
+                  {/* Slide Dots Indicator */}
+                  {activeBanners.length > 1 && (
+                    <div 
+                      className="flex items-center gap-1.5"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {activeBanners.map((_, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setCurrentIndex(idx)}
+                          aria-label={`Chuyển tới slide ${idx + 1}`}
+                          className={`h-1.5 rounded-full transition-all cursor-pointer ${
+                            currentIndex === idx 
+                              ? 'w-6 bg-emerald-400' 
+                              : 'w-2 bg-white/40 hover:bg-white/70'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Box 2: Gian Hàng Nhập Ngoại */}
-            <div 
-              onClick={() => onSelectOrigin('imported')}
-              className="group cursor-pointer bg-gradient-to-b from-sky-950/40 to-slate-900/80 border border-sky-500/30 hover:border-sky-400/70 rounded-2xl p-4 transition-all duration-300 hover:scale-[1.02] backdrop-blur-md shadow-xl"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-1 text-lg">
-                  <span>🇺🇸</span>
-                  <span>🇦🇺</span>
-                  <span>🇯🇵</span>
-                  <span>🇰🇷</span>
-                  <span>🇩🇪</span>
+            {/* Hotline & Cam kết GSP Pill */}
+            <div className="bg-gradient-to-r from-emerald-950/70 to-teal-950/70 border border-emerald-500/30 rounded-2xl p-3 sm:p-3.5 flex items-center justify-between gap-3 shadow-lg backdrop-blur-md">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                  <Stethoscope className="w-4 h-4" />
                 </div>
-                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30">
-                  Tem Phụ Chính Ngạch
-                </span>
-              </div>
-              <h3 className="font-extrabold text-white text-base group-hover:text-sky-300 transition-colors">
-                Hàng Nhập Khẩu Quốc Tế
-              </h3>
-              <p className="text-xs text-slate-300 mt-1 line-clamp-2">
-                Kirkland USA, Blackmores Úc, DHC Nhật Bản, Hồng Sâm KGC Hàn Quốc, Doppelherz Đức...
-              </p>
-              <div className="mt-3 pt-3 border-t border-sky-500/20 flex items-center justify-between text-xs text-sky-300 font-semibold">
-                <span>Xem 6+ thương hiệu toàn cầu</span>
-                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </div>
-
-            {/* Box 3: Hotline Dược Sĩ & Cam kết bảo quản GSP */}
-            <div className="sm:col-span-2 bg-gradient-to-r from-emerald-950/60 to-teal-950/60 border border-emerald-500/30 rounded-2xl p-4 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
-                  <Stethoscope className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="text-xs text-emerald-300 font-semibold">Cần tư vấn lựa chọn sản phẩm phù hợp?</div>
-                  <div className="text-sm font-bold text-white">Dược sĩ chuyên môn trực tuyến hỗ trợ 24/7</div>
+                <div className="min-w-0">
+                  <div className="text-[11px] text-emerald-300 font-semibold truncate">Cần tư vấn lựa chọn sản phẩm?</div>
+                  <div className="text-xs font-bold text-white truncate">Dược sĩ trực tuyến 24/7 • Hotline: {hotline}</div>
                 </div>
               </div>
               <button
+                type="button"
                 onClick={onOpenAdvisor}
-                className="shrink-0 text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-900 px-3.5 py-2 rounded-xl transition-all shadow-md"
+                className="shrink-0 text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-900 px-3 py-1.5 rounded-xl transition-all shadow-xs cursor-pointer"
               >
                 Tư Vấn Ngay
               </button>
             </div>
-
           </div>
 
         </div>
-
-        {/* 4 Trụ Cột Vàng MedXpressCare */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mt-10 pt-8 border-t border-slate-700/60">
-          <div className="flex items-start gap-3 p-3 rounded-xl bg-white/5 border border-white/5">
-            <div className="p-2 rounded-lg bg-emerald-500/20 text-emerald-400 shrink-0">
-              <ShieldCheck className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="text-xs sm:text-sm font-bold text-white">100% Chính Hãng</h4>
-              <p className="text-[11px] text-slate-400 mt-0.5">Cam kết đền gấp 3 lần nếu phát hiện hàng giả</p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3 p-3 rounded-xl bg-white/5 border border-white/5">
-            <div className="p-2 rounded-lg bg-teal-500/20 text-teal-400 shrink-0">
-              <Truck className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="text-xs sm:text-sm font-bold text-white">Hỏa Tốc Hà Nội • Giao Nhanh</h4>
-              <p className="text-[11px] text-slate-400 mt-0.5">Hỏa tốc nội thành Hà Nội & Giao hàng nhanh toàn quốc</p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3 p-3 rounded-xl bg-white/5 border border-white/5">
-            <div className="p-2 rounded-lg bg-cyan-500/20 text-cyan-400 shrink-0">
-              <Stethoscope className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="text-xs sm:text-sm font-bold text-white">Dược Sĩ 1:1 Miễn Phí</h4>
-              <p className="text-[11px] text-slate-400 mt-0.5">Tư vấn đúng liều dùng, đúng thể trạng người bệnh</p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3 p-3 rounded-xl bg-white/5 border border-white/5">
-            <div className="p-2 rounded-lg bg-amber-500/20 text-amber-400 shrink-0">
-              <Award className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="text-xs sm:text-sm font-bold text-white">Đổi Trả 30 Ngày</h4>
-              <p className="text-[11px] text-slate-400 mt-0.5">Đổi trả miễn phí nếu sản phẩm lỗi bao bì, móp vỡ</p>
-            </div>
-          </div>
-        </div>
-
       </div>
     </div>
   );

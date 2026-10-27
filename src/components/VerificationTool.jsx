@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { VERIFIED_REGISTRATIONS } from '../data/registrations';
 
-export const VerificationTool = ({ initialRegNumber = '', onClose, products = [], customRegistrations = {} }) => {
+export const VerificationTool = ({ initialRegNumber = '', onClose, products = [], customRegistrations = {}, hotline = '1800 6868' }) => {
   const allRegistrations = { ...VERIFIED_REGISTRATIONS, ...(customRegistrations || {}) };
   const [query, setQuery] = useState(initialRegNumber);
   const extractCode = (str) => (str ? str.split('(')[0].trim() : '');
@@ -263,7 +263,7 @@ export const VerificationTool = ({ initialRegNumber = '', onClose, products = []
 
         {/* Footer */}
         <div className="p-4 bg-slate-50 border-t border-slate-100 text-center text-xs text-slate-500">
-          Cần hỗ trợ tra cứu trực tiếp? Gọi Hotline Dược sĩ: <strong className="text-slate-800">1800 6868</strong> (Miễn phí)
+          Cần hỗ trợ tra cứu trực tiếp? Gọi Hotline Dược sĩ: <strong className="text-slate-800">{hotline || '1800 6868'}</strong> (Miễn phí)
         </div>
       </div>
     </div>

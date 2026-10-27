@@ -14,7 +14,8 @@ export const OrderTrackingModal = ({
   initialOrderCode = '',
   onSyncCarrierStatus,
   onPrintSlip,
-  isAdmin = false
+  isAdmin = false,
+  hotline = '1800 6868'
 }) => {
   const [copied, setCopied] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -461,7 +462,7 @@ export const OrderTrackingModal = ({
                 <p className="text-[11px] text-rose-700">
                   {isAdmin 
                     ? 'Kiện hàng đang được quay đầu về Tổng kho Dược MedXpressCare.' 
-                    : 'Kiện hàng đang được chuyển hoàn về nhà thuốc. Dược sĩ sẽ liên hệ hỗ trợ bạn, hoặc quý khách vui lòng gọi Hotline 1800 6868.'}
+                    : `Kiện hàng đang được chuyển hoàn về nhà thuốc. Dược sĩ sẽ liên hệ hỗ trợ bạn, hoặc quý khách vui lòng gọi Hotline ${hotline || '1800 6868'}.`}
                 </p>
               </div>
             </div>

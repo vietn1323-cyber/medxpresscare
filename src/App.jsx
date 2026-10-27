@@ -4,6 +4,7 @@ import { INITIAL_CUSTOMERS } from './data/customers';
 import { VERIFIED_REGISTRATIONS } from './data/registrations';
 import { DEFAULT_SHIPPING_CARRIERS } from './data/shippingCarriers';
 import { DEFAULT_ARTICLES } from './data/articles';
+import { DEFAULT_HERO_BANNERS } from './data/banners';
 import { Header } from './components/Header';
 import { HeroBanner } from './components/HeroBanner';
 import { OriginFilterTabs } from './components/OriginFilterTabs';
@@ -16,6 +17,7 @@ import { CheckoutModal } from './components/CheckoutModal';
 import { WishlistModal } from './components/WishlistModal';
 import { HealthBlogSection } from './components/HealthBlogSection';
 import { ArticleDetailPage } from './components/ArticleDetailPage';
+import { ProductsPage } from './components/ProductsPage';
 import { VoucherModal } from './components/VoucherModal';
 import { DEFAULT_VOUCHERS } from './data/vouchers';
 import { INITIAL_REVIEWS } from './data/reviews';
@@ -52,6 +54,7 @@ const DEFAULT_CONFIG = {
   telegramBotToken: '',
   telegramChatId: '',
   shippingCarriers: DEFAULT_SHIPPING_CARRIERS,
+  heroBanners: DEFAULT_HERO_BANNERS,
   aiProvider: 'gemini',
   aiModel: 'gemini-2.5-flash',
   aiApiKey: ''
@@ -122,7 +125,10 @@ export default function App() {
           ...parsed,
           shippingCarriers: Array.isArray(parsed.shippingCarriers) && parsed.shippingCarriers.length > 0
             ? parsed.shippingCarriers
-            : DEFAULT_SHIPPING_CARRIERS
+            : DEFAULT_SHIPPING_CARRIERS,
+          heroBanners: Array.isArray(parsed.heroBanners) && parsed.heroBanners.length > 0
+            ? parsed.heroBanners
+            : DEFAULT_HERO_BANNERS
         };
       }
       return DEFAULT_CONFIG;
@@ -217,7 +223,35 @@ export default function App() {
   // Dedicated Article Detail Page View (Hiển thị bài viết trên trang riêng thay vì modal nổi)
   const [viewingArticle, setViewingArticle] = useState(null);
 
-  // Đồng bộ bài viết đang xem với URL hash #cam-nang/:slug hoặc #health-blog?article=:slug
+  // View mode hiện tại: 'home' (Trang chủ) | 'products' (Trang danh mục sản phẩm chuyên biệt)
+  const [currentView, setCurrentView] = useState('home');
+
+  // Điều hướng chuyển sang Trang Sản Phẩm chuyên biệt với bộ lọc nguồn gốc
+  const handleNavigateToProducts = (origin = 'all') => {
+    setViewingArticle(null);
+    setCurrentView('products');
+    setOriginFilter(origin);
+    if (origin === 'domestic') {
+      setSelectedCountry('VN');
+      window.location.hash = '#san-pham?origin=domestic';
+    } else if (origin === 'imported') {
+      if (selectedCountry === 'VN') setSelectedCountry('all');
+      window.location.hash = '#san-pham?origin=imported';
+    } else {
+      setSelectedCountry('all');
+      window.location.hash = '#san-pham';
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleGoHome = () => {
+    setViewingArticle(null);
+    setCurrentView('home');
+    window.location.hash = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Đồng bộ bài viết và trang sản phẩm đang xem với URL hash
   useEffect(() => {
     const handleHashSync = () => {
       const hash = window.location.hash || '';
@@ -235,16 +269,34 @@ export default function App() {
           setViewingArticle(found);
           return;
         }
-      }
-      if (!hash.startsWith('#cam-nang/') && !hash.startsWith('#health-blog?article=') && viewingArticle) {
+      } else if (hash.startsWith('#san-pham')) {
         setViewingArticle(null);
+        setCurrentView('products');
+        if (hash.includes('origin=domestic')) {
+          setOriginFilter('domestic');
+          setSelectedCountry('VN');
+        } else if (hash.includes('origin=imported')) {
+          setOriginFilter('imported');
+          setSelectedCountry('all');
+        } else {
+          setOriginFilter('all');
+          setSelectedCountry('all');
+        }
+        return;
+      }
+
+      if (viewingArticle) {
+        setViewingArticle(null);
+      }
+      if (!hash.startsWith('#san-pham') && currentView === 'products' && (hash === '' || hash === '#')) {
+        setCurrentView('home');
       }
     };
 
     handleHashSync();
     window.addEventListener('hashchange', handleHashSync);
     return () => window.removeEventListener('hashchange', handleHashSync);
-  }, [articlesList]);
+  }, [articlesList, viewingArticle, currentView]);
 
   const handleOpenArticle = (art) => {
     setViewingArticle(art);
@@ -1431,10 +1483,13 @@ export default function App() {
         onOpenAuthModal={() => { setCustomerAuthInitialTab('login'); setIsCustomerAuthOpen(true); }}
         onOpenProfileModal={() => setIsCustomerProfileOpen(true)}
         onOpenVouchers={() => setIsVoucherModalOpen(true)}
-        onGoHome={() => { setViewingArticle(null); window.location.hash = ''; }}
+        onGoHome={handleGoHome}
+        currentView={currentView}
+        onNavigateToProducts={handleNavigateToProducts}
+        hotline={storeConfig.hotline}
       />
 
-      {/* Hiển thị Trang Chi Tiết Bài Viết (Full-Page View) hoặc Trang Chủ Gian Hàng */}
+      {/* Hiển thị Trang Chi Tiết Bài Viết (Full-Page View), Trang Sản Phẩm Chuyên Biệt, hoặc Trang Chủ */}
       {viewingArticle ? (
         <ArticleDetailPage
           article={viewingArticle}
@@ -1444,18 +1499,47 @@ export default function App() {
           onSelectArticle={handleOpenArticle}
           onSelectProduct={(p) => setActiveProductDetail(p)}
           onAddToCart={handleAddToCart}
+          hotline={storeConfig.hotline}
+        />
+      ) : currentView === 'products' ? (
+        <ProductsPage
+          products={filteredProducts}
+          allProducts={productsList}
+          originFilter={originFilter}
+          setOriginFilter={setOriginFilter}
+          selectedCountry={selectedCountry}
+          setSelectedCountry={setSelectedCountry}
+          selectedCategory={selectedCategory}
+          setSelectedCategory={setSelectedCategory}
+          selectedDosage={selectedDosage}
+          setSelectedDosage={setSelectedDosage}
+          selectedAudience={selectedAudience}
+          setSelectedAudience={setSelectedAudience}
+          selectedBrand={selectedBrand}
+          setSelectedBrand={setSelectedBrand}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          priceRange={priceRange}
+          setPriceRange={setPriceRange}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          onAddToCart={handleAddToCart}
+          onOpenDetail={(p) => setActiveProductDetail(p)}
+          wishlist={wishlist}
+          onToggleWishlist={handleToggleWishlist}
+          onBackHome={handleGoHome}
+          onNavigateToProducts={handleNavigateToProducts}
+          onOpenAdvisor={() => setIsAdvisorOpen(true)}
         />
       ) : (
         <>
           {/* 2. Hero Banner với Dual Origin Showcase */}
           <HeroBanner
-            onSelectOrigin={(origin) => {
-              setOriginFilter(origin);
-              setSelectedCountry(origin === 'domestic' ? 'VN' : 'all');
-              document.getElementById('catalog-section')?.scrollIntoView({ behavior: 'smooth' });
-            }}
+            onSelectOrigin={(origin) => handleNavigateToProducts(origin)}
             onOpenAdvisor={() => setIsAdvisorOpen(true)}
             onOpenVerifier={() => { setVerifierInitialReg(''); setIsVerifierOpen(true); }}
+            banners={storeConfig?.heroBanners || DEFAULT_HERO_BANNERS}
+            hotline={storeConfig?.hotline}
           />
 
           {/* Main Container */}
@@ -1652,8 +1736,8 @@ export default function App() {
               </p>
             </div>
             <button
-              onClick={() => { setOriginFilter('domestic'); setSelectedCountry('VN'); }}
-              className="mt-4 text-xs font-bold text-rose-700 flex items-center gap-1 hover:text-rose-900"
+              onClick={() => handleNavigateToProducts('domestic')}
+              className="mt-4 text-xs font-bold text-rose-700 flex items-center gap-1 hover:text-rose-900 cursor-pointer"
             >
               <span>Xem toàn bộ gian hàng Nội Địa</span>
               <ChevronRight className="w-4 h-4" />
@@ -1676,8 +1760,8 @@ export default function App() {
               </p>
             </div>
             <button
-              onClick={() => { setOriginFilter('imported'); if (selectedCountry === 'VN') setSelectedCountry('all'); }}
-              className="mt-4 text-xs font-bold text-blue-700 flex items-center gap-1 hover:text-blue-900"
+              onClick={() => handleNavigateToProducts('imported')}
+              className="mt-4 text-xs font-bold text-blue-700 flex items-center gap-1 hover:text-blue-900 cursor-pointer"
             >
               <span>Xem toàn bộ gian hàng Nhập Ngoại</span>
               <ChevronRight className="w-4 h-4" />
@@ -1702,6 +1786,7 @@ export default function App() {
         onOpenVerifier={() => { setVerifierInitialReg(''); setIsVerifierOpen(true); }}
         onOpenAdvisor={() => setIsAdvisorOpen(true)}
         onOpenAdmin={handleOpenAdminPortal}
+        hotline={storeConfig.hotline}
       />
 
       {/* Floating Call to Action Buttons (Dành riêng cho khách hàng: Dược sĩ tư vấn & Hotline) */}
@@ -1907,6 +1992,7 @@ export default function App() {
           onClose={() => setIsVerifierOpen(false)}
           products={productsList}
           customRegistrations={registrationsDb}
+          hotline={storeConfig.hotline}
         />
       )}
 
@@ -1922,6 +2008,7 @@ export default function App() {
           initialOrderCode={trackingOrderCode}
           onSyncCarrierStatus={handleSyncCarrierStatus}
           isAdmin={isAdminOpen}
+          hotline={storeConfig.hotline}
         />
       )}
 

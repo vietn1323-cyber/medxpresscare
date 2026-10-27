@@ -24,7 +24,10 @@ export const Header = ({
   onOpenAuthModal,
   onOpenProfileModal,
   onOpenVouchers,
-  onGoHome
+  onGoHome,
+  currentView = 'home',
+  onNavigateToProducts,
+  hotline = '1800 6868'
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -96,11 +99,11 @@ export const Header = ({
             </a>
             <span className="text-emerald-500 hidden lg:inline">|</span>
             <a 
-              href="tel:18006868" 
+              href={`tel:${(hotline || '1800 6868').replace(/\s+/g, '')}`} 
               className="flex items-center gap-1 font-bold text-amber-300 hover:text-white transition-colors"
             >
               <PhoneCall className="w-3.5 h-3.5 animate-pulse" />
-              Tổng đài: 1800 6868
+              Tổng đài: {hotline || '1800 6868'}
             </a>
           </div>
         </div>
@@ -267,10 +270,10 @@ export const Header = ({
           {/* Quick Origin Filters Toggle */}
           <div className="flex items-center gap-1.5 shrink-0 bg-white p-1 rounded-lg border border-slate-200 shadow-xs">
             <button
-              onClick={() => setOriginFilter('all')}
-              className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${
-                originFilter === 'all'
-                  ? 'bg-emerald-600 text-white shadow-xs'
+              onClick={() => onNavigateToProducts ? onNavigateToProducts('all') : setOriginFilter('all')}
+              className={`px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                currentView === 'products' && originFilter === 'all'
+                  ? 'bg-emerald-600 text-white shadow-xs font-bold'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
@@ -278,9 +281,9 @@ export const Header = ({
             </button>
 
             <button
-              onClick={() => setOriginFilter('domestic')}
-              className={`flex items-center gap-1 px-3 py-1 rounded-md text-xs font-bold transition-all ${
-                originFilter === 'domestic'
+              onClick={() => onNavigateToProducts ? onNavigateToProducts('domestic') : setOriginFilter('domestic')}
+              className={`flex items-center gap-1 px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                currentView === 'products' && originFilter === 'domestic'
                   ? 'bg-rose-600 text-white shadow-xs'
                   : 'text-rose-700 bg-rose-50/70 hover:bg-rose-100/80'
               }`}
@@ -290,9 +293,9 @@ export const Header = ({
             </button>
 
             <button
-              onClick={() => setOriginFilter('imported')}
-              className={`flex items-center gap-1 px-3 py-1 rounded-md text-xs font-bold transition-all ${
-                originFilter === 'imported'
+              onClick={() => onNavigateToProducts ? onNavigateToProducts('imported') : setOriginFilter('imported')}
+              className={`flex items-center gap-1 px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                currentView === 'products' && originFilter === 'imported'
                   ? 'bg-blue-600 text-white shadow-xs'
                   : 'text-blue-700 bg-blue-50/70 hover:bg-blue-100/80'
               }`}

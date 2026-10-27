@@ -633,7 +633,7 @@ export const CheckoutModal = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
                   {activeCarriers.length === 0 ? (
                     <div className="col-span-2 p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs">
-                      ⚠️ Tuyến vận chuyển cho khu vực của quý khách đang được tối ưu hóa. Vui lòng liên hệ Dược sĩ hotline <strong>1800 6868</strong> để được hỗ trợ giao hàng hỏa tốc.
+                      ⚠️ Tuyến vận chuyển cho khu vực của quý khách đang được tối ưu hóa. Vui lòng liên hệ Dược sĩ hotline <strong>{storeConfig?.hotline || '1800 6868'}</strong> để được hỗ trợ giao hàng hỏa tốc.
                     </div>
                   ) : (
                     activeCarriers.map((carrier) => {
