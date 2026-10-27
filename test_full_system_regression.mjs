@@ -60,7 +60,7 @@ runTest('Products', 'Hỗ trợ lọc sản phẩm thuộc nhiều hơn 1 nhóm 
   assert.ok(multiCatProducts.length > 0, 'Phải có sản phẩm thuộc từ 2 nhóm bệnh lý trở lên');
   
   // Test lọc sản phẩm có category 'bone_joint'
-  const jointProds = PRODUCTS.filter(p => p.categories.includes('bone_joint'));
+  const jointProds = PRODUCTS.filter(p => p.categories.includes('co-xuong-khop') || p.categories.includes('bone_joint'));
   assert.ok(jointProds.length >= 2, 'Nhóm xương khớp phải có ít nhất 2 sản phẩm');
   assert.ok(jointProds.some(p => p.id === 'vn-01'));
   assert.ok(jointProds.some(p => p.id === 'us-01'));
