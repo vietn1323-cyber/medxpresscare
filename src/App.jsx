@@ -26,6 +26,7 @@ import { CustomerAuthModal } from './components/CustomerAuthModal';
 import { CustomerProfileModal } from './components/CustomerProfileModal';
 import { OrderTrackingModal } from './components/OrderTrackingModal';
 import { cleanPrice } from './utils/csvHelper';
+import { apiClient } from './services/apiClient';
 import { 
   initializeOrderTracking, 
   stepOrderToShipping, 
@@ -372,6 +373,108 @@ export default function App() {
     };
   }, []);
 
+  // Trạng thái kết nối Cloudflare D1 Serverless Database
+  const [d1Status, setD1Status] = useState('connecting'); // 'connected' | 'offline'
+  const [isD1Loaded, setIsD1Loaded] = useState(false);
+
+  // 1. Tự động đồng bộ hai chiều với Cloudflare D1 Database khi tải trang
+  useEffect(() => {
+    let isMounted = true;
+    async function initCloudSync() {
+      try {
+        const cloudData = await apiClient.fetchAll();
+        if (!isMounted) return;
+
+        if (cloudData && typeof cloudData === 'object') {
+          setD1Status('connected');
+
+          // Products
+          if (Array.isArray(cloudData.products) && cloudData.products.length > 0) {
+            setProductsList(cloudData.products);
+          } else {
+            apiClient.saveProducts(productsList);
+          }
+
+          // Orders
+          if (Array.isArray(cloudData.orders)) {
+            setOrders(cloudData.orders);
+          } else {
+            apiClient.saveOrdersList(orders);
+          }
+
+          // Articles
+          if (Array.isArray(cloudData.articles) && cloudData.articles.length > 0) {
+            setArticlesList(cloudData.articles);
+          } else {
+            apiClient.saveArticles(articlesList);
+          }
+
+          // Reviews
+          if (Array.isArray(cloudData.reviews) && cloudData.reviews.length > 0) {
+            setReviewsList(cloudData.reviews);
+          } else {
+            apiClient.saveReviews(reviewsList);
+          }
+
+          // Store Config
+          if (cloudData.storeConfig && typeof cloudData.storeConfig === 'object' && Object.keys(cloudData.storeConfig).length > 0) {
+            setStoreConfig(prev => ({ ...prev, ...cloudData.storeConfig }));
+          } else {
+            apiClient.saveConfig(storeConfig);
+          }
+
+          // Customers
+          if (Array.isArray(cloudData.customers) && cloudData.customers.length > 0) {
+            setCustomersList(cloudData.customers);
+          } else {
+            apiClient.saveCustomers(customersList);
+          }
+        } else {
+          setD1Status('offline');
+        }
+      } catch (err) {
+        console.warn('D1 Sync notice:', err);
+        if (isMounted) setD1Status('offline');
+      } finally {
+        if (isMounted) setIsD1Loaded(true);
+      }
+    }
+
+    initCloudSync();
+    return () => { isMounted = false; };
+  }, []);
+
+  // 2. Tự động lưu lên Cloudflare D1 khi có thay đổi từ Admin hoặc Người dùng (sau khi đã nạp D1)
+  useEffect(() => {
+    if (!isD1Loaded) return;
+    apiClient.saveProducts(productsList);
+  }, [productsList, isD1Loaded]);
+
+  useEffect(() => {
+    if (!isD1Loaded) return;
+    apiClient.saveOrdersList(orders);
+  }, [orders, isD1Loaded]);
+
+  useEffect(() => {
+    if (!isD1Loaded) return;
+    apiClient.saveArticles(articlesList);
+  }, [articlesList, isD1Loaded]);
+
+  useEffect(() => {
+    if (!isD1Loaded) return;
+    apiClient.saveReviews(reviewsList);
+  }, [reviewsList, isD1Loaded]);
+
+  useEffect(() => {
+    if (!isD1Loaded) return;
+    apiClient.saveConfig(storeConfig);
+  }, [storeConfig, isD1Loaded]);
+
+  useEffect(() => {
+    if (!isD1Loaded) return;
+    apiClient.saveCustomers(customersList);
+  }, [customersList, isD1Loaded]);
+
   // Sync to localStorage
   useEffect(() => {
     try {
@@ -522,21 +625,13 @@ export default function App() {
     setIsCheckoutOpen(true);
   };
 
-  // Order created callback from CheckoutModal (syncs to PHP backend and local state)
+  // Order created callback from CheckoutModal (syncs to Cloudflare D1 and local state)
   const handleOrderCreated = async (newOrder) => {
     setOrders(prev => [newOrder, ...prev]);
     showToast(`Đơn hàng ${newOrder.id} đã được gửi thành công đến Dược sĩ!`);
 
-    // Gửi lên backend PHP nếu đang chạy trên web server có PHP
-    try {
-      await fetch('/api/orders.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newOrder)
-      });
-    } catch {
-      // Offline fallback
-    }
+    // Gửi tức thì lên Cloudflare D1
+    apiClient.saveNewOrder(newOrder);
   };
 
   // Customer Account & Loyalty Points Handlers
@@ -1063,7 +1158,8 @@ export default function App() {
     localStorage.removeItem('medxpress_cart');
     setWishlist([]);
     localStorage.removeItem('medxpress_wishlist');
-    showToast(`✅ Đã xóa sạch toàn bộ dữ liệu đơn hàng và khách hàng thử nghiệm!`);
+    apiClient.clearTestOrders();
+    showToast(`✅ Đã xóa sạch toàn bộ dữ liệu đơn hàng và khách hàng thử nghiệm trên cả Cloudflare D1!`);
   };
 
   // Quản lý Cẩm Nang & Bài Viết Y Khoa Chuẩn SEO
@@ -1591,6 +1687,7 @@ export default function App() {
       {isAdminOpen && (
         <AdminPanel
           isOpen={isAdminOpen}
+          d1Status={d1Status}
           onClose={() => setIsAdminOpen(false)}
           orders={orders}
           onUpdateOrderStatus={handleUpdateOrderStatus}
