@@ -723,40 +723,61 @@ export const consultWithAiPharmacist = async ({
       .join('\n');
 
     const systemPrompt = `Bạn là Dược sĩ Lâm sàng Trưởng của Hệ Thống Chăm Sóc Sức Khỏe MedXpressCare (medxpresscare.com).
-Tôn chỉ cao nhất của bạn: "LƯƠNG Y NHƯ TỪ MẪU" — Lấy sự an tâm, sức khỏe và quyền lợi của người bệnh làm trọng tâm. Tuyệt đối không hành xử như nhân viên bán hàng chèo kéo.
+Tôn chỉ cao nhất của bạn: "LƯƠNG Y NHƯ TỪ MẪU" — Lấy sự an tâm, sức khỏe và tính mạng người bệnh làm trọng tâm. Tuyệt đối không hành xử như nhân viên bán hàng chèo kéo.
 
 DANH MỤC SẢN PHẨM CỬA HÀNG HIỆN CÓ:
 ${catalogSummary}
 
-NGUYÊN TẮC TƯ VẤN SỐNG CÒN (BẮT BUỘC TUÂN THỦ):
-1. TRẢ LỜI ĐÚNG TRỌNG TÂM CÂU HỎI TRƯỚC TIÊN:
+NGUYÊN TẮC TƯ VẤN SỐNG CÒN (BẮT BUỘC TUÂN THỦ ĐỂ ĐÚNG HOÀN CẢNH):
+
+1. THẤU HIỂU ĐÚNG NGỮ CẢNH VÀ ĐỐI TƯỢNG (CONTEXT & RELATIONSHIP AWARENESS):
+   - XÁC ĐỊNH CHÍNH XÁC AI LÀ NGƯỜI BỆNH THỰC SỰ:
+     + Khách hỏi cho BỐ MẸ / NGƯỜI CAO TUỔI (ví dụ: "Mẹ tôi 65 tuổi...", "Bác gái nhà mình...", "Bố em bị thoái hóa..."):
+       * Xưng hô chuẩn mực: "Chào bạn, Dược sĩ xin chia sẻ với bạn về tình trạng sức khỏe của Bác gái / Bác trai (mẹ/bố bạn)..."
+       * Đưa ra lời khuyên cho gia đình: "Bạn hãy nhắc Bác...", "Đối với người cao tuổi như Bác...", phân tích các giải pháp an toàn cho dạ dày, tránh té ngã. Tuyệt đối KHÔNG nhầm người hỏi là người bệnh cao tuổi.
+     + Khách hỏi cho CON NHỎ / TRẺ EM (ví dụ: "Bé nhà em 3 tuổi...", "Con em biếng ăn...", "Bé hay ốm sổ mũi..."):
+       * Xưng hô: "Dược sĩ chào ba/mẹ! Về tình trạng của bé...", nhắc nhở cẩn trọng về liều lượng theo cân nặng/độ tuổi, không ép trẻ ăn.
+     + Khách hỏi cho PHỤ NỮ MANG THAI / MẸ BẦU:
+       * Chú trọng tuyệt đối an toàn thai kỳ, chỉ định dinh dưỡng vi chất lành tính (Canxi sữa, Sắt hữu cơ, Axit Folic), cảnh báo chống chỉ định các thảo dược hoạt huyết co bóp tử cung.
+     + Khách là DÂN VĂN PHÒNG (ngồi máy tính nhiều, đau vai gáy, khô mắt, trĩ):
+       * Thấu cảm với tính chất công việc ngồi tĩnh tại lâu, hướng dẫn bài tập giãn cơ 20-20-20, chỉnh tư thế bàn ghế.
+     + Khách hỏi cho BẢN THÂN: Xưng hô tự nhiên, ân cần "Dược sĩ" - "bạn/anh/chị".
+
+2. NGUYÊN TẮC CẤP CỨU ĐỎ (RED FLAG EMERGENCY TRIAGE):
+   - Nếu phát hiện các dấu hiệu nguy kịch: Đau thắt ngực dữ dội đè nặng sau xương ức, khó thở cấp tính, méo miệng/nói đớ/tê yếu liệt nửa người (dấu hiệu đột quỵ FAST), co giật, sốt cao co giật ở trẻ, nôn ra máu, mất ý thức/ngất xỉu:
+   - HÀNH ĐỘNG KHẨN CẤP: Lập tức đặt CẢNH BÁO ĐỎ, hướng dẫn người nhà gọi ngay Cấp cứu 115 hoặc đưa người bệnh đến Khoa Cấp Cứu Bệnh viện gần nhất NGAY LẬP TỨC.
+   - Hướng dẫn sơ cứu tại chỗ: Nằm nơi thoáng, nới lỏng áo, KHÔNG cạo gió, KHÔNG cho ăn uống hay uống thuốc tùy tiện.
+   - BẮT BUỘC ĐỂ "recommendedProductIds": [] (mảng rỗng), TUYỆT ĐỐI KHÔNG bán thuốc hay TPCN trong tình huống cấp cứu!
+
+3. TRẢ LỜI ĐÚNG TRỌNG TÂM CÂU HỎI TRƯỚC TIÊN:
    - Khách hỏi điều gì, hãy trả lời trực tiếp, chính xác và giải thích rõ ràng điều đó ngay từ câu đầu tiên. Tuyệt đối không vòng vo né tránh.
    - Nếu khách chào hỏi: Hãy chào đón ấm áp, xưng "Dược sĩ" và hỏi thăm khách hàng đang gặp khó khăn hay triệu chứng gì để hỗ trợ.
    - Nếu khách hỏi về dinh dưỡng, kiêng cữ: Hướng dẫn cụ thể món nên ăn, món nên tránh và lý do sinh học đằng sau.
    - Nếu khách hỏi về cách dùng, thời điểm uống: Giải thích chính xác thời điểm vàng cơ thể hấp thu tốt nhất và lưu ý tương tác thuốc/bữa ăn.
    - Nếu khách mô tả triệu chứng: Thấu cảm, giải thích cơ chế bình dị, đưa ra lời khuyên xử trí tại nhà và hỏi thăm thêm các thông tin cần thiết (độ tuổi, bị bao lâu rồi, tiền sử dạ dày/huyết áp/tiểu đường).
 
-2. TUYỆT ĐỐI KHÔNG ÉP BÁN HÀNG — CHỈ ĐỀ XUẤT SẢN PHẨM KHI ĐÚNG MỤC TIÊU:
+4. TUYỆT ĐỐI KHÔNG ÉP BÁN HÀNG — CHỈ ĐỀ XUẤT SẢN PHẨM KHI ĐÚNG MỤC TIÊU:
    - TUYỆT ĐỐI ĐỂ "recommendedProductIds": [] (mảng rỗng) trong các trường hợp:
      + Khách chỉ chào hỏi, làm quen, cảm ơn.
      + Khách hỏi kiến thức y tế, sinh hoạt, chế độ ăn uống, tập luyện, kiêng cữ.
      + Khách hỏi thời điểm uống, cách dùng hoặc kiểm tra tương tác thuốc hiện tại của họ.
      + Triệu chứng của khách còn sơ sài, cần Dược sĩ hỏi thăm thêm để làm rõ tình trạng.
      + Khách hỏi thông tin cửa hàng, vận chuyển, đổi trả.
+     + Các trường hợp cấp cứu đỏ (Red Flag).
    - CHỈ ĐỀ XUẤT SẢN PHẨM (tối đa 1-2 mã ID từ danh mục trên) KHI:
      + Khách chủ động hỏi: "nên uống thuốc/TPCN gì?", "có loại nào tốt?", "tư vấn giúp tôi sản phẩm...", "bên shop có bán...", "mua loại nào hiệu quả?"
      + Hoặc sau khi đã giải thích rõ cơ chế và khách cần một phác đồ bổ trợ cụ thể để phục hồi.
    - Khi đề xuất sản phẩm: Trình bày nhẹ nhàng, khách quan, phân tích rõ lý do vì sao sản phẩm đó giúp ích. KHÔNG dùng ngôn từ giục giã mua hàng ("hãy mua ngay", "đặt hỏa tốc").
 
-3. VĂN PHONG TỰ NHIÊN, ẤM ÁP, CHUẨN MỰC:
+5. VĂN PHONG TỰ NHIÊN, ẤM ÁP, CHUẨN MỰC:
    - Nói chuyện như một Dược Sĩ Lâm Sàng gia đình ân cần, giàu chuyên môn, thấu hiểu tâm lý người bệnh.
-   - KHÔNG dùng các tiêu đề khô cứng, rập khuôn máy móc (như "### Chẩn Đoán & Tư Vấn Chuyên Môn... 1. Về vấn đề... 2. Phác đồ...").
+   - KHÔNG dùng các tiêu đề khô cứng, rập khuôn máy móc.
    - Trình bày mạch lạc, ngắn gọn, gạch đầu dòng rõ ràng, dễ đọc trên thiết bị di động.
 
 ĐẦU RA BẮT BUỘC: Trả về MỘT CHUỖI JSON DUY NHẤT (không dùng markdown code blocks):
 {
-  "reply": "Nội dung phản hồi tư vấn tự nhiên, ấm áp, đúng trọng tâm của Dược sĩ bằng Markdown",
-  "intent": "greeting | lifestyle_diet | usage_timing | symptom_inquiry | product_consultation",
+  "reply": "Nội dung phản hồi tư vấn tự nhiên, ấm áp, đúng hoàn cảnh của Dược sĩ bằng Markdown",
+  "intent": "greeting | lifestyle_diet | usage_timing | symptom_inquiry | product_consultation | emergency",
   "detectedAudience": "elderly | women | men | office | kids | general",
   "detectedConcern": "Mối quan tâm sức khỏe chính",
   "recommendedProductIds": ["id_sp_1", "id_sp_2"] (HOẶC MẢNG RỖNG [] nếu khách chưa có nhu cầu mua hoặc chỉ đang hỏi thông tin/lối sống!),
@@ -779,11 +800,22 @@ NGUYÊN TẮC TƯ VẤN SỐNG CÒN (BẮT BUỘC TUÂN THỦ):
           })),
           {
             role: 'user',
-            parts: [{ text: `${systemPrompt}\n\nThông tin người dùng: Đối tượng=${targetAudience || 'Chưa xác định'}, Mối quan tâm=${selectedConcern?.title || 'Chưa xác định'}, Bệnh nền=${selectedCondition}\nCâu hỏi người dùng: "${query}"` }]
+            parts: [{ 
+              text: `[NGỮ CẢNH TƯ VẤN HỆ THỐNG]:
+- Đối tượng chỉ định: ${targetAudience || 'Tự động nhận diện từ câu hỏi'}
+- Mối quan tâm sức khỏe: ${selectedConcern?.title || 'Chưa chọn cụ thể'}
+- Tiền sử bệnh nền: ${selectedCondition || 'Không có'}
+
+[CÂU HỎI TỪ KHÁCH HÀNG]:
+"${query}"` 
+            }]
           }
         ];
 
         const payload = {
+          systemInstruction: {
+            parts: [{ text: systemPrompt }]
+          },
           contents,
           generationConfig: { 
             temperature: 0.65, 
@@ -810,7 +842,7 @@ NGUYÊN TẮC TƯ VẤN SỐNG CÒN (BẮT BUỘC TUÂN THỦ):
           })),
           {
             role: 'user',
-            content: `Thông tin: Đối tượng=${targetAudience || 'Chưa rõ'}, Mối quan tâm=${selectedConcern?.title || 'Chưa rõ'}, Bệnh nền=${selectedCondition}. Câu hỏi: "${query}"`
+            content: `[NGỮ CẢNH]: Đối tượng=${targetAudience || 'Tự động'}, Mối quan tâm=${selectedConcern?.title || 'Chưa rõ'}, Bệnh nền=${selectedCondition}. Câu hỏi: "${query}"`
           }
         ];
 
@@ -903,25 +935,68 @@ NGUYÊN TẮC TƯ VẤN SỐNG CÒN (BẮT BUỘC TUÂN THỦ):
   }
 
   // 3. GIẢI THUẬT DƯỢC LÝ HỌC LÂM SÀNG THÔNG MINH DỰ PHÒNG (Clinical Rule Engine)
-  // Phân tích Intent thông minh, trả lời đúng trọng tâm câu hỏi và KHÔNG ép sản phẩm khi chưa phù hợp!
+  // Phân tích Intent thông minh, nhận diện đúng hoàn cảnh / đối tượng và KHÔNG ép sản phẩm!
   const textLower = query.toLowerCase();
+
+  // A. KIỂM TRA DẤU HIỆU CẤP CỨU ĐỎ (RED FLAG EMERGENCY TRIAGE)
+  const isEmergency = /(đau ngực|thắt ngực|khó thở cấp|méo miệng|yếu liệt|liệt nửa người|nói đớ|co giật|sốt cao co giật|nôn ra máu|ngất xỉu|hôn mê)/i.test(textLower);
+  if (isEmergency) {
+    return {
+      reply: `🚨 **CẢNH BÁO Y TẾ KHẨN CẤP (RED FLAG TRIAGE)** 🚨
+
+Chào bạn, các triệu chứng bạn vừa mô tả là **dấu hiệu cảnh báo cấp cứu khẩn cấp** (nguy cơ biến cố tim mạch cấp tính, đột quỵ não hoặc suy hô hấp nguy hiểm).
+
+⚠️ **HÀNH ĐỘNG CẦN THỰC HIỆN NGAY LẬP TỨC:**
+1. **Gọi ngay Cấp cứu 115** hoặc nhanh chóng đưa người bệnh đến **Khoa Cấp Cứu của Bệnh viện gần nhất**.
+2. **Sơ cứu tại chỗ trong lúc chờ cấp cứu:**
+   - Đặt người bệnh nằm nghỉ ở nơi thoáng khí, nới lỏng cổ áo, khăn quàng và thắt lưng.
+   - Tuyệt đối **KHÔNG** cạo gió, chích máu đầu ngón tay, vắt chanh vào miệng hay bấm huyệt mạnh.
+   - Tuyệt đối **KHÔNG** cho ăn uống hay tự ý uống thuốc để tránh nguy cơ sặc vào đường thở hoặc biến chứng nguy hiểm.
+   - Nếu người bệnh hôn mê nhưng còn thở, hãy đặt ở tư thế nằm nghiêng an toàn.
+
+*Hệ thống MedXpressCare cam kết đặt an toàn tính mạng người bệnh lên trên hết. Vui lòng ưu tiên hỗ trợ y tế khẩn cấp ngay lập tức!*`,
+      detectedAudience: targetAudience || 'general',
+      detectedConcern: 'Cảnh Báo Cấp Cứu Khẩn Cấp (Red Flag)',
+      recommendedProductIds: [],
+      precautions: 'CẦN ĐI CẤP CỨU BỆNH VIỆN NGAY LẬP TỨC - TUYỆT ĐỐI KHÔNG TỰ DÙNG THUỐC!'
+    };
+  }
+
+  // B. NHẬN DIỆN MỐI QUAN HỆ & NGỮ CẢNH (Hỏi cho bản thân vs Bố Mẹ vs Con nhỏ vs Mẹ bầu)
+  const isAskingForParents = /(mẹ|bố|ba|má|ông|bà|phụ huynh).*(tôi|mình|em|nhà tôi|nhà mình)/i.test(textLower) || /(mẹ|bố|ba|má|ông|bà)\s+(\d+|năm nay|đã lớn|cao tuổi)/i.test(textLower);
+  const isAskingForKids = /(bé|con|cháu|nhóc|trẻ nhỏ|em bé).*(nhà em|nhà mình|của em|mấy tháng|\d+\s*tuổi|\d+\s*tháng)/i.test(textLower) || /(cho bé|cho con|trẻ nhỏ|trẻ em|bé biếng ăn|bé chậm|bé lười)/i.test(textLower) || /\b(bé|em bé)\b/i.test(textLower);
+  const isAskingForPregnant = /(mang thai|bầu|có thai|thai kỳ|dự sinh|mẹ bầu)/i.test(textLower);
 
   // Nhận diện đối tượng (Audience Detection)
   let audience = targetAudience || '';
   if (!audience || audience === 'general') {
-    if (/bác|ông|bà|cao tuổi|người già|hưu|60|70|50|thoái hóa|tiểu đêm|tai biến/.test(textLower)) {
+    if (isAskingForParents || /bác|ông|bà|cao tuổi|người già|hưu|60|70|50|thoái hóa|tiểu đêm|tai biến/.test(textLower)) {
       audience = 'elderly';
-    } else if (/phụ nữ|chị em|phái đẹp|nữ|mẹ bầu|sau sinh|da|nám|nếp nhăn|bốc hỏa|khô hạn|kinh nguyệt|nội tiết/.test(textLower)) {
+    } else if (isAskingForKids || /bé|con|trẻ|em bé|học sinh|chiều cao|thấp còi|biếng ăn|lười ăn|hay ốm|đề kháng/.test(textLower)) {
+      audience = 'kids';
+    } else if (isAskingForPregnant || /phụ nữ|chị em|phái đẹp|nữ|mẹ bầu|sau sinh|da|nám|nếp nhăn|bốc hỏa|khô hạn|kinh nguyệt|nội tiết/.test(textLower)) {
       audience = 'women';
     } else if (/nam|đàn ông|anh em|phái mạnh|bia|rượu|nhậu|men gan|sinh lý|gút|uric|thận yếu/.test(textLower)) {
       audience = 'men';
-    } else if (/bé|con|trẻ|em bé|học sinh|chiều cao|thấp còi|biếng ăn|lười ăn|hay ốm|đề kháng/.test(textLower)) {
-      audience = 'kids';
     } else if (/văn phòng|máy tính|laptop|mắt|mỏi mắt|khô mắt|vai gáy|cổ|stress|ngồi nhiều|trĩ|táo bón/.test(textLower)) {
       audience = 'office';
     } else {
       audience = 'general';
     }
+  }
+
+  // Tinh chỉnh lời chào & đại từ xưng hô đúng ngữ cảnh
+  let greetingSalutation = 'Chào bạn!';
+  if (isAskingForParents) {
+    greetingSalutation = 'Chào bạn! Dược sĩ rất hiểu và xin chia sẻ cùng bạn về tình trạng sức khỏe của **Bác (bố/mẹ bạn)**';
+  } else if (isAskingForKids || audience === 'kids') {
+    greetingSalutation = 'Chào bạn! Dược sĩ rất hiểu và xin đồng hành cùng ba/mẹ chăm sóc sức khỏe cho **bé**';
+  } else if (isAskingForPregnant) {
+    greetingSalutation = 'Chào bạn! Dược sĩ xin chia sẻ và đồng hành cùng mẹ trong giai đoạn thai kỳ';
+  } else if (audience === 'elderly') {
+    greetingSalutation = 'Dược sĩ xin kính chào Bác!';
+  } else if (audience === 'office') {
+    greetingSalutation = 'Chào bạn! Dược sĩ rất thấu hiểu nỗi vất vả của dân văn phòng chúng ta khi phải ngồi máy tính nhiều';
   }
 
   // Phân loại Intent của người dùng:
@@ -1041,12 +1116,19 @@ Bạn có thể chia sẻ cụ thể tình trạng, độ tuổi hoặc câu h�
 - **Giấc ngủ chất lượng**: Cố gắng ngủ đủ 7-8 tiếng/đêm và đi ngủ trước 23h.`;
     }
 
+    let audienceFollowUp = 'Bạn có đang gặp triệu chứng cụ thể nào khác hoặc đang phải dùng thuốc điều trị nào không ạ? Hãy chia sẻ thêm để Dược sĩ đồng hành cùng bạn nhé!';
+    if (isAskingForParents) {
+      audienceFollowUp = 'Bạn hãy nhắc Bác duy trì chế độ sinh hoạt và kiêng cữ trên nhé. Bác hiện có đang dùng thuốc điều trị nào khác không ạ? Hãy chia sẻ thêm để Dược sĩ lưu ý an toàn cho Bác nhé!';
+    } else if (isAskingForKids) {
+      audienceFollowUp = 'Ba/mẹ lưu ý kiên nhẫn đồng hành cùng con và không ép bé ăn quá no một lúc. Bé hiện sinh hoạt và lên cân thế nào ạ? Hãy chia sẻ thêm với Dược sĩ nhé!';
+    }
+
     return {
-      reply: `Chào bạn, Dược sĩ xin chia sẻ cặn kẽ về chế độ ăn uống và lối sống cho tình trạng **${topicName}**:
+      reply: `${greetingSalutation}, về chế độ ăn uống và lối sống cho tình trạng **${topicName}**:
 
 ${dietAdvice}
 ${precautionsNote ? `\n> **${precautionsNote}**\n` : ''}
-Bạn có đang gặp triệu chứng cụ thể nào khác hoặc đang phải dùng thuốc điều trị nào không ạ? Hãy chia sẻ thêm để Dược sĩ đồng hành cùng bạn nhé!`,
+${audienceFollowUp}`,
       detectedAudience: audience,
       detectedConcern: topicName,
       recommendedProductIds: [],
@@ -1099,12 +1181,19 @@ Bạn có đang gặp triệu chứng cụ thể nào khác hoặc đang phải 
 
     const usageAdvice = adviceParts.join('\n\n');
 
+    let timingFollowUp = 'Nếu bạn đang dùng đồng thời nhiều loại thuốc hoặc có bệnh nền cần kiểm tra tương tác, bạn cứ nhắn chi tiết tên các sản phẩm cho Dược sĩ để được rà soát an toàn nhé!';
+    if (isAskingForParents) {
+      timingFollowUp = 'Bạn hãy nhắc Bác tuân thủ khung giờ uống trên để đạt hiệu quả tốt nhất. Nếu Bác đang uống thuốc huyết áp hay tim mạch theo đơn bệnh viện, hãy nhắn tên thuốc cho Dược sĩ để rà soát tương tác an toàn cho Bác nhé!';
+    } else if (isAskingForKids) {
+      timingFollowUp = 'Ba/mẹ lưu ý cho bé uống đúng liều lượng theo lứa tuổi. Nếu bé có đang uống siro hay thuốc điều trị nào khác, hãy nhắn tên cho Dược sĩ kiểm tra an toàn cho con nhé!';
+    }
+
     return {
-      reply: `Chào bạn, về câu hỏi **cách dùng và thời điểm uống chuẩn y khoa**, Dược sĩ xin hướng dẫn chi tiết như sau:
+      reply: `${greetingSalutation}, về câu hỏi **cách dùng và thời điểm uống chuẩn y khoa**, Dược sĩ xin hướng dẫn chi tiết như sau:
 
 ${usageAdvice}
 ${precautionsNote ? `\n> **${precautionsNote}**\n` : ''}
-Nếu bạn đang dùng đồng thời nhiều loại thuốc hoặc có bệnh nền cần kiểm tra tương tác, bạn cứ nhắn chi tiết tên các sản phẩm cho Dược sĩ để được rà soát an toàn nhé!`,
+${timingFollowUp}`,
       detectedAudience: audience,
       detectedConcern: 'Hướng dẫn cách dùng & Thời điểm uống',
       recommendedProductIds: [],
@@ -1166,17 +1255,31 @@ Bạn đang cần tìm hiểu thông tin cho sản phẩm nào hoặc cần hỗ
       homeCare = 'Bạn nên uống đủ nước ấm, nghỉ ngơi hợp lý, tránh thức khuya và theo dõi sát các biểu hiện của cơ thể.';
     }
 
+    let adviceFollowUp = `Để Dược sĩ đánh giá chính xác mức độ và tư vấn giải pháp thích hợp nhất cho bạn, bạn cho Dược sĩ hỏi thêm một chút nhé:
+1. Bạn đã bị tình trạng này bao lâu rồi, mức độ khó chịu nhiều vào thời điểm nào trong ngày?
+2. Hiện tại bạn có đang dùng thuốc điều trị nào khác (như huyết áp, dạ dày, tiểu đường) không?
+
+*(Nếu bạn muốn tìm hiểu các dòng thực phẩm bảo vệ sức khỏe hoặc phác đồ thảo dược hỗ trợ phục hồi từ gốc, hãy cho Dược sĩ biết nhé!)*`;
+
+    if (isAskingForParents) {
+      adviceFollowUp = `Để Dược sĩ đánh giá chính xác và tư vấn phương án chăm sóc an toàn nhất cho Bác, bạn cho Dược sĩ hỏi thêm một chút nhé:
+1. Bác năm nay bao nhiêu tuổi và đã bị tình trạng này bao lâu rồi, ban đêm Bác ngủ có ngon giấc không?
+2. Bác hiện có đang dùng thuốc điều trị bệnh nền nào khác (như huyết áp, dạ dày, tim mạch) không?
+
+*(Nếu bạn muốn tìm hiểu các dòng phác đồ thảo dược bồi bổ, tái tạo lành tính và an toàn cho người lớn tuổi, hãy cho Dược sĩ biết để hỗ trợ nhé!)*`;
+    } else if (isAskingForKids) {
+      adviceFollowUp = `Để Dược sĩ hỗ trợ ba/mẹ tốt nhất cho bé, cho Dược sĩ hỏi thêm một chút nhé:
+1. Bé nhà mình hiện được bao nhiêu tháng/tuổi và cân nặng khoảng bao nhiêu kg ạ?
+2. Tình trạng này của bé đã diễn ra bao lâu rồi và bé có hay nôn trớ hay sốt không?`;
+    }
+
     return {
-      reply: `Chào bạn, Dược sĩ rất hiểu và đồng cảm với cảm giác khó chịu bạn đang trải qua về tình trạng **${concernTitle}**:
+      reply: `${greetingSalutation}, Dược sĩ rất hiểu và đồng cảm với cảm giác lo lắng về tình trạng **${concernTitle}**:
 
 - **Cơ chế:** ${symptomAnalysis}
 - **Cách chăm sóc tại nhà ngay lúc này:** ${homeCare}
 ${precautionsNote ? `\n> **${precautionsNote}**\n` : ''}
-Để Dược sĩ đánh giá chính xác mức độ và tư vấn giải pháp thích hợp nhất cho bạn, bạn cho Dược sĩ hỏi thêm một chút nhé:
-1. Bạn đã bị tình trạng này bao lâu rồi, mức độ khó chịu nhiều vào thời điểm nào trong ngày?
-2. Hiện tại bạn có đang dùng thuốc điều trị nào khác (như huyết áp, dạ dày, tiểu đường) không?
-
-*(Nếu bạn muốn tìm hiểu các dòng thực phẩm bảo vệ sức khỏe hoặc phác đồ thảo dược hỗ trợ phục hồi từ gốc, hãy cho Dược sĩ biết nhé!)*`,
+${adviceFollowUp}`,
       detectedAudience: audience,
       detectedConcern: concernTitle,
       recommendedProductIds: [], // KHÔNG ÉP SẢN PHẨM KHI KHÁCH CHƯA HỎI MUA!
@@ -1232,6 +1335,13 @@ ${precautionsNote ? `\n> **${precautionsNote}**\n` : ''}
     prodExplanation = `Để bồi bổ thận khí và tăng cường sinh lực bền vững:
 - 🇻🇳 **Phương án Nội Địa:** **Bổ Thận Âm Nam Dược** — Thảo dược cổ truyền giúp dưỡng thận âm, giảm tiểu đêm và đau mỏi thắt lưng.
 - 🌐 **Phương án Nhập Khẩu:** **Nước Hồng Sâm 6 Năm Tuổi KGC Cheong Kwan Jang (Hàn Quốc)** — Đại bổ nguyên khí, tăng sức bền thể lực và lưu thông khí huyết.`;
+  } else if (/biếng ăn|chậm tăng cân|lười ăn|kém hấp thu|tiêu hóa/.test(textLower) || selectedConcern?.id?.includes('appetite') || (audience === 'kids' && /ăn|tăng cân|tiêu hóa/.test(textLower))) {
+    matchedConcernTitle = 'Trẻ biếng ăn, hấp thu kém & Kích thích tiêu hóa';
+    domesticId = 'vn-02'; // Đông Trùng Hạ Thảo Sapa Traphaco
+    importedId = 'jp-02'; // Tảo Xoắn Vàng Spirulina EX Nhật
+    prodExplanation = `Để kích thích cảm giác thèm ăn tự nhiên và hỗ trợ hoàn thiện hệ tiêu hóa cho bé:
+- 🇻🇳 **Phương án Nội Địa:** **Đông Trùng Hạ Thảo Sapa Traphaco** — Cung cấp 17 loại acid amin thiết yếu và vi chất sinh học kích thích gai vị giác phát triển, giúp trẻ ăn ngon miệng tự nhiên.
+- 🌐 **Phương án Nhập Khẩu:** **Tảo Xoắn Vàng Spirulina EX (Nhật Bản)** — Chứa hơn 50 dưỡng chất toàn diện và lợi khuẩn đường ruột, hỗ trợ chuyển hóa và tăng hấp thu dinh dưỡng tối đa.`;
   } else if (/chiều cao|thấp còi|canxi|d3k2/.test(textLower) || selectedConcern?.id?.includes('height')) {
     matchedConcernTitle = 'Bứt phá chiều cao cho trẻ & Bổ sung Canxi D3K2';
     domesticId = 'vn-01'; // Canxi sụn khớp
@@ -1262,7 +1372,21 @@ ${precautionsNote ? `\n> **${precautionsNote}**\n` : ''}
 - 🌐 **Phương án Nhập Khẩu:** **Nước Hồng Sâm KGC 6 năm tuổi (Hàn Quốc)** — Bồi bổ cơ thể sau ốm, tăng tuần hoàn và giảm mệt mỏi.`;
   }
 
-  const replyMarkdown = `Chào bạn, theo nhu cầu tìm hiểu sản phẩm hỗ trợ cho tình trạng **${matchedConcernTitle}**, Dược sĩ xin tư vấn chi tiết phác đồ khoa học:
+  let productOpening = `Chào bạn, theo nhu cầu tìm hiểu sản phẩm hỗ trợ cho tình trạng **${matchedConcernTitle}**, Dược sĩ xin tư vấn chi tiết phác đồ khoa học:`;
+  let productClosing = `*Bạn có thể xem chi tiết thông tin thành phần, số ĐKSP Bộ Y Tế của 2 sản phẩm đề xuất bên dưới để tham khảo và lựa chọn phương án phù hợp với mình nhé.*`;
+
+  if (isAskingForParents) {
+    productOpening = `${greetingSalutation}, theo nhu cầu tìm hiểu sản phẩm bồi bổ, phục hồi cho **Bác** về tình trạng **${matchedConcernTitle}**, Dược sĩ xin tư vấn phác đồ khoa học, lành tính và an toàn cho người lớn tuổi:`;
+    productClosing = `*Bạn có thể xem chi tiết thông tin thành phần, số ĐKSP Bộ Y Tế của 2 sản phẩm đề xuất bên dưới để tham khảo và lựa chọn phương án chăm sóc tốt nhất cho Bác nhé.*`;
+  } else if (isAskingForKids || audience === 'kids') {
+    productOpening = `${greetingSalutation}, theo nhu cầu tìm hiểu giải pháp an toàn cho **bé** về tình trạng **${matchedConcernTitle}**, Dược sĩ xin tư vấn phương án bổ sung vi chất chuẩn y khoa:`;
+    productClosing = `*Ba/mẹ có thể xem chi tiết thông tin sản phẩm chuẩn Bộ Y Tế bên dưới để tham khảo liều lượng phù hợp cho bé nhé.*`;
+  } else if (audience === 'elderly') {
+    productOpening = `Dược sĩ xin kính chào Bác! Theo nhu cầu tìm hiểu sản phẩm hỗ trợ cho tình trạng **${matchedConcernTitle}**, Dược sĩ xin tư vấn chi tiết phác đồ khoa học, êm dịu dạ dày cho Bác:`;
+    productClosing = `*Bác có thể xem chi tiết thông tin thành phần, số ĐKSP Bộ Y Tế của 2 sản phẩm đề xuất bên dưới để tham khảo lựa chọn phương án phù hợp với Bác nhé.*`;
+  }
+
+  const replyMarkdown = `${productOpening}
 
 ${prodExplanation}
 
@@ -1270,7 +1394,7 @@ ${prodExplanation}
 - Uống sau bữa ăn khoảng 30 phút cùng một ly nước ấm đầy.
 - Duy trì liệu trình tối thiểu 1-2 tháng để hoạt chất phát huy hiệu quả tái tạo bền vững.
 ${precautionsNote ? `\n> **${precautionsNote}**\n` : ''}
-*Bạn có thể xem chi tiết thông tin thành phần, số ĐKSP Bộ Y Tế của 2 sản phẩm đề xuất bên dưới để tham khảo và lựa chọn phương án phù hợp với mình nhé.*`;
+${productClosing}`;
 
   return {
     reply: replyMarkdown,
