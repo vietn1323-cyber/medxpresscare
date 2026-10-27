@@ -907,6 +907,48 @@ export default function App() {
     showToast(`Đã cập nhật sản phẩm: ${updatedProd.name}!`);
   };
 
+  const handleBulkDeleteProducts = (prodIds) => {
+    if (!Array.isArray(prodIds) || prodIds.length === 0) return;
+    setProductsList(prev => prev.filter(p => !prodIds.includes(p.id)));
+    showToast(`✅ Đã xóa ${prodIds.length} sản phẩm thành công!`);
+  };
+
+  const handleBulkUpdateProducts = (updatedProducts) => {
+    if (!Array.isArray(updatedProducts) || updatedProducts.length === 0) return;
+    const map = new Map(updatedProducts.map(p => [p.id, p]));
+    setProductsList(prev => prev.map(p => map.has(p.id) ? map.get(p.id) : p));
+    showToast(`✅ Đã cập nhật hàng loạt ${updatedProducts.length} sản phẩm thành công!`);
+  };
+
+  const handleBulkDeleteArticles = (artIds) => {
+    if (!Array.isArray(artIds) || artIds.length === 0) return;
+    setArticlesList(prev => prev.filter(a => !artIds.includes(a.id)));
+    showToast(`✅ Đã xóa ${artIds.length} bài viết thành công!`);
+  };
+
+  const handleBulkUpdateArticles = (updatedArticles) => {
+    if (!Array.isArray(updatedArticles) || updatedArticles.length === 0) return;
+    const map = new Map(updatedArticles.map(a => [a.id, a]));
+    setArticlesList(prev => prev.map(a => map.has(a.id) ? map.get(a.id) : a));
+    showToast(`✅ Đã cập nhật hàng loạt ${updatedArticles.length} bài viết thành công!`);
+  };
+
+  const handleBulkUpdateOrdersStatus = (orderIds, newStatus) => {
+    if (!Array.isArray(orderIds) || orderIds.length === 0) return;
+    setOrders(prev => prev.map(o => {
+      if (orderIds.includes(o.id)) {
+        if (newStatus === 'confirmed') {
+          return initializeOrderTracking(o, o.shippingMethod, 'confirm');
+        } else if (newStatus === 'shipping') {
+          return stepOrderToShipping(o);
+        }
+        return { ...o, status: newStatus };
+      }
+      return o;
+    }));
+    showToast(`✅ Đã cập nhật trạng thái ${orderIds.length} đơn hàng sang "${newStatus}"!`);
+  };
+
   // Quản lý Số ĐKSP Bộ Y Tế (Thủ công & Hàng loạt)
   const handleAddRegistration = (regNumber, regData) => {
     setRegistrationsDb(prev => ({ ...prev, [regNumber]: regData }));
@@ -1691,10 +1733,13 @@ export default function App() {
           onClose={() => setIsAdminOpen(false)}
           orders={orders}
           onUpdateOrderStatus={handleUpdateOrderStatus}
+          onBulkUpdateOrdersStatus={handleBulkUpdateOrdersStatus}
           products={productsList}
           onAddProduct={handleAddProduct}
           onDeleteProduct={handleDeleteProduct}
           onUpdateProduct={handleUpdateProduct}
+          onBulkDeleteProducts={handleBulkDeleteProducts}
+          onBulkUpdateProducts={handleBulkUpdateProducts}
           onBulkImportProducts={handleBulkImportProducts}
           registrations={registrationsDb}
           onAddRegistration={handleAddRegistration}
@@ -1710,6 +1755,8 @@ export default function App() {
           onAddArticle={handleAddArticle}
           onUpdateArticle={handleUpdateArticle}
           onDeleteArticle={handleDeleteArticle}
+          onBulkDeleteArticles={handleBulkDeleteArticles}
+          onBulkUpdateArticles={handleBulkUpdateArticles}
           vouchers={vouchersList}
           onAddVoucher={handleAddVoucher}
           onUpdateVoucher={handleUpdateVoucher}
