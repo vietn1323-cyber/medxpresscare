@@ -62,9 +62,11 @@ export const AdminLoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
             <X className="w-5 h-5" />
           </button>
 
-          <div className="w-14 h-14 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-400 mx-auto mb-3 shadow-inner">
-            <Lock className="w-7 h-7" />
-          </div>
+          <img 
+            src="/logo-icon.png" 
+            alt="MedXpress Care" 
+            className="w-14 h-14 object-contain rounded-2xl mx-auto mb-3 shadow-md bg-white p-1" 
+          />
 
           <span className="text-[10px] uppercase tracking-widest font-extrabold bg-emerald-950 text-emerald-400 px-2.5 py-1 rounded-full border border-emerald-800">
             Khu Vực Dược Sĩ & Quản Trị
