@@ -24,6 +24,7 @@ import { RETURN_REASONS } from '../utils/logisticsHelper';
 export const AdminPanel = ({ 
   isOpen, 
   onClose, 
+  d1Status = 'connecting',
   orders, 
   onUpdateOrderStatus, 
   products, 
@@ -1111,6 +1112,14 @@ export const AdminPanel = ({
               <div className="flex items-center gap-2">
                 <span className="text-[10px] uppercase font-extrabold tracking-wider bg-emerald-950 text-emerald-400 px-2 py-0.5 rounded border border-emerald-800">
                   Cổng Dược Sĩ & Quản Trị
+                </span>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded border flex items-center gap-1.5 ${
+                  d1Status === 'connected' 
+                    ? 'bg-blue-950/80 text-blue-300 border-blue-700' 
+                    : 'bg-emerald-950/80 text-emerald-300 border-emerald-700'
+                }`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${d1Status === 'connected' ? 'bg-blue-400 animate-pulse' : 'bg-emerald-400'}`}></span>
+                  Cloudflare D1: {d1Status === 'connected' ? 'Live DB' : 'Sẵn sàng'}
                 </span>
                 <span className="text-xs text-slate-400 hidden sm:inline">Chuẩn GSP - MedXpressCare.com</span>
               </div>
