@@ -1,0 +1,19 @@
+{
+  "name": "medxpresscare",
+  "main": "worker.js",
+  "compatibility_date": "2026-10-27",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "medxpress_db",
+      "database_id": "5b89c664-cab0-49b3-b8f5-33df0e448862"
+    }
+  ],
+  "ai": {
+    "binding": "AI"
+  }
+}
