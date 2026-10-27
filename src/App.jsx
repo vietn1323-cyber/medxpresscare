@@ -950,6 +950,30 @@ export default function App() {
   };
 
   // Quản lý Số ĐKSP Bộ Y Tế (Thủ công & Hàng loạt)
+  const handleManualSyncD1 = async () => {
+    try {
+      showToast('🔄 Đang đồng bộ toàn bộ dữ liệu lên Cloudflare D1...');
+      await fetch('/api/init-db').catch(() => null);
+      const ok = await apiClient.batchSync({
+        products: productsList,
+        orders: orders,
+        articles: articlesList,
+        reviews: reviewsList,
+        customers: customersList,
+        storeConfig: storeConfig
+      });
+      if (ok) {
+        setD1Status('connected');
+        showToast('✅ Đã đồng bộ thành công Sản phẩm, Đơn hàng, Bài viết lên Cloudflare D1!');
+      } else {
+        showToast('⚠️ Đồng bộ D1 chưa hoàn tất, vui lòng thử lại.');
+      }
+    } catch (err) {
+      console.error('Manual sync error:', err);
+      showToast('⚠️ Lỗi kết nối khi đồng bộ D1.');
+    }
+  };
+
   const handleAddRegistration = (regNumber, regData) => {
     setRegistrationsDb(prev => ({ ...prev, [regNumber]: regData }));
     showToast(`Đã thêm số ĐKSP: ${regNumber}!`);
@@ -1730,6 +1754,7 @@ export default function App() {
         <AdminPanel
           isOpen={isAdminOpen}
           d1Status={d1Status}
+          onManualSyncD1={handleManualSyncD1}
           onClose={() => setIsAdminOpen(false)}
           orders={orders}
           onUpdateOrderStatus={handleUpdateOrderStatus}
