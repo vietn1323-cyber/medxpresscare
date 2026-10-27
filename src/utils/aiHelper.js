@@ -103,9 +103,34 @@ export const callGeminiWithFallback = async ({
 };
 
 /**
- * Kiểm tra kết nối API Key AI (Hỗ trợ tự động nhận diện và kích hoạt Model khả dụng)
+ * Kiểm tra kết nối API Key AI (Hỗ trợ Cloudflare Workers AI, Google Gemini, OpenAI)
  */
 export const testAiConnection = async (apiKey, provider = 'gemini', model = 'gemini-2.5-flash') => {
+  // 1. Kiểm tra Cloudflare Workers AI (Chạy trực tiếp trên Cloudflare không cần API Key)
+  if (provider === 'cloudflare_ai') {
+    try {
+      const res = await fetch('/api/ai-pharmacist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userMessage: 'Kiểm tra kết nối Cloudflare Workers AI' })
+      });
+      if (res.ok) {
+        return {
+          success: true,
+          activeModel: model || '@cf/meta/llama-3.1-8b-instruct',
+          message: 'Kết nối Cloudflare Workers AI thành công! (Mô hình Meta Llama 3.1 8B Instruct, 10.000 lượt tính toán AI miễn phí mỗi ngày trên Cloudflare)'
+        };
+      }
+      const err = await res.json().catch(() => ({}));
+      return {
+        success: false,
+        message: err.error || 'Chưa gắn kết binding "AI" trên Cloudflare Pages (Settings -> Bindings -> Workers AI -> Tên biến: AI).'
+      };
+    } catch (e) {
+      return { success: false, message: 'Lỗi kiểm tra Cloudflare Workers AI: ' + e.message };
+    }
+  }
+
   if (!apiKey || !apiKey.trim()) {
     return { success: false, message: 'Vui lòng nhập API Key trước khi kiểm tra!' };
   }
@@ -491,7 +516,63 @@ ${rawContent ? rawContent.slice(0, 4000) : `Vui lòng phân tích chủ đề t�
     }
   }
 
-  // 2. GIẢI THUẬT TỰ ĐỘNG THÔNG MINH DỰ PHÒNG (Khi chưa cấu hình API Key hoặc mạng offline)
+  // 2. Thử gọi Cloudflare Workers AI (100% Miễn phí không cần API Key)
+  try {
+    const cfRes = await fetch('/api/ai-writer', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        topic: targetKeyword || (rawContent ? rawContent.slice(0, 150) : 'Cẩm nang sức khỏe'),
+        referenceText: rawContent || sourceUrl || ''
+      })
+    });
+
+    if (cfRes.ok) {
+      const cfData = await cfRes.json();
+      if (cfData.success && cfData.data) {
+        const d = cfData.data;
+        const artTitle = d.title || `Cẩm nang chuyên sâu về ${targetKeyword || 'Sức khỏe'}`;
+        const artSlug = d.slug || slugify(artTitle);
+        const artSummary = d.summary || `Hướng dẫn chuyên sâu từ Dược sĩ MedXpressCare về ${targetKeyword || artTitle}.`;
+        const artMetaTitle = d.metaTitle || (artTitle.length > 55 ? artTitle.slice(0, 55) : artTitle + ' | MedXpressCare');
+        const artMetaDesc = d.metaDescription || (artSummary.length > 155 ? artSummary.slice(0, 155) : artSummary);
+
+        const cfArticle = {
+          id: 'art-' + Date.now(),
+          title: artTitle,
+          slug: artSlug,
+          category: d.category || 'Chuyên Gia Tư Vấn',
+          author: 'Dược sĩ Lâm sàng MedXpressCare',
+          authorRole: 'Hội đồng Cố vấn Y Dược MedXpressCare',
+          publishedAt: new Date().toISOString().split('T')[0],
+          readTime: d.readTime || '6 phút đọc',
+          image: d.image || 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=900&auto=format&fit=crop&q=80',
+          imageAlt: `Hình ảnh chuyên môn chuẩn y khoa cho bài viết ${artTitle}`,
+          summary: artSummary,
+          content: d.content || '',
+          tags: Array.isArray(d.tags) && d.tags.length > 0 ? d.tags : [targetKeyword || 'sức khỏe', 'y khoa', 'dược sĩ tư vấn'],
+          status: 'published',
+          featured: false,
+          metaTitle: artMetaTitle,
+          metaDescription: artMetaDesc,
+          focusKeyword: (targetKeyword || artTitle).toLowerCase(),
+          secondaryKeywords: (d.tags || []).join(', '),
+          schemaType: 'MedicalWebPage',
+          canonicalUrl: `https://medxpresscare.com/cam-nang/${artSlug}`,
+          sourceUrl: sourceUrl || '',
+          aiModel: '@cf/meta/llama-3.1-8b-instruct (Cloudflare Workers AI)'
+        };
+
+        const seoCheck = calculateSeoScore(cfArticle);
+        cfArticle.seoScore = seoCheck.score;
+        return cfArticle;
+      }
+    }
+  } catch {
+    // Cloudflare AI not available or offline -> fallback to local smart generator
+  }
+
+  // 3. GIẢI THUẬT TỰ ĐỘNG THÔNG MINH DỰ PHÒNG (Khi chưa cấu hình API Key hoặc mạng offline)
   // Phân tích từ khóa từ URL hoặc text thô để tạo một bài viết chuẩn SEO 100%
   const extractedKeyword = targetKeyword.trim() || extractKeywordFromUrl(sourceUrl) || 'chăm sóc sức khỏe y khoa';
   const cleanKeyword = extractedKeyword.charAt(0).toUpperCase() + extractedKeyword.slice(1);
@@ -753,7 +834,53 @@ QUY TẮC TƯ VẤN:
     }
   }
 
-  // 2. GIẢI THUẬT DƯỢC LÝ HỌC LÂM SÀNG THÔNG MINH DỰ PHÒNG (Clinical Rule Engine)
+  // 2. Thử gọi Cloudflare Workers AI (100% Miễn phí không cần API Key)
+  try {
+    const catalogSummary = (products && products.length > 0 ? products : [])
+      .map(p => {
+        const catStr = Array.isArray(p.categories) && p.categories.length > 0 ? p.categories.join(', ') : (p.category || '');
+        return `- Mã: ${p.id} | Tên: ${p.name} | Loại: ${p.originType === 'domestic' ? 'Nội địa VN' : 'Nhập ngoại (' + (p.countryName || 'Chính ngạch') + ')'} | Giá: ${p.price.toLocaleString('vi-VN')}đ | Nhóm: ${catStr}`;
+      })
+      .join('\n');
+
+    const cfRes = await fetch('/api/ai-pharmacist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userMessage: query,
+        catalogSummary,
+        targetAudience,
+        selectedCondition,
+        chatHistory: (chatHistory || []).slice(-4)
+      })
+    });
+
+    if (cfRes.ok) {
+      const cfData = await cfRes.json();
+      if (cfData.success && cfData.reply) {
+        let recIds = [];
+        const replyLower = cfData.reply.toLowerCase();
+        for (const p of products) {
+          if (replyLower.includes(p.name.toLowerCase()) || replyLower.includes(p.id.toLowerCase())) {
+            recIds.push(p.id);
+          }
+        }
+        if (recIds.length === 0) recIds = ['vn-04', 'au-01'];
+
+        return {
+          reply: cfData.reply,
+          detectedAudience: targetAudience || 'general',
+          detectedConcern: 'Dược Sĩ AI Cloudflare',
+          recommendedProductIds: recIds.slice(0, 2),
+          precautions: ''
+        };
+      }
+    }
+  } catch {
+    // Cloudflare AI not available or offline -> fallback to local clinical engine
+  }
+
+  // 3. GIẢI THUẬT DƯỢC LÝ HỌC LÂM SÀNG THÔNG MINH DỰ PHÒNG (Clinical Rule Engine)
   // Tự động phân tích từ khóa, đối tượng, mối quan tâm, tương tác thuốc và trả về lời khuyên y khoa chi tiết
   const textLower = query.toLowerCase();
 
