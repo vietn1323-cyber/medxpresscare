@@ -4692,11 +4692,16 @@ export const AdminPanel = ({
                     <div>
                       <label className="block text-slate-700 font-semibold mb-1">Nhà cung cấp AI</label>
                       <select
-                        value={tempConfig.aiProvider || 'gemini'}
-                        onChange={(e) => setTempConfig({ ...tempConfig, aiProvider: e.target.value })}
+                        value={tempConfig.aiProvider || 'cloudflare_ai'}
+                        onChange={(e) => setTempConfig({ 
+                          ...tempConfig, 
+                          aiProvider: e.target.value,
+                          aiModel: e.target.value === 'cloudflare_ai' ? '@cf/meta/llama-3.1-8b-instruct' : (e.target.value === 'openai' ? 'gpt-4o-mini' : 'gemini-2.5-flash')
+                        })}
                         className="w-full px-3 py-2 bg-white border rounded-xl font-bold text-slate-800 text-xs"
                       >
-                        <option value="gemini">Google Gemini (Miễn phí - Khuyên dùng)</option>
+                        <option value="cloudflare_ai">⚡ Cloudflare Workers AI (Miễn phí 10.000 lượt/ngày - Không cần Key)</option>
+                        <option value="gemini">Google Gemini (Miễn phí qua API Key)</option>
                         <option value="openai">OpenAI (ChatGPT)</option>
                       </select>
                     </div>
@@ -4704,11 +4709,17 @@ export const AdminPanel = ({
                     <div>
                       <label className="block text-slate-700 font-semibold mb-1">Mô hình (Model)</label>
                       <select
-                        value={tempConfig.aiModel || 'gemini-2.5-flash'}
+                        value={tempConfig.aiModel || (tempConfig.aiProvider === 'cloudflare_ai' ? '@cf/meta/llama-3.1-8b-instruct' : 'gemini-2.5-flash')}
                         onChange={(e) => setTempConfig({ ...tempConfig, aiModel: e.target.value })}
                         className="w-full px-3 py-2 bg-white border rounded-xl font-bold text-slate-800 text-xs"
                       >
-                        {tempConfig.aiProvider === 'openai' ? (
+                        {tempConfig.aiProvider === 'cloudflare_ai' ? (
+                          <>
+                            <option value="@cf/meta/llama-3.1-8b-instruct">Meta Llama 3.1 8B Instruct (Khuyên dùng - Nhanh & Chuẩn Y khoa)</option>
+                            <option value="@cf/google/gemma-7b-it">Google Gemma 7B Instruct</option>
+                            <option value="@cf/qwen/qwen1.5-14b-chat-awq">Qwen 1.5 14B Chat AWQ</option>
+                          </>
+                        ) : tempConfig.aiProvider === 'openai' ? (
                           <>
                             <option value="gpt-4o-mini">GPT-4o Mini (Nhanh & Tối ưu chi phí)</option>
                             <option value="gpt-4o">GPT-4o (Chất lượng cao nhất)</option>
@@ -4726,10 +4737,12 @@ export const AdminPanel = ({
                     </div>
 
                     <div>
-                      <label className="block text-slate-700 font-semibold mb-1">API Key AI</label>
+                      <label className="block text-slate-700 font-semibold mb-1">
+                        API Key AI {tempConfig.aiProvider === 'cloudflare_ai' ? '(Không bắt buộc)' : ''}
+                      </label>
                       <input
                         type="password"
-                        placeholder="Dán mã API Key tại đây..."
+                        placeholder={tempConfig.aiProvider === 'cloudflare_ai' ? "Không cần API Key (Chạy trực tiếp trên Cloudflare)" : "Dán mã API Key tại đây..."}
                         value={tempConfig.aiApiKey || ''}
                         onChange={(e) => setTempConfig({ ...tempConfig, aiApiKey: e.target.value })}
                         className="w-full px-3 py-2 bg-white border rounded-xl font-mono text-xs"
