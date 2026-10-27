@@ -76,15 +76,15 @@ export default function App() {
   const [productsList, setProductsList] = useState(() => {
     try {
       const saved = localStorage.getItem('medxpress_custom_products');
-      if (saved) {
+      if (saved !== null) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           return parsed.map(p => {
             if (!Array.isArray(p.categories) || p.categories.length === 0) {
               return {
                 ...p,
-                categories: p.category ? [p.category] : ['bone_joint'],
-                category: p.category || 'bone_joint'
+                categories: p.category ? [p.category] : ['bo-nao-than-kinh'],
+                category: p.category || 'bo-nao-than-kinh'
               };
             }
             return p;
@@ -210,9 +210,9 @@ export default function App() {
   const [articlesList, setArticlesList] = useState(() => {
     try {
       const saved = localStorage.getItem('medxpress_articles_db');
-      if (saved) {
+      if (saved !== null) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) return parsed;
       }
       return DEFAULT_ARTICLES;
     } catch {
@@ -332,9 +332,9 @@ export default function App() {
   const [reviewsList, setReviewsList] = useState(() => {
     try {
       const saved = localStorage.getItem('medxpress_reviews_db');
-      if (saved) {
+      if (saved !== null) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) return parsed;
       }
       return INITIAL_REVIEWS;
     } catch {
@@ -441,8 +441,13 @@ export default function App() {
           setD1Status('connected');
 
           // Products
-          if (Array.isArray(cloudData.products) && cloudData.products.length > 0) {
+          if (Array.isArray(cloudData.products)) {
             setProductsList(cloudData.products);
+            try {
+              localStorage.setItem('medxpress_custom_products', JSON.stringify(cloudData.products));
+            } catch (e) {
+              console.error(e);
+            }
           } else {
             apiClient.saveProducts(productsList);
           }
@@ -450,20 +455,35 @@ export default function App() {
           // Orders
           if (Array.isArray(cloudData.orders)) {
             setOrders(cloudData.orders);
+            try {
+              localStorage.setItem('medxpress_admin_orders', JSON.stringify(cloudData.orders));
+            } catch (e) {
+              console.error(e);
+            }
           } else {
             apiClient.saveOrdersList(orders);
           }
 
           // Articles
-          if (Array.isArray(cloudData.articles) && cloudData.articles.length > 0) {
+          if (Array.isArray(cloudData.articles)) {
             setArticlesList(cloudData.articles);
+            try {
+              localStorage.setItem('medxpress_articles_db', JSON.stringify(cloudData.articles));
+            } catch (e) {
+              console.error(e);
+            }
           } else {
             apiClient.saveArticles(articlesList);
           }
 
           // Reviews
-          if (Array.isArray(cloudData.reviews) && cloudData.reviews.length > 0) {
+          if (Array.isArray(cloudData.reviews)) {
             setReviewsList(cloudData.reviews);
+            try {
+              localStorage.setItem('medxpress_reviews_db', JSON.stringify(cloudData.reviews));
+            } catch (e) {
+              console.error(e);
+            }
           } else {
             apiClient.saveReviews(reviewsList);
           }
@@ -476,8 +496,13 @@ export default function App() {
           }
 
           // Customers
-          if (Array.isArray(cloudData.customers) && cloudData.customers.length > 0) {
+          if (Array.isArray(cloudData.customers)) {
             setCustomersList(cloudData.customers);
+            try {
+              localStorage.setItem('medxpress_customers_db', JSON.stringify(cloudData.customers));
+            } catch (e) {
+              console.error(e);
+            }
           } else {
             apiClient.saveCustomers(customersList);
           }
@@ -950,19 +975,52 @@ export default function App() {
   };
 
   const handleDeleteProduct = (prodId) => {
-    setProductsList(prev => prev.filter(p => p.id !== prodId));
+    const updated = productsList.filter(p => p.id !== prodId);
+    setProductsList(updated);
+    try {
+      localStorage.setItem('medxpress_custom_products', JSON.stringify(updated));
+    } catch (e) {
+      console.error(e);
+    }
+    apiClient.saveProductsNow(updated);
     showToast(`Đã xóa sản phẩm khỏi danh sách.`);
   };
 
   const handleUpdateProduct = (updatedProd) => {
-    setProductsList(prev => prev.map(p => p.id === updatedProd.id ? updatedProd : p));
+    const updated = productsList.map(p => p.id === updatedProd.id ? updatedProd : p);
+    setProductsList(updated);
+    try {
+      localStorage.setItem('medxpress_custom_products', JSON.stringify(updated));
+    } catch (e) {
+      console.error(e);
+    }
+    apiClient.saveProductsNow(updated);
     showToast(`Đã cập nhật sản phẩm: ${updatedProd.name}!`);
   };
 
   const handleBulkDeleteProducts = (prodIds) => {
     if (!Array.isArray(prodIds) || prodIds.length === 0) return;
-    setProductsList(prev => prev.filter(p => !prodIds.includes(p.id)));
+    const updated = productsList.filter(p => !prodIds.includes(p.id));
+    setProductsList(updated);
+    try {
+      localStorage.setItem('medxpress_custom_products', JSON.stringify(updated));
+    } catch (e) {
+      console.error(e);
+    }
+    apiClient.saveProductsNow(updated);
     showToast(`✅ Đã xóa ${prodIds.length} sản phẩm thành công!`);
+  };
+
+  const handleResetProductsToDefault = () => {
+    if (!window.confirm('Khôi phục lại 21 sản phẩm mẫu ban đầu của MedXpressCare?')) return;
+    setProductsList(PRODUCTS);
+    try {
+      localStorage.setItem('medxpress_custom_products', JSON.stringify(PRODUCTS));
+    } catch (e) {
+      console.error(e);
+    }
+    apiClient.saveProductsNow(PRODUCTS);
+    showToast('✅ Đã khôi phục 21 sản phẩm mẫu thành công!');
   };
 
   const handleBulkUpdateProducts = (updatedProducts) => {
@@ -1851,6 +1909,7 @@ export default function App() {
           onBulkDeleteProducts={handleBulkDeleteProducts}
           onBulkUpdateProducts={handleBulkUpdateProducts}
           onBulkImportProducts={handleBulkImportProducts}
+          onResetProductsToDefault={handleResetProductsToDefault}
           registrations={registrationsDb}
           onAddRegistration={handleAddRegistration}
           onUpdateRegistration={handleUpdateRegistration}

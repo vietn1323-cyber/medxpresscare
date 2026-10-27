@@ -39,6 +39,7 @@ export const AdminPanel = ({
   onBulkDeleteProducts,
   onBulkUpdateProducts,
   onBulkImportProducts,
+  onResetProductsToDefault,
   registrations = {},
   onAddRegistration,
   onUpdateRegistration,
@@ -2771,6 +2772,17 @@ export const AdminPanel = ({
                     <FileSpreadsheet className="w-3.5 h-3.5 text-blue-600" />
                     <span>Nhập File Hàng Loạt</span>
                   </button>
+                  {onResetProductsToDefault && (
+                    <button
+                      type="button"
+                      onClick={onResetProductsToDefault}
+                      className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl flex items-center gap-1.5 border border-slate-200 transition-all cursor-pointer"
+                      title="Khôi phục lại danh sách 21 sản phẩm mẫu ban đầu của MedXpressCare"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Khôi Phục SP Mẫu</span>
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => setShowAddProduct(!showAddProduct)}
@@ -3466,11 +3478,38 @@ export const AdminPanel = ({
                     </tbody>
                   </table>
                 </div>
-                {filteredAdminProducts.length === 0 && (
+                {products.length === 0 ? (
+                  <div className="p-12 text-center text-slate-500 space-y-3 bg-slate-50/50 rounded-2xl m-3 border border-dashed border-slate-200">
+                    <Package className="w-12 h-12 text-slate-300 mx-auto" />
+                    <div className="font-bold text-sm text-slate-700">Kho sản phẩm hiện đang trống (0 sản phẩm)</div>
+                    <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                      Bạn đã xóa sạch các sản phẩm mẫu. Bạn có thể thêm sản phẩm mới thủ công, nhập file CSV hàng loạt hoặc khôi phục lại dữ liệu mẫu bất kỳ lúc nào.
+                    </p>
+                    <div className="flex items-center justify-center gap-2 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowAddProduct(true)}
+                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl cursor-pointer"
+                      >
+                        Thêm Sản Phẩm Mới
+                      </button>
+                      {onResetProductsToDefault && (
+                        <button
+                          type="button"
+                          onClick={onResetProductsToDefault}
+                          className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 cursor-pointer flex items-center gap-1.5 shadow-xs"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
+                          <span>Khôi Phục 21 SP Mẫu</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ) : filteredAdminProducts.length === 0 ? (
                   <div className="p-10 text-center text-slate-400 text-xs">
                     Không tìm thấy sản phẩm nào phù hợp với bộ lọc tìm kiếm.
                   </div>
-                )}
+                ) : null}
               </div>
 
                 </div>
@@ -3512,6 +3551,17 @@ export const AdminPanel = ({
                     <FileSpreadsheet className="w-3.5 h-3.5 text-blue-600" />
                     <span>Nhập File Hàng Loạt</span>
                   </button>
+                  {onResetProductsToDefault && (
+                    <button
+                      type="button"
+                      onClick={onResetProductsToDefault}
+                      className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl flex items-center gap-1.5 border border-slate-200 transition-all cursor-pointer"
+                      title="Khôi phục lại danh sách 21 sản phẩm mẫu ban đầu của MedXpressCare"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Khôi Phục SP Mẫu</span>
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={handleOpenAddReg}

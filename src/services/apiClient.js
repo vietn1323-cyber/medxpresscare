@@ -54,6 +54,22 @@ export const apiClient = {
     });
   },
 
+  // Lưu sản phẩm ngay lập tức (dùng khi xóa, xóa hàng loạt để tránh mất dữ liệu khi F5 nhanh)
+  async saveProductsNow(products) {
+    if (debounceTimers['products']) {
+      clearTimeout(debounceTimers['products']);
+    }
+    try {
+      await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(products)
+      });
+    } catch (e) {
+      console.warn('D1 Sync Products Now error:', e);
+    }
+  },
+
   // Lưu danh sách đơn hàng (trạng thái, logistics tracking, kiểm định GSP) - Debounced
   saveOrdersList(orders) {
     debounceCall('orders', async () => {
