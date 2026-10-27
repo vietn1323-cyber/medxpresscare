@@ -38,6 +38,7 @@ export const AdminPanel = ({
   onBulkImportRegistrations,
   storeConfig,
   onUpdateStoreConfig,
+  onClearTestData,
   customers = [],
   onBonusPoints,
   articles = [],
@@ -3964,6 +3965,13 @@ export const AdminPanel = ({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
+                      {customers.length === 0 && (
+                        <tr>
+                          <td colSpan="6" className="p-8 text-center text-slate-400">
+                            Chưa có khách hàng đăng ký tài khoản. Danh sách sẽ tự động cập nhật khi khách hàng tạo tài khoản hoặc đặt hàng.
+                          </td>
+                        </tr>
+                      )}
                       {customers.map(c => (
                         <tr key={c.id} className="hover:bg-slate-50 transition-colors">
                           <td className="p-3.5 font-bold text-slate-900">
@@ -4751,6 +4759,31 @@ export const AdminPanel = ({
                     </div>
                   )}
                 </div>
+              </div>
+
+              {/* Dọn Dẹp Dữ Liệu Thử Nghiệm */}
+              <div className="p-4 bg-rose-50/80 rounded-2xl border border-rose-200/90 space-y-2 mt-4">
+                <div className="flex items-center gap-2 text-rose-900 font-extrabold text-xs">
+                  <Trash2 className="w-4 h-4 text-rose-600" />
+                  <span>Dọn Dẹp & Xóa Dữ Liệu Thử Nghiệm</span>
+                </div>
+                <p className="text-[11px] text-rose-700">
+                  Xóa sạch toàn bộ các đơn hàng thử nghiệm, tài khoản khách hàng mẫu và làm sạch bộ nhớ tạm (localStorage) để chuẩn bị cho việc bán hàng thực tế.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm('Bạn có chắc chắn muốn xóa toàn bộ dữ liệu đơn hàng và khách hàng thử nghiệm không? Thao tác này không thể hoàn tác.')) {
+                      if (onClearTestData) {
+                        onClearTestData();
+                      }
+                    }
+                  }}
+                  className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-1.5"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Xóa Sạch Dữ Liệu Thử Nghiệm Ngay</span>
+                </button>
               </div>
 
               <div className="pt-2">
