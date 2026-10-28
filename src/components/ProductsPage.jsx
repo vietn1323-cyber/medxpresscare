@@ -71,8 +71,8 @@ export const ProductsPage = ({
             <span className="font-semibold text-slate-700">Sản Phẩm</span>
             <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
             <span className="font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-              {originFilter === 'domestic' && '🇻🇳 Hàng Nội Địa Uy Tín'}
-              {originFilter === 'imported' && '🌍 Hàng Nhập Ngoại Chính Ngạch'}
+              {originFilter === 'domestic' && 'Hàng Nội Địa Uy Tín'}
+              {originFilter === 'imported' && 'Hàng Nhập Khẩu Chính Ngạch'}
               {originFilter === 'all' && 'Tất Cả Sản Phẩm'}
             </span>
           </div>
@@ -101,14 +101,14 @@ export const ProductsPage = ({
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md bg-white/15 border border-white/20">
               {originFilter === 'domestic' && (
                 <>
-                  <span className="text-base">🇻🇳</span>
+                  <ShieldCheck className="w-4 h-4 text-rose-300" />
                   <span>Chuẩn GMP-WHO • Dược Liệu Việt Nam</span>
                 </>
               )}
               {originFilter === 'imported' && (
                 <>
-                  <span className="text-base">🌍</span>
-                  <span>Chính Ngạch Quốc Tế • USA • Úc • Nhật • Hàn • Đức</span>
+                  <Globe2 className="w-4 h-4 text-sky-300" />
+                  <span>Chính Ngạch Quốc Tế • Mỹ • Úc • Nhật • Hàn • Đức</span>
                 </>
               )}
               {originFilter === 'all' && (

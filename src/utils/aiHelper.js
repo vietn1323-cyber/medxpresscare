@@ -1369,49 +1369,49 @@ ${adviceFollowUp}`,
     domesticId = 'vn-01'; // Khớp Bách Niên Kiện
     importedId = 'us-01'; // Glucosamine MSM Kirkland Mỹ
     prodExplanation = `Để phục hồi sụn khớp an toàn từ gốc mà không ảnh hưởng dạ dày, Dược sĩ gợi ý 2 giải pháp chuẩn hóa cho bạn lựa chọn:
-- 🇻🇳 **Phương án Nội Địa:** **Viên Khớp Bách Niên Kiện** — Chiết xuất Cây Móng Quỷ và Vỏ Liễu Trắng đạt chuẩn GMP-WHO, hỗ trợ giảm đau nhức tự nhiên, an toàn cho dạ dày người Việt.
+- 🌿 **Phương án Nội Địa:** **Viên Khớp Bách Niên Kiện** — Chiết xuất Cây Móng Quỷ và Vỏ Liễu Trắng đạt chuẩn GMP-WHO, hỗ trợ giảm đau nhức tự nhiên, an toàn cho dạ dày người Việt.
 - 🌐 **Phương án Nhập Khẩu:** **Glucosamine HCL with MSM Kirkland (Mỹ)** — Hộp lớn chuẩn FDA Hoa Kỳ, cung cấp hàm lượng cao 1500mg Glucosamine kết hợp hoạt chất chống viêm khớp MSM tái tạo bao hoạt dịch dẻo dai.`;
   } else if (/mắt|khô mắt|mỏi mắt|nhòe|ánh sáng xanh|cận/.test(textLower) || selectedConcern?.id?.includes('eyes')) {
     matchedConcernTitle = 'Khô mỏi mắt & Suy giảm thị lực do màn hình';
     domesticId = 'vn-04'; // Cebraton Traphaco
     importedId = 'jp-03'; // DHC Lutein Nhật
     prodExplanation = `Để bảo vệ mắt khỏi ánh sáng xanh và chấm dứt tình trạng khô cay nhức mắt:
-- 🇻🇳 **Phương án Nội Địa:** **Hoạt Huyết Dưỡng Não Cebraton Traphaco** — Tăng cường lưu thông tuần hoàn vi mạch đáy mắt và nuôi dưỡng tế bào thần kinh thị giác.
+- 🌿 **Phương án Nội Địa:** **Hoạt Huyết Dưỡng Não Cebraton Traphaco** — Tăng cường lưu thông tuần hoàn vi mạch đáy mắt và nuôi dưỡng tế bào thần kinh thị giác.
 - 🌐 **Phương án Nhập Khẩu:** **Viên Uống Bổ Mắt DHC Lutein Quang Học (Nhật Bản)** — Chứa 16mg Lutein chiết xuất từ hoa cúc vạn thọ tự nhiên, tái lập màng lọc ánh sáng xanh cho điểm vàng võng mạc.`;
   } else if (/gan|men gan|rượu|bia|mẩn ngứa|mề đay|nóng trong/.test(textLower) || selectedConcern?.id?.includes('liver')) {
     matchedConcernTitle = 'Nóng gan, Men gan cao & Tổn thương gan do bia rượu';
     domesticId = 'vn-03'; // Curcumin OIC New
     importedId = 'us-02'; // Silymarin Milk Thistle Now Foods
     prodExplanation = `Để bảo vệ màng tế bào gan và hạ men gan hiệu quả:
-- 🇻🇳 **Phương án Nội Địa:** **Tinh Nghệ Nano Curcumin OIC New** — Hạt nano siêu nhỏ thẩm thấu trực tiếp, hỗ trợ chống oxy hóa và bảo vệ niêm mạc tiêu hóa, giải độc gan.
+- 🌿 **Phương án Nội Địa:** **Tinh Nghệ Nano Curcumin OIC New** — Hạt nano siêu nhỏ thẩm thấu trực tiếp, hỗ trợ chống oxy hóa và bảo vệ niêm mạc tiêu hóa, giải độc gan.
 - 🌐 **Phương án Nhập Khẩu:** **Silymarin Kế Sữa Milk Thistle 1000mg Now Foods (Mỹ)** — Chiết xuất Cây Kế Sữa chuẩn hóa giúp hạ men gan và tạo lớp màng bảo vệ tế bào gan trước độc tố bia rượu.`;
   } else if (/da|nám|tàn nhang|collagen|sạm|chảy xệ|lão hóa/.test(textLower) || selectedConcern?.id?.includes('skin')) {
     matchedConcernTitle = 'Sạm nám, lão hóa sớm & Suy giảm Collagen';
     domesticId = 'vn-03'; // Nano Curcumin OIC New
     importedId = 'jp-01'; // Viên Trắng Da DHC Coix Nhật
     prodExplanation = `Để cải thiện làn da sáng khỏe, mờ thâm sạm từ bên trong:
-- 🇻🇳 **Phương án Nội Địa:** **Tinh Nghệ Nano Curcumin OIC New** — Hỗ trợ ức chế enzyme hắc sắc tố Melanin và làm sáng đều màu da.
+- 🌿 **Phương án Nội Địa:** **Tinh Nghệ Nano Curcumin OIC New** — Hỗ trợ ức chế enzyme hắc sắc tố Melanin và làm sáng đều màu da.
 - 🌐 **Phương án Nhập Khẩu:** **Viên Trắng Da DHC Coix Chiết Xuất Ý Dĩ (Nhật Bản)** — Tinh chất Ý Dĩ cô đặc gấp 13 lần giúp da mềm mượt và ức chế nám sạm do ánh nắng.`;
   } else if (/nội tiết|bốc hỏa|khô hạn|mãn kinh|kinh nguyệt/.test(textLower) || selectedConcern?.id?.includes('hormone')) {
     matchedConcernTitle = 'Rối loạn nội tiết tố nữ & Tiền mãn kinh';
     domesticId = 'vn-05'; // Sâm Ngọc Linh K5
     importedId = 'au-03'; // Hoa Anh Thảo Blackmores EPO Úc
     prodExplanation = `Để điều hòa nội tiết và chấm dứt các cơn bốc hỏa, khô hạn:
-- 🇻🇳 **Phương án Nội Địa:** **Sâm Ngọc Linh K5** — Dược liệu Quốc bảo Việt Nam chứa hàm lượng Saponin MR2 cực cao, giúp cân bằng trục Não bộ - Tuyến yên - Buồng trứng.
+- 🌿 **Phương án Nội Địa:** **Sâm Ngọc Linh K5** — Dược liệu Quốc bảo Việt Nam chứa hàm lượng Saponin MR2 cực cao, giúp cân bằng trục Não bộ - Tuyến yên - Buồng trứng.
 - 🌐 **Phương án Nhập Khẩu:** **Tinh Dầu Hoa Anh Thảo Blackmores Evening Primrose Oil (Úc)** — Giàu axit béo GLA tự nhiên hỗ trợ cân bằng nội tiết tố nữ và giữ ẩm cơ thể.`;
   } else if (/sinh lý|yếu|xuất tinh|thận yếu|đau lưng mỏi gối|tiểu đêm/.test(textLower) || selectedConcern?.id?.includes('vitality')) {
     matchedConcernTitle = 'Suy giảm sinh lực, Thận âm hư & Tiểu đêm';
     domesticId = 'vn-06'; // Bổ Thận Âm Nam Dược
     importedId = 'kr-01'; // Nước Hồng Sâm KGC Hàn Quốc
     prodExplanation = `Để bồi bổ thận khí và tăng cường sinh lực bền vững:
-- 🇻🇳 **Phương án Nội Địa:** **Bổ Thận Âm Nam Dược** — Thảo dược cổ truyền giúp dưỡng thận âm, giảm tiểu đêm và đau mỏi thắt lưng.
+- 🌿 **Phương án Nội Địa:** **Bổ Thận Âm Nam Dược** — Thảo dược cổ truyền giúp dưỡng thận âm, giảm tiểu đêm và đau mỏi thắt lưng.
 - 🌐 **Phương án Nhập Khẩu:** **Nước Hồng Sâm 6 Năm Tuổi KGC Cheong Kwan Jang (Hàn Quốc)** — Đại bổ nguyên khí, tăng sức bền thể lực và lưu thông khí huyết.`;
   } else if (/biếng ăn|chậm tăng cân|lười ăn|kém hấp thu|tiêu hóa/.test(textLower) || selectedConcern?.id?.includes('appetite') || (audience === 'kids' && /ăn|tăng cân|tiêu hóa/.test(textLower))) {
     matchedConcernTitle = 'Trẻ biếng ăn, hấp thu kém & Kích thích tiêu hóa';
     domesticId = 'vn-02'; // Đông Trùng Hạ Thảo Sapa Traphaco
     importedId = 'jp-02'; // Tảo Xoắn Vàng Spirulina EX Nhật
     prodExplanation = `Để kích thích cảm giác thèm ăn tự nhiên và hỗ trợ hoàn thiện hệ tiêu hóa cho bé:
-- 🇻🇳 **Phương án Nội Địa:** **Đông Trùng Hạ Thảo Sapa Traphaco** — Cung cấp 17 loại acid amin thiết yếu và vi chất sinh học kích thích gai vị giác phát triển, giúp trẻ ăn ngon miệng tự nhiên.
+- 🌿 **Phương án Nội Địa:** **Đông Trùng Hạ Thảo Sapa Traphaco** — Cung cấp 17 loại acid amin thiết yếu và vi chất sinh học kích thích gai vị giác phát triển, giúp trẻ ăn ngon miệng tự nhiên.
 - 🌐 **Phương án Nhập Khẩu:** **Tảo Xoắn Vàng Spirulina EX (Nhật Bản)** — Chứa hơn 50 dưỡng chất toàn diện và lợi khuẩn đường ruột, hỗ trợ chuyển hóa và tăng hấp thu dinh dưỡng tối đa.`;
   } else if (/chiều cao|thấp còi|canxi|d3k2/.test(textLower) || selectedConcern?.id?.includes('height')) {
     if (audience === 'kids' || isAskingForKids) {
@@ -1419,14 +1419,14 @@ ${adviceFollowUp}`,
       domesticId = 'vn-01'; // Canxi Nano
       importedId = 'au-02'; // Canxi Sữa Bio Island Úc
       prodExplanation = `Để cung cấp nguồn Canxi sinh học lành tính, giúp bé có hệ xương răng chắc khỏe và phát triển chiều cao vượt trội:
-- 🇻🇳 **Phương án Nội Địa:** **Viên Khớp & Bổ Sung Canxi Nano Bách Niên Kiện** — Cung cấp Canxi và khoáng chất tự nhiên đạt chuẩn GMP-WHO.
+- 🌿 **Phương án Nội Địa:** **Viên Khớp & Bổ Sung Canxi Nano Bách Niên Kiện** — Cung cấp Canxi và khoáng chất tự nhiên đạt chuẩn GMP-WHO.
 - 🌐 **Phương án Nhập Khẩu (Khuyên dùng cho bé):** **Canxi Sữa Tảo Biển Bio Island Milk Calcium (Úc)** — Dòng Canxi sữa hữu cơ số 1 của Úc dành riêng cho trẻ nhỏ, chiết xuất từ sữa bò tươi nguyên chất với tỷ lệ vàng Canxi:Phospho 2:1 tương thích sinh học cao nhất, kết hợp sẵn Vitamin D3 giúp hấp thu tối đa vào xương mà hoàn toàn không gây nóng trong hay táo bón.`;
     } else {
       matchedConcernTitle = 'Bổ sung Canxi D3K2 & Phòng ngừa loãng xương';
       domesticId = 'vn-01';
       importedId = 'de-02'; // Doppelherz Magie + Canxi + D3 Đức
       prodExplanation = `Để bổ sung Canxi và khoáng chất vững chắc cho hệ cơ xương khớp:
-- 🇻🇳 **Phương án Nội Địa:** **Viên Khớp Bách Niên Kiện** — Giảm đau nhức và bổ sung dưỡng chất sụn khớp chuẩn GMP-WHO.
+- 🌿 **Phương án Nội Địa:** **Viên Khớp Bách Niên Kiện** — Giảm đau nhức và bổ sung dưỡng chất sụn khớp chuẩn GMP-WHO.
 - 🌐 **Phương án Nhập Khẩu:** **Doppelherz Magie + Canxi + D3 (Đức)** — Công thức tối ưu kết hợp Canxi và Magie hữu cơ giúp tăng mật độ xương và giảm chuột rút co cơ.`;
     }
   } else if (/tim mạch|huyết áp|mỡ máu|xơ vữa|cholesterol/.test(textLower) || selectedConcern?.id?.includes('cardio')) {
@@ -1434,21 +1434,21 @@ ${adviceFollowUp}`,
     domesticId = 'vn-04'; // Cebraton Traphaco
     importedId = 'au-01'; // Blackmores Fish Oil 1000mg Úc
     prodExplanation = `Để làm sạch mảng bám mỡ máu và bảo vệ sự dẻo dai của thành mạch:
-- 🇻🇳 **Phương án Nội Địa:** **Cebraton Traphaco** — Tăng tuần hoàn máu não, giảm hoa mắt chóng mặt và giảm nguy cơ tai biến mạch máu.
+- 🌿 **Phương án Nội Địa:** **Cebraton Traphaco** — Tăng tuần hoàn máu não, giảm hoa mắt chóng mặt và giảm nguy cơ tai biến mạch máu.
 - 🌐 **Phương án Nhập Khẩu:** **Blackmores Dầu Cá Không Mùi Fish Oil 1000mg (Úc)** — Nguồn EPA/DHA tinh khiết đã loại bỏ thủy ngân, hỗ trợ giảm Triglycerid và cholesterol xấu trong máu.`;
   } else if (/mất ngủ|đau đầu|tiền đình|chóng mặt|thần kinh|stress/.test(textLower) || selectedConcern?.id?.includes('sleep')) {
     matchedConcernTitle = 'Mất ngủ kinh niên, Rối loạn tiền đình & Suy nhược';
     domesticId = 'vn-04'; // Cebraton Traphaco
     importedId = 'de-02'; // Doppelherz Magie + Canxi + D3 Đức
     prodExplanation = `Để thư giãn hệ thần kinh và khôi phục nhịp ngủ sinh học tự nhiên:
-- 🇻🇳 **Phương án Nội Địa:** **Hoạt Huyết Dưỡng Não Cebraton Traphaco** — Tăng tưới máu vi mạch não, tạo giấc ngủ êm dịu, sáng dậy đầu óc tỉnh táo không bị nặng nề.
+- 🌿 **Phương án Nội Địa:** **Hoạt Huyết Dưỡng Não Cebraton Traphaco** — Tăng tưới máu vi mạch não, tạo giấc ngủ êm dịu, sáng dậy đầu óc tỉnh táo không bị nặng nề.
 - 🌐 **Phương án Nhập Khẩu:** **Doppelherz Magie + Canxi + D3 (Đức)** — Bổ sung Magie hữu cơ giúp thư giãn trương lực cơ bắp, giải tỏa căng thẳng thần kinh giúp ngủ sâu giấc.`;
   } else {
     matchedConcernTitle = 'Bồi bổ sức khỏe toàn diện & Tăng cường miễn dịch';
     domesticId = 'vn-05'; // Sâm Ngọc Linh K5
     importedId = 'kr-01'; // Hồng sâm KGC
     prodExplanation = `Để phục hồi thể lực và củng cố hệ miễn dịch:
-- 🇻🇳 **Phương án Nội Địa:** **Sâm Ngọc Linh K5** — Thảo dược bản địa thượng hạng phục hồi thể lực và đề kháng.
+- 🌿 **Phương án Nội Địa:** **Sâm Ngọc Linh K5** — Thảo dược bản địa thượng hạng phục hồi thể lực và đề kháng.
 - 🌐 **Phương án Nhập Khẩu:** **Nước Hồng Sâm KGC 6 năm tuổi (Hàn Quốc)** — Bồi bổ cơ thể sau ốm, tăng tuần hoàn và giảm mệt mỏi.`;
   }
 

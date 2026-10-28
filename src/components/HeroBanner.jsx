@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   ShieldCheck, Truck, Stethoscope, Award, ArrowRight, 
-  Sparkles, CheckCircle2, ChevronRight, ChevronLeft, HeartHandshake, Flame
+  Sparkles, CheckCircle2, ChevronRight, ChevronLeft, HeartHandshake, Flame, Globe
 } from 'lucide-react';
 import { DEFAULT_HERO_BANNERS } from '../data/banners';
 
@@ -97,7 +97,7 @@ export const HeroBanner = ({
                 onClick={() => onSelectOrigin('domestic')}
                 className="group flex items-center gap-3 px-5 py-3 rounded-xl bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-500 hover:to-red-600 text-white font-bold text-sm shadow-lg shadow-rose-900/40 transition-all hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
               >
-                <span className="text-xl">🇻🇳</span>
+                <ShieldCheck className="w-5 h-5 text-rose-200 shrink-0" />
                 <div className="text-left">
                   <div className="text-[11px] text-rose-200 font-normal leading-none">Tinh Hoa Dược Liệu</div>
                   <div className="font-bold">Gian Hàng Nội Địa</div>
@@ -109,7 +109,7 @@ export const HeroBanner = ({
                 onClick={() => onSelectOrigin('imported')}
                 className="group flex items-center gap-3 px-5 py-3 rounded-xl bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-500 hover:to-blue-600 text-white font-bold text-sm shadow-lg shadow-blue-900/40 transition-all hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
               >
-                <span className="text-xl">🌐</span>
+                <Globe className="w-5 h-5 text-sky-200 shrink-0" />
                 <div className="text-left">
                   <div className="text-[11px] text-sky-200 font-normal leading-none">Chính Ngạch Tem Phụ</div>
                   <div className="font-bold">Gian Hàng Nhập Ngoại</div>

@@ -302,7 +302,7 @@ export const Header = ({
                   : 'text-rose-700 bg-rose-50/70 hover:bg-rose-100/80'
               }`}
             >
-              <span>🇻🇳 Hàng Nội Địa Uy Tín</span>
+              <span>Hàng Nội Địa Uy Tín</span>
               <span className="text-[10px] font-normal px-1 py-0.2 bg-white/20 rounded">GMP</span>
             </button>
 
@@ -314,8 +314,8 @@ export const Header = ({
                   : 'text-blue-700 bg-blue-50/70 hover:bg-blue-100/80'
               }`}
             >
-              <span>🌍 Hàng Nhập Ngoại Chính Ngạch</span>
-              <span className="text-[10px] font-normal px-1 py-0.2 bg-white/20 rounded">USA • Úc • Nhật • Hàn • Đức</span>
+              <span>Hàng Nhập Khẩu Chính Ngạch</span>
+              <span className="text-[10px] font-normal px-1 py-0.2 bg-white/20 rounded">Mỹ • Úc • Nhật • Hàn • Đức</span>
             </button>
           </div>
 

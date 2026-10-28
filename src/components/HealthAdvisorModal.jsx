@@ -866,7 +866,7 @@ Quý khách đang gặp tình trạng khó chịu nào hoặc cần Dược sĩ 
                       <div>
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-rose-600 text-white flex items-center gap-1 shadow-xs">
-                            🇻🇳 Hàng Nội Địa Chuẩn GMP-WHO
+                            Hàng Nội Địa Chuẩn GMP-WHO
                           </span>
                           <span className="text-[11px] font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded">
                             {domesticProduct.brand || 'Dược Liệu Việt'}

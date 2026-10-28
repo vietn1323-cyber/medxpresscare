@@ -3537,8 +3537,8 @@ export const AdminPanel = ({
                         className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                       >
                         <option value="all">Tất cả xuất xứ</option>
-                        <option value="domestic">🇻🇳 Hàng Nội Địa ({domesticProductsCount})</option>
-                        <option value="imported">🌐 Hàng Nhập Khẩu ({importedProductsCount})</option>
+                        <option value="domestic">Hàng Nội Địa ({domesticProductsCount})</option>
+                        <option value="imported">Hàng Nhập Khẩu ({importedProductsCount})</option>
                       </select>
 
                       {(productCategoryFilter !== 'all' || productOriginFilter !== 'all' || productSearchQuery) && (
@@ -4819,8 +4819,8 @@ export const AdminPanel = ({
                         <span className="text-slate-400">•</span>
                         <span className="font-mono bg-purple-50 text-purple-700 px-2 py-0.5 rounded-md border border-purple-200">
                           Hành động: {
-                            banner.actionType === 'domestic' ? '🇻🇳 Gian Hàng Nội Địa' :
-                            banner.actionType === 'imported' ? '🌐 Gian Hàng Nhập Ngoại' :
+                            banner.actionType === 'domestic' ? 'Gian Hàng Nội Địa' :
+                            banner.actionType === 'imported' ? 'Gian Hàng Nhập Khẩu' :
                             banner.actionType === 'advisor' ? '🩺 Dược Sĩ AI Tư Vấn' :
                             `🔗 ${banner.actionLink || 'Trang chủ'}`
                           }
@@ -9816,8 +9816,8 @@ export const AdminPanel = ({
                     onChange={(e) => setBannerFormData({ ...bannerFormData, actionType: e.target.value })}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                   >
-                    <option value="domestic">🇻🇳 Chuyển tới Gian Hàng Nội Địa</option>
-                    <option value="imported">🌐 Chuyển tới Gian Hàng Nhập Khẩu</option>
+                    <option value="domestic">Chuyển tới Gian Hàng Nội Địa</option>
+                    <option value="imported">Chuyển tới Gian Hàng Nhập Khẩu</option>
                     <option value="advisor">🩺 Mở Trắc Nghiệm Dược Sĩ AI</option>
                     <option value="custom">🔗 Đường dẫn / Section tùy chỉnh</option>
                   </select>

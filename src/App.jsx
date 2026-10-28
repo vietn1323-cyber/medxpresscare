@@ -1967,7 +1967,9 @@ export default function App() {
           <div className="p-6 rounded-3xl bg-gradient-to-br from-rose-50 to-orange-50 border border-rose-200 shadow-sm flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-3">
-                <span className="text-3xl">🇻🇳</span>
+                <span className="text-xs font-black uppercase tracking-wider px-3 py-1 bg-rose-100 text-rose-800 rounded-full border border-rose-300">
+                  Dược Liệu Việt Nam
+                </span>
                 <span className="text-xs font-bold px-3 py-1 bg-rose-600 text-white rounded-full">
                   Chuẩn GMP-WHO & OCOP
                 </span>
@@ -1991,7 +1993,9 @@ export default function App() {
           <div className="p-6 rounded-3xl bg-gradient-to-br from-sky-50 to-blue-50 border border-blue-200 shadow-sm flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-3">
-                <span className="text-3xl">🌍</span>
+                <span className="text-xs font-black uppercase tracking-wider px-3 py-1 bg-blue-100 text-blue-800 rounded-full border border-blue-300">
+                  Quốc Tế Chính Ngạch
+                </span>
                 <span className="text-xs font-bold px-3 py-1 bg-blue-600 text-white rounded-full">
                   Nhập Khẩu Chính Ngạch
                 </span>
