@@ -70,7 +70,7 @@ export const apiClient = {
     }
   },
 
-  // Lưu danh sách đơn hàng (trạng thái, logistics tracking, kiểm định GSP) - Debounced
+  // Lưu danh sách đơn hàng (trạng thái, logistics tracking, kiểm nhận hoàn) - Debounced
   saveOrdersList(orders) {
     debounceCall('orders', async () => {
       try {

@@ -39,8 +39,8 @@ export const DEFAULT_HERO_BANNERS = [
   },
   {
     id: 'banner-04',
-    title: 'Miễn Phí Giao Hàng & Bảo Quản GSP',
-    subtitle: 'Kiện hàng niêm phong tem chống giả, đóng gói thùng xốp đá gel chuẩn GSP Bộ Y Tế.',
+    title: 'Miễn Phí Giao Hàng Toàn Quốc',
+    subtitle: 'Kiện hàng niêm phong tem chống giả, đóng gói thùng xốp đá gel bảo quản chuyên dụng.',
     badge: '⚡ Giao Hỏa Tốc',
     image: 'https://images.unsplash.com/photo-1577401239170-897942555fb3?w=1000&auto=format&fit=crop&q=80',
     actionType: 'custom',

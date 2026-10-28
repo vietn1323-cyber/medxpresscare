@@ -1280,7 +1280,7 @@ ${timingFollowUp}`,
 
 🚚 **Chính Sách Giao Hàng & Đóng Gói:**
 - Giao hàng hỏa tốc toàn quốc, miễn phí vận chuyển cho đơn hàng đủ điều kiện.
-- Đóng gói bảo quản chuẩn GSP (nhiệt độ mát, hộp chống sốc chuyên dụng cho dược phẩm).
+- Đóng gói bảo quản chuyên dụng (hộp chống sốc chuyên dụng cho dược phẩm).
 - Quý khách được **đồng kiểm khi nhận hàng**, kiểm tra đúng sản phẩm, nguyên vẹn tem niêm phong mới thanh toán.
 
 🛡️ **Cam Kết Chất Lượng:**

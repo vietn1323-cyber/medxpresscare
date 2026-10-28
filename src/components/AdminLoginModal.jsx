@@ -131,7 +131,7 @@ export const AdminLoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
 
           <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-500 text-center flex items-center justify-center gap-1.5">
             <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            <span>Kết nối mã hóa SSL/TLS 256-bit • Cổng bảo mật nội bộ Dược sĩ GSP</span>
+            <span>Kết nối mã hóa SSL/TLS 256-bit • Cổng bảo mật nội bộ Dược sĩ phụ trách</span>
           </div>
         </form>
       </div>

@@ -137,8 +137,8 @@ export const OrderTrackingPage = ({
       a: '100% CÓ. MedXpressCare cam kết chính sách ĐỒNG KIỂM toàn quốc. Quý khách được quyền bóc hộp carton bảo vệ để kiểm tra số ĐKSP Bộ Y Tế, tem phụ tiếng Việt, tem chống hàng giả niêm phong và hóa đơn chứng từ trước khi thanh toán tiền cho bưu tá.'
     },
     {
-      q: 'Sản phẩm có được bảo quản chuẩn GSP trong lúc vận chuyển không?',
-      a: 'Toàn bộ đơn hàng được đóng gói trong hộp xốp chống sốc, màng bọc chống ẩm và túi khí chuyên dụng cho dược phẩm, duy trì nhiệt độ mát dưới 30°C trong suốt hành trình vận chuyển.'
+      q: 'Sản phẩm có được đóng gói cẩn thận trong lúc vận chuyển không?',
+      a: 'Toàn bộ đơn hàng được đóng gói trong hộp chống sốc, màng bọc chống ẩm và túi khí chuyên dụng, bảo vệ kiện hàng nguyên vẹn trong suốt hành trình vận chuyển.'
     },
     {
       q: 'Nếu tôi muốn đổi địa chỉ nhận hàng hoặc dời lịch giao thì làm thế nào?',
@@ -173,7 +173,7 @@ export const OrderTrackingPage = ({
                 Tra Cứu Vận Đơn Trực Tuyến
               </h1>
               <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
-                Nhập <strong>Mã đơn hàng (MXC-...)</strong>, <strong>Mã vận đơn bưu cục</strong> hoặc <strong>Số điện thoại</strong> để theo dõi trực tiếp vị trí bưu tá, điều kiện bảo quản GSP và thời gian giao dự kiến.
+                Nhập <strong>Mã đơn hàng (MXC-...)</strong>, <strong>Mã vận đơn bưu cục</strong> hoặc <strong>Số điện thoại</strong> để theo dõi trực tiếp tiến trình bưu tá và thời gian giao dự kiến.
               </p>
             </div>
 
@@ -361,7 +361,7 @@ export const OrderTrackingPage = ({
                     <span className="font-black text-emerald-700">
                       {selectedOrder.status === 'completed' ? 'Hoàn thành 100%' :
                        selectedOrder.status === 'shipping' ? 'Đang giao hàng (75%)' :
-                       selectedOrder.status === 'confirmed' ? 'Đã đóng gói GSP (35%)' : 'Tiếp nhận (15%)'}
+                       selectedOrder.status === 'confirmed' ? 'Đã đóng gói (35%)' : 'Tiếp nhận (15%)'}
                     </span>
                   </div>
 
@@ -386,7 +386,7 @@ export const OrderTrackingPage = ({
                         <div className={`w-7 h-7 mx-auto rounded-full flex items-center justify-center font-bold text-xs ${currentStep >= 2 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-500'}`}>
                           2
                         </div>
-                        <div className="text-[11px] font-bold">Đóng gói GSP</div>
+                        <div className="text-[11px] font-bold">Đóng gói</div>
                       </div>
 
                       <div className={`space-y-1 ${currentStep >= 3 ? 'text-emerald-700' : 'text-slate-400'}`}>
@@ -426,15 +426,14 @@ export const OrderTrackingPage = ({
                       </div>
                       <div className="text-[11px] text-slate-600 flex flex-wrap items-center gap-2">
                         <span>{selectedOrder.shippingMethod === 'ghn' ? 'Mạng lưới bưu cục GHN Express toàn quốc' : (currentCarrier?.shipper?.vehicle || 'Giao hàng tiêu chuẩn')}</span>
-                        <span>•</span>
-                        <span className="text-emerald-700 font-semibold">
-                          {selectedOrder.status === 'shipping' 
-                            ? 'Bưu tá tuyến phát đang giao hàng tận nơi' 
-                            : 'Bảo quản tiêu chuẩn GSP Dược phẩm 15-25°C'}
-                        </span>
-                      </div>
-                      <div className="text-[10px] text-slate-500 italic mt-0.5">
-                        * Bưu tá trực tiếp liên hệ người nhận trước khi phát. Quý khách được quyền kiểm tra gói thuốc nguyên niêm phong.
+                        {selectedOrder.status === 'shipping' && (
+                          <>
+                            <span>•</span>
+                            <span className="text-emerald-700 font-semibold">
+                              Bưu tá tuyến phát đang giao hàng tận nơi
+                            </span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -685,7 +684,7 @@ export const OrderTrackingPage = ({
           </div>
         ) : null}
 
-        {/* 4. CAM KẾT VẬN CHUYỂN CHUẨN GSP (TRUST BADGES) */}
+        {/* 4. CAM KẾT VẬN CHUYỂN & GIAO HÀNG (TRUST BADGES) */}
         <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-3.5">
             <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-lg shrink-0">
@@ -712,8 +711,8 @@ export const OrderTrackingPage = ({
               📦
             </div>
             <div>
-              <h4 className="font-bold text-xs text-slate-900">Bảo Quản Chuẩn Mát GSP</h4>
-              <p className="text-[11px] text-slate-500 mt-0.5">Hộp chống sốc, màng chống ẩm nhiệt độ dưới 30°C</p>
+              <h4 className="font-bold text-xs text-slate-900">Đóng Gói Chuyên Dụng</h4>
+              <p className="text-[11px] text-slate-500 mt-0.5">Hộp chống sốc, màng chống ẩm bảo vệ sản phẩm</p>
             </div>
           </div>
 

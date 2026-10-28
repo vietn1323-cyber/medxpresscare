@@ -127,6 +127,19 @@ assert.ok(modalContent.includes('.toUpperCase()'), 'OrderTrackingModal hiển th
 
 console.log('  ✅ PASSED: OrderTrackingPage và OrderTrackingModal chuẩn hóa hiển thị sạch sẽ và viết hoa mã vận đơn.');
 
+// 7. Kiểm thử loại bỏ hoàn toàn tiêu chuẩn GSP theo yêu cầu
+console.log('\n--- 7. Kiểm tra loại bỏ 100% GSP và chuẩn hóa bước "Đóng gói" ---');
+
+assert.ok(!pageContent.includes('GSP'), 'OrderTrackingPage.jsx không còn bất kỳ chữ GSP nào');
+assert.ok(!modalContent.includes('GSP'), 'OrderTrackingModal.jsx không còn bất kỳ chữ GSP nào');
+assert.ok(pageContent.includes('>Đóng gói<'), 'Bước 2 trong stepper phải là "Đóng gói"');
+assert.ok(!pageContent.includes('Đóng gói GSP'), 'Đã xóa bỏ hoàn toàn "Đóng gói GSP"');
+assert.ok(pageContent.includes("'Đã đóng gói (35%)'"), 'Tiến trình phải hiển thị "Đã đóng gói (35%)"');
+assert.ok(!pageContent.includes('Bảo quản tiêu chuẩn GSP Dược phẩm 15-25°C'), 'Đã xóa bỏ hoàn toàn dòng Bảo quản tiêu chuẩn GSP');
+assert.ok(!pageContent.includes('Bưu tá trực tiếp liên hệ người nhận trước khi phát'), 'Đã xóa bỏ hoàn toàn dòng lưu ý bưu tá');
+
+console.log('  ✅ PASSED: Đã thay thế "Đóng gói" và loại bỏ 100% tiêu chuẩn GSP.');
+
 console.log('\n================================================================');
-console.log('   🎉 TẤT CẢ 6 NHÓM TEST CASES TRA CỨU VẬN ĐƠN ĐỀU PASSED 100%! ');
+console.log('   🎉 TẤT CẢ 7 NHÓM TEST CASES TRA CỨU VẬN ĐƠN ĐỀU PASSED 100%! ');
 console.log('================================================================\n');

@@ -236,7 +236,7 @@ export const HeroBanner = ({
               </div>
             </div>
 
-            {/* Hotline & Cam kết GSP Pill */}
+            {/* Hotline & Cam kết tư vấn Pill */}
             <div className="bg-gradient-to-r from-emerald-950/70 to-teal-950/70 border border-emerald-500/30 rounded-2xl p-3 sm:p-3.5 flex items-center justify-between gap-3 shadow-lg backdrop-blur-md">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">

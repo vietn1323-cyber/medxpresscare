@@ -390,10 +390,6 @@ export const OrderTrackingModal = ({
                 <div className="text-[11px] text-slate-600 mt-0.5">
                   Hình thức giao: <strong>{displayOrder.shippingMethod === 'ghn' ? 'Mạng lưới chuyển phát nhanh GHN' : (carrier.shipper?.vehicle || 'Giao hàng tiêu chuẩn')}</strong>
                 </div>
-                <div className="text-[10px] text-emerald-700 flex items-center gap-1 mt-0.5">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Bảo quản tiêu chuẩn GSP Dược phẩm 15-25°C • Bưu tá liên hệ trước khi phát</span>
-                </div>
               </div>
             </div>
 
@@ -482,7 +478,7 @@ export const OrderTrackingModal = ({
                 </strong>
                 <p className="text-amber-900">
                   {isAdmin 
-                    ? 'Bưu tá đã giao bưu kiện về kho. Dược sĩ cần thực hiện kiểm tra tem niêm phong và điều kiện bảo quản GSP trước khi tái nhập kho.' 
+                    ? 'Bưu tá đã giao bưu kiện về kho. Dược sĩ cần thực hiện kiểm tra tem niêm phong và tình trạng hàng trước khi tái nhập kho.' 
                     : 'Nhà thuốc MedXpressCare đã tiếp nhận lại kiện hàng. Dược sĩ sẽ liên hệ để hỗ trợ hoàn tiền hoặc gửi lại theo yêu cầu của quý khách.'}
                 </p>
               </div>
@@ -494,7 +490,7 @@ export const OrderTrackingModal = ({
               <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
               <div className="space-y-0.5 text-xs">
                 <strong className="font-extrabold text-emerald-900 block">
-                  {isAdmin ? '✅ ĐÃ XÁC NHẬN THỦ CÔNG NHẬN HÀNG HOÀN & TÁI NHẬP KHO GSP' : 'Đơn Hàng Đã Hoàn Trả Về Nhà Thuốc Thành Công'}
+                  {isAdmin ? '✅ ĐÃ XÁC NHẬN THỦ CÔNG NHẬN HÀNG HOÀN & TÁI NHẬP KHO' : 'Đơn Hàng Đã Hoàn Trả Về Nhà Thuốc Thành Công'}
                 </strong>
                 {isAdmin ? (
                   <p className="text-emerald-800 text-[11px]">

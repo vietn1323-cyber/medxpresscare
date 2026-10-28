@@ -1,7 +1,7 @@
 /**
  * CƠ SỞ DỮ LIỆU CÁC CHÍNH SÁCH HOẠT ĐỘNG & BẢO VỆ NGƯỜI TIÊU DÙNG MEDXPRESSCARE
  * Tuân thủ đầy đủ Luật Dược 2016, Nghị định 52/2013/NĐ-CP & Nghị định 85/2021/NĐ-CP (TMĐT),
- * Nghị định 13/2023/NĐ-CP (Bảo vệ dữ liệu cá nhân) và Quy chuẩn GSP bảo quản dược phẩm.
+ * Nghị định 13/2023/NĐ-CP (Bảo vệ dữ liệu cá nhân) và quy chuẩn bảo quản dược phẩm.
  */
 
 export const POLICIES = [
@@ -9,10 +9,10 @@ export const POLICIES = [
     id: 'chinh-sach-giao-hang',
     slug: 'chinh-sach-giao-hang',
     legacyAliases: ['rules', 'shipping', 'giao-hang'],
-    title: 'Chính Sách Vận Chuyển & Giao Hàng Chuẩn GSP',
-    shortDesc: 'Giao hỏa tốc 1h-2h nội thành Hà Nội, giao nhanh toàn quốc với quy trình kiểm soát nhiệt độ chuẩn GSP.',
+    title: 'Chính Sách Vận Chuyển & Giao Hàng Toàn Quốc',
+    shortDesc: 'Giao hỏa tốc 1h-2h nội thành Hà Nội, giao nhanh toàn quốc với quy trình kiểm soát đóng gói chuyên nghiệp.',
     icon: 'Truck',
-    badge: 'Chuẩn GSP Bộ Y Tế',
+    badge: 'Đồng Kiểm Toàn Quốc',
     lastUpdated: '15/10/2026',
     sections: [
       {
@@ -22,7 +22,7 @@ export const POLICIES = [
 - **Giao hàng nhanh toàn quốc (1 - 3 ngày làm việc):** Phối hợp cùng các đối tác bưu chính uy tín hàng đầu: Giao Hàng Tiết Kiệm (GHTK), Giao Hàng Nhanh (GHN), Viettel Post và VNPost. Hàng hóa được đóng thùng niêm phong và gửi trực tiếp từ trung tâm phân phối Hà Nội.`
       },
       {
-        heading: '2. Tiêu Chuẩn Bảo Quản Vận Chuyển GSP (Good Storage Practice)',
+        heading: '2. Tiêu Chuẩn Đóng Gói & Bảo Quản Vận Chuyển',
         content: `Dược phẩm và thực phẩm chức năng đòi hỏi điều kiện bảo quản nghiêm ngặt nhằm bảo toàn 100% hoạt tính sinh học của vi chất:
 - **Nhiệt độ bảo quản khi vận chuyển:** Đảm bảo duy trì dưới 30°C đối với thực phẩm chức năng thông thường và từ 2°C - 8°C đối với các dòng men vi sinh hoặc chế phẩm sinh học đặc biệt (sử dụng túi gel giữ nhiệt chuyên dụng).
 - **Quy cách đóng gói chống va đập:** 100% đơn hàng được bọc màng xốp khí chống sốc 3 lớp, cố định vị trí hộp thuốc, đựng trong hộp carton cứng cáp và dán tem niêm phong vỡ MedXpressCare.
@@ -94,11 +94,11 @@ export const POLICIES = [
 - Sản phẩm không chứng minh được nguồn gốc đã mua từ MedXpressCare (không có mã đơn hàng hợp lệ trên hệ thống).`
       },
       {
-        heading: '4. Quy Trình Thu Hồi & Hoàn Tiền Chuẩn GSP',
+        heading: '4. Quy Trình Thu Hồi & Hoàn Tiền',
         content: `- **Bước 1 (Gửi yêu cầu):** Quý khách liên hệ hotline **1800 6868** (miễn phí) hoặc nhắn tin qua Dược Sĩ AI trên web/Zalo Official kèm ảnh/video chụp sản phẩm.
 - **Bước 2 (Kiểm duyệt chuyên môn):** Dược sĩ phụ trách chuyên môn xem xét và phê duyệt trong vòng 2 giờ làm việc.
 - **Bước 3 (Thu hồi tận nhà):** Bưu tá MedXpressCare sẽ đến tận địa chỉ của quý khách để nhận lại sản phẩm hoàn, quý khách không cần phải mang ra bưu cục.
-- **Bước 4 (Hoàn tiền hoặc đổi mới):** Ngay khi kiện hàng được Dược sĩ kho GSP kiểm nhận, MedXpressCare tiến hành gửi sản phẩm mới thay thế hoặc chuyển khoản hoàn tiền 100% qua VietQR/Ngân hàng trong vòng **24 giờ làm việc**.`
+- **Bước 4 (Hoàn tiền hoặc đổi mới):** Ngay khi kiện hàng được Dược sĩ kiểm nhận, MedXpressCare tiến hành gửi sản phẩm mới thay thế hoặc chuyển khoản hoàn tiền 100% qua VietQR/Ngân hàng trong vòng **24 giờ làm việc**.`
       }
     ],
     faqs: [

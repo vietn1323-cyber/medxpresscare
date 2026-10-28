@@ -163,7 +163,7 @@ export const Footer = ({
                       onClick={() => onNavigateToPolicy ? onNavigateToPolicy('chinh-sach-giao-hang') : (window.location.hash = '#rules')}
                       className="hover:text-emerald-400 transition-colors flex items-center gap-1.5 text-left cursor-pointer"
                     >
-                      <span>📦</span> Chính sách giao hỏa tốc HN & Giao nhanh GSP
+                      <span>📦</span> Chính sách giao hỏa tốc HN & Giao nhanh toàn quốc
                     </button>
                   </li>
                   <li>
@@ -248,7 +248,7 @@ export const Footer = ({
                 ĐÃ THÔNG BÁO BỘ CÔNG THƯƠNG
               </span>
               <span className="text-[10px] font-bold px-2 py-1 bg-blue-950 text-blue-300 rounded border border-blue-800">
-                CHUẨN GSP
+                CHÍNH HÃNG 100%
               </span>
             </div>
 

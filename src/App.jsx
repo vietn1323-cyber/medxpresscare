@@ -1349,7 +1349,7 @@ export default function App() {
           return tracked;
         } else if (newStatus === 'returned') {
           const tracked = stepOrderToReturnConfirmed(o, additionalData.inspectionData);
-          toastMessage = `✅ Đơn ${orderId}: Dược sĩ đã kiểm nhận hàng hoàn & nhập lại kho GSP thành công!`;
+          toastMessage = `✅ Đơn ${orderId}: Dược sĩ đã kiểm nhận hàng hoàn & nhập lại kho thành công!`;
           return tracked;
         } else {
           return { ...o, status: newStatus, ...additionalData };
@@ -1402,7 +1402,7 @@ export default function App() {
     showToast(`📦 Đơn ${orderId}: Kiện hàng hoàn đã về kho! Chờ Dược sĩ kiểm tra tem niêm phong & xác nhận thủ công.`);
   };
 
-  // Dược sĩ xác nhận THỦ CÔNG đã nhận hàng hoàn về kho & phục hồi tồn kho GSP
+  // Dược sĩ xác nhận THỦ CÔNG đã nhận hàng hoàn về kho & phục hồi tồn kho
   const handleConfirmReturnedOrder = (orderId, inspectionData = {}) => {
     let orderToRestore = null;
     setOrders(prev => prev.map(o => {
@@ -1428,7 +1428,7 @@ export default function App() {
       });
     }
 
-    showToast(`✅ Đã xác nhận thủ công nhận hàng hoàn đơn ${orderId} & nhập lại kho GSP thành công!`);
+    showToast(`✅ Đã xác nhận thủ công nhận hàng hoàn đơn ${orderId} & nhập lại kho thành công!`);
   };
 
   // Đồng bộ bưu cục tức thì (Instant Carrier Sync)

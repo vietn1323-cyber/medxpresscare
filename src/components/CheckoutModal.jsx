@@ -629,7 +629,7 @@ export const CheckoutModal = ({
                         <strong className="font-mono text-emerald-700 font-black text-base">{displayGrandTotal.toLocaleString('vi-VN')}₫</strong>
                       </div>
                       <p className="text-[11px] text-slate-500 leading-relaxed">
-                        📦 Quý khách vui lòng chuẩn bị đúng số tiền trên khi bưu tá giao hàng. Kiện hàng được niêm phong tem GSP, quý khách được xem hàng trước khi thanh toán.
+                        📦 Quý khách vui lòng chuẩn bị đúng số tiền trên khi bưu tá giao hàng. Kiện hàng được niêm phong cẩn thận, quý khách được đồng kiểm xem hàng trước khi thanh toán.
                       </p>
                     </div>
 

@@ -196,7 +196,7 @@ export const CARRIER_METADATA = {
       name: 'Đội Vận Chuyển Hỏa Tốc MedXpressCare',
       phone: '1800 6868',
       vehicle: 'Xe chuyên dụng bảo quản thuốc',
-      storage: 'Thùng bảo ôn chuyên dụng GSP 15-25°C'
+      storage: 'Thùng bảo ôn chuyên dụng'
     }
   },
   ghtk: {
@@ -448,14 +448,14 @@ export const stepOrderToWarehouseArrival = (order) => {
 };
 
 /**
- * Dược sĩ xác nhận thủ công đã nhận hàng hoàn về kho & nhập lại kho GSP
+ * Dược sĩ xác nhận thủ công đã nhận hàng hoàn về kho & nhập lại kho
  */
 export const stepOrderToReturnConfirmed = (order, inspectionData = {}) => {
   const now = new Date();
   const timeStr = formatCleanTrackingTime(now);
   const pharmacistName = inspectionData.pharmacistName || 'DS. CKI Nguyễn Thu Trang';
   const sealCondition = inspectionData.sealCondition || 'intact'; // intact | damaged
-  const note = inspectionData.note || 'Hàng nguyên vẹn tem chống giả Bộ Y Tế, đã nhập lại giá kệ kho mát GSP.';
+  const note = inspectionData.note || 'Hàng nguyên vẹn tem chống giả Bộ Y Tế, đã nhập lại giá kệ kho mát.';
   const restoreStock = inspectionData.restoreStock !== false;
 
   const currentTimeline = Array.isArray(order.trackingTimeline) ? order.trackingTimeline : [];
@@ -463,7 +463,7 @@ export const stepOrderToReturnConfirmed = (order, inspectionData = {}) => {
     time: timeStr,
     status: 'returned',
     stage: 'warehouse_accepted',
-    title: `✅ Dược sĩ đã kiểm nhận hàng hoàn & Nhập lại kho GSP`,
+    title: `✅ Dược sĩ đã kiểm nhận hàng hoàn & Nhập lại kho`,
     desc: `Dược sĩ kiểm nhận: ${pharmacistName}. Tình trạng tem mác: ${sealCondition === 'intact' ? 'Nguyên vẹn 100%' : 'Có dấu hiệu mở seal'}. Hoàn lại tồn kho: ${restoreStock ? 'Đã hoàn lại tồn' : 'Không nhập lại'}. Ghi chú: ${note}.`,
     location: 'Kho hàng MedXpressCare'
   };

@@ -36,11 +36,11 @@ console.log('  ✅ PASSED: 100% các chính sách có đầy đủ tiêu đề, 
 // 2. Kiểm thử nội dung pháp lý và cam kết y tế bắt buộc
 console.log('\n--- 2. KIỂM THỬ NỘI DUNG CAM KẾT PHÁP LÝ & Y TẾ ---');
 
-// 2.1 Chính sách giao hàng GSP
+// 2.1 Chính sách giao hàng & bảo quản
 const shippingPolicy = POLICIES.find(p => p.slug === 'chinh-sach-giao-hang');
-assert.ok(shippingPolicy.sections.some(s => (s.heading.includes('GSP') || s.content.includes('GSP')) && (s.heading.includes('30°C') || s.content.includes('30°C'))), 'Phải có quy chuẩn nhiệt độ bảo quản GSP');
+assert.ok(shippingPolicy.sections.some(s => (s.heading.includes('Bảo Quản') || s.content.includes('bảo quản')) && (s.heading.includes('30°C') || s.content.includes('30°C'))), 'Phải có quy chuẩn nhiệt độ bảo quản');
 assert.ok(shippingPolicy.sections.some(s => s.content.includes('500.000₫') || s.content.includes('Freeship')), 'Phải có chính sách Freeship');
-console.log('  ✅ PASSED: Chính sách vận chuyển nêu rõ chuẩn bảo quản GSP <30°C và điều kiện Freeship');
+console.log('  ✅ PASSED: Chính sách vận chuyển nêu rõ chuẩn bảo quản <30°C và điều kiện Freeship');
 
 // 2.2 Chính sách đổi trả & bồi hoàn 300%
 const returnPolicy = POLICIES.find(p => p.slug === 'chinh-sach-doi-tra');

@@ -621,9 +621,9 @@ export const AdminPanel = ({
   const [inspectionForm, setInspectionForm] = useState({
     pharmacistName: 'DS. CKI Nguyễn Thu Trang',
     sealCondition: 'intact',
-    gspCompliant: true,
+    qualityCompliant: true,
     restoreStock: true,
-    note: 'Hàng nguyên vẹn tem chống giả Bộ Y Tế, bao bì đạt chuẩn GSP, đã nhập lại giá kệ kho mát.'
+    note: 'Hàng nguyên vẹn tem chống giả Bộ Y Tế, bao bì đạt chuẩn, đã nhập lại giá kệ kho mát.'
   });
 
   // State for In Vận Đơn & Re-order & Telegram
@@ -2026,7 +2026,7 @@ export const AdminPanel = ({
                     </span>
                   </button>
                 )}
-                <span className="text-xs text-slate-400 hidden sm:inline">Chuẩn GSP - MedXpressCare.com</span>
+                <span className="text-xs text-slate-400 hidden sm:inline">Hệ Thống Quản Trị - MedXpressCare.com</span>
               </div>
               <h2 className="text-base sm:text-lg font-black text-white">
                 Hệ Thống Quản Lý Dược MedXpressCare
@@ -2445,7 +2445,7 @@ export const AdminPanel = ({
                     {activeTab === 'registrations' && 'Quản lý số công bố lưu hành toàn quốc, cập nhật thủ công & nhập file Excel/CSV'}
                     {activeTab === 'stats' && 'Tổng quan doanh số bán hàng, đơn hoàn tất và phân bổ nguồn thu'}
                     {activeTab === 'shipping' && 'Kết nối API GHTK, GHN, Viettel Post... Bật/tắt hãng hiển thị lúc khách đặt hàng'}
-                    {activeTab === 'policies' && 'Chỉnh sửa tiêu đề, quy chuẩn vận chuyển GSP, đổi trả 30 ngày, đồng kiểm, bảo mật và FAQs'}
+                    {activeTab === 'policies' && 'Chỉnh sửa tiêu đề, quy chuẩn vận chuyển, đổi trả 30 ngày, đồng kiểm, bảo mật và FAQs'}
                     {activeTab === 'settings' && 'Thiết lập tài khoản ngân hàng vẽ mã QR, Hotline, thông tin Footer doanh nghiệp và Telegram'}
                   </p>
                 </div>
@@ -2522,7 +2522,7 @@ export const AdminPanel = ({
                         <span className="bg-rose-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">Cần kiểm nhận</span>
                       </h4>
                       <p className="text-[11px] text-amber-900 mt-1 leading-relaxed">
-                        Theo quy định an toàn Dược phẩm GSP: Đơn hàng hoàn về kho bắt buộc phải được Dược sĩ kiểm tra tem niêm phong, ngoại quan viên thuốc và xác nhận thủ công trước khi nhập lại kệ kho.
+                        Theo quy định an toàn dược phẩm: Đơn hàng hoàn về kho bắt buộc phải được Dược sĩ kiểm tra tem niêm phong, ngoại quan sản phẩm và xác nhận thủ công trước khi nhập lại kệ kho.
                       </p>
                     </div>
                   </div>
@@ -2729,7 +2729,7 @@ export const AdminPanel = ({
                                   <strong>Lý do hoàn:</strong> <em>"{order.failureReason || 'Khách hàng không nhận thuốc'}"</em>
                                 </p>
                                 <p className="text-[11px] text-amber-800 mt-0.5">
-                                  <span className="font-bold text-rose-700">⚠️ BẮT BUỘC KIỂM TRA THỦ CÔNG:</span> Kiểm tra tem niêm phong Bộ Y Tế, tình trạng vỡ móp và nhiệt độ bảo quản GSP trước khi tái nhập kho.
+                                  <span className="font-bold text-rose-700">⚠️ BẮT BUỘC KIỂM TRA THỦ CÔNG:</span> Kiểm tra tem niêm phong Bộ Y Tế, tình trạng vỡ móp và điều kiện bảo quản trước khi tái nhập kho.
                                 </p>
                               </div>
                             </div>
@@ -2741,9 +2741,9 @@ export const AdminPanel = ({
                                 setInspectionForm({
                                   pharmacistName: 'DS. CKI Nguyễn Thu Trang',
                                   sealCondition: 'intact',
-                                  gspCompliant: true,
+                                  qualityCompliant: true,
                                   restoreStock: true,
-                                  note: 'Hàng nguyên vẹn tem chống giả Bộ Y Tế, đã kiểm định ngoại quan và nhập lại giá kệ kho mát GSP.'
+                                  note: 'Hàng nguyên vẹn tem chống giả Bộ Y Tế, đã kiểm định ngoại quan và nhập lại giá kệ kho mát.'
                                 });
                               }}
                               className="px-4 py-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-black rounded-xl text-xs flex items-center gap-1.5 shadow-md transition-all shrink-0 hover:scale-[1.02] active:scale-[0.98] self-end sm:self-center"
@@ -2755,7 +2755,7 @@ export const AdminPanel = ({
                         </div>
                       )}
 
-                      {/* 3. Đã kiểm nhận hàng hoàn & Nhập kho GSP thành công */}
+                      {/* 3. Đã kiểm nhận hàng hoàn & Nhập kho thành công */}
                       {order.status === 'returned' && (
                         <div className="my-2.5 bg-emerald-50 border border-emerald-300 rounded-xl p-3 text-xs text-emerald-950 shadow-2xs">
                           <div className="flex items-start gap-2.5">
@@ -2765,7 +2765,7 @@ export const AdminPanel = ({
                             <div className="space-y-1">
                               <div className="flex items-center gap-2">
                                 <strong className="text-emerald-900 font-extrabold text-xs">
-                                  ✅ ĐÃ XÁC NHẬN THỦ CÔNG NHẬN HÀNG HOÀN & TÁI NHẬP KHO GSP
+                                  ✅ ĐÃ XÁC NHẬN THỦ CÔNG NHẬN HÀNG HOÀN & TÁI NHẬP KHO
                                 </strong>
                                 <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-200">
                                   Đã nhập kho an toàn
@@ -2984,9 +2984,9 @@ export const AdminPanel = ({
                                     setInspectionForm({
                                       pharmacistName: 'DS. CKI Nguyễn Thu Trang',
                                       sealCondition: 'intact',
-                                      gspCompliant: true,
+                                      qualityCompliant: true,
                                       restoreStock: true,
-                                      note: 'Hàng nguyên vẹn tem chống giả Bộ Y Tế, đã kiểm định ngoại quan và nhập lại giá kệ kho mát GSP.'
+                                      note: 'Hàng nguyên vẹn tem chống giả Bộ Y Tế, đã kiểm định ngoại quan và nhập lại giá kệ kho mát.'
                                     });
                                   }}
                                   className="px-3 py-1 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white rounded-lg text-xs font-extrabold transition-all flex items-center gap-1 shadow-sm"
@@ -7730,7 +7730,7 @@ export const AdminPanel = ({
                         value={currentEditingPolicy.title || ''}
                         onChange={(e) => handleUpdatePolicyField('title', e.target.value)}
                         className="w-full px-3.5 py-2.5 bg-white border rounded-xl font-bold text-slate-900"
-                        placeholder="VD: Chính Sách Vận Chuyển & Giao Hàng Chuẩn GSP"
+                        placeholder="VD: Chính Sách Vận Chuyển & Giao Hàng Toàn Quốc"
                       />
                     </div>
 
@@ -7741,7 +7741,7 @@ export const AdminPanel = ({
                         value={currentEditingPolicy.badge || ''}
                         onChange={(e) => handleUpdatePolicyField('badge', e.target.value)}
                         className="w-full px-3.5 py-2.5 bg-white border rounded-xl font-semibold text-emerald-700"
-                        placeholder="VD: Chuẩn GSP Bộ Y Tế"
+                        placeholder="VD: Đồng Kiểm Toàn Quốc"
                       />
                     </div>
 
@@ -10051,7 +10051,7 @@ export const AdminPanel = ({
                   <div className="flex justify-between items-start border-b-2 border-slate-900 pb-3">
                     <div>
                       <div className="font-black text-lg text-emerald-700 tracking-wider">MEDXPRESSCARE</div>
-                      <div className="text-[10px] text-slate-500 font-semibold uppercase">Tổng Kho Dược Phẩm & TPCN Chuẩn GSP</div>
+                      <div className="text-[10px] text-slate-500 font-semibold uppercase">Kho Dược Phẩm & TPCN MedXpressCare</div>
                       <div className="text-[11px] text-slate-600 mt-1">Hotline: <strong>{storeConfig?.hotline || '1800 6868'}</strong> • Web: medxpresscare.com</div>
                     </div>
                     <div className="text-right">
@@ -10282,7 +10282,7 @@ export const AdminPanel = ({
           </div>
         )}
 
-        {/* MODAL 2: DƯỢC SĨ KIỂM NHẬN THỦ CÔNG HÀNG HOÀN VỀ KHO & NHẬP LẠI KHO GSP */}
+        {/* MODAL 2: DƯỢC SĨ KIỂM NHẬN THỦ CÔNG HÀNG HOÀN VỀ KHO & NHẬP LẠI KHO */}
         {inspectingReturnOrder && (
           <div 
             className="fixed inset-0 z-70 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 animate-in fade-in"
@@ -10300,7 +10300,7 @@ export const AdminPanel = ({
                   </div>
                   <div>
                     <h3 className="font-black text-sm sm:text-base tracking-tight">
-                      Kiểm Nhận Hàng Hoàn & Tái Nhập Kho GSP
+                      Kiểm Nhận Hàng Hoàn & Tái Nhập Kho
                     </h3>
                     <p className="text-[11px] text-amber-100">
                       Mã đơn: <strong className="font-mono text-white selection:bg-amber-800">{inspectingReturnOrder.id}</strong> • Vận đơn: {inspectingReturnOrder.trackingNumber || 'Bưu cục'}
@@ -10415,17 +10415,17 @@ export const AdminPanel = ({
                     </div>
                   </div>
 
-                  {/* 3. Tiêu chuẩn GSP & Tái nhập kho */}
+                  {/* 3. Tiêu chuẩn bảo quản & Tái nhập kho */}
                   <div className="space-y-2 pt-1 border-t border-amber-200/80">
                     <label className="flex items-center gap-2.5 cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={inspectionForm.gspCompliant}
-                        onChange={(e) => setInspectionForm({ ...inspectionForm, gspCompliant: e.target.checked })}
+                        checked={inspectionForm.qualityCompliant}
+                        onChange={(e) => setInspectionForm({ ...inspectionForm, qualityCompliant: e.target.checked })}
                         className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500"
                       />
                       <span className="font-semibold text-slate-800">
-                        Nhiệt độ bảo quản và hạn dùng đảm bảo chuẩn GSP (Bảo quản mát 18-25°C, không ẩm mốc)
+                        Nhiệt độ bảo quản và hạn dùng đảm bảo chất lượng (Bảo quản mát 18-25°C, không ẩm mốc)
                       </span>
                     </label>
 
@@ -10477,7 +10477,7 @@ export const AdminPanel = ({
                   className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold rounded-xl text-xs shadow-md transition-all flex items-center gap-1.5 hover:scale-[1.01] active:scale-[0.99]"
                 >
                   <CheckSquare className="w-4 h-4" />
-                  <span>Xác Nhận Đã Nhận Hàng Hoàn & Nhập Kho GSP</span>
+                  <span>Xác Nhận Đã Nhận Hàng Hoàn & Nhập Kho</span>
                 </button>
               </div>
 
