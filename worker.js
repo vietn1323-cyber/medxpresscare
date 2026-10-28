@@ -384,13 +384,105 @@ export default {
         }
       }
 
+      // /api/consultations (Lưu giữ lịch sử khảo sát nhu cầu & tương tác chat AI của khách hàng trên Cloudflare D1)
+      if (pathname === '/api/consultations') {
+        if (!db) return errorResponse('D1 database not configured', 500);
+
+        if (request.method === 'GET') {
+          const customerId = searchParams.get('customerId');
+          const phone = searchParams.get('phone');
+          const consultations = await getCollection(db, 'consultations') || [];
+          
+          if (customerId) {
+            const filtered = consultations.filter(c => c.customerId === customerId);
+            return jsonResponse({ success: true, consultations: filtered });
+          }
+          if (phone) {
+            const filtered = consultations.filter(c => c.customerPhone === phone);
+            return jsonResponse({ success: true, consultations: filtered });
+          }
+          return jsonResponse({ success: true, consultations });
+        }
+
+        if (request.method === 'POST') {
+          try {
+            const payload = await request.json();
+            let current = await getCollection(db, 'consultations') || [];
+            
+            if (Array.isArray(payload)) {
+              await setCollection(db, 'consultations', payload);
+              return jsonResponse({ success: true, count: payload.length });
+            } else if (payload && (payload.id || payload.customerId || payload.customerPhone)) {
+              const consultationId = payload.id || ('cst-' + Date.now() + '-' + Math.floor(Math.random() * 1000));
+              const fullRecord = {
+                ...payload,
+                id: consultationId,
+                updatedAt: new Date().toISOString()
+              };
+              const index = current.findIndex(c => c.id === consultationId);
+              if (index >= 0) current[index] = fullRecord;
+              else current.unshift(fullRecord);
+
+              await setCollection(db, 'consultations', current);
+
+              // Cập nhật tóm tắt hồ sơ sức khỏe khách hàng vào bảng customers nếu có thông tin khách
+              if (payload.customerId || payload.customerPhone) {
+                try {
+                  let customersList = await getCollection(db, 'customers') || [];
+                  const cIdx = customersList.findIndex(c => 
+                    (payload.customerId && c.id === payload.customerId) ||
+                    (payload.customerPhone && c.phone === payload.customerPhone)
+                  );
+                  if (cIdx >= 0) {
+                    customersList[cIdx] = {
+                      ...customersList[cIdx],
+                      healthProfile: payload.healthProfile || customersList[cIdx].healthProfile,
+                      lastConsultationDate: fullRecord.updatedAt,
+                      lastConcern: payload.healthProfile?.primaryConcernTitle || payload.healthProfile?.primaryConcern || ''
+                    };
+                    await setCollection(db, 'customers', customersList);
+                  }
+                } catch (e) {
+                  console.warn('Sync customer healthProfile error:', e);
+                }
+              }
+
+              return jsonResponse({ success: true, consultation: fullRecord });
+            }
+            return errorResponse('Invalid consultation payload', 400);
+          } catch (err) {
+            return errorResponse(err.message, 500);
+          }
+        }
+
+        if (request.method === 'DELETE') {
+          const id = searchParams.get('id');
+          if (!id) return errorResponse('Missing consultation id', 400);
+          let current = await getCollection(db, 'consultations') || [];
+          current = current.filter(c => c.id !== id);
+          await setCollection(db, 'consultations', current);
+          return jsonResponse({ success: true, id });
+        }
+      }
+
       // /api/ai-pharmacist
       if (pathname === '/api/ai-pharmacist') {
         if (!env.AI) return errorResponse('Workers AI not configured', 503);
         try {
-          const { userMessage, catalogSummary, targetAudience, selectedCondition, chatHistory } = await request.json();
+          const { userMessage, catalogSummary, targetAudience, selectedCondition, chatHistory, customerContext } = await request.json();
+          let personalizedPrompt = '';
+          if (customerContext) {
+            personalizedPrompt = `
+THÔNG TIN KHÁCH HÀNG ĐÃ ĐƯỢC CÁ NHÂN HÓA:
+- Tên khách hàng: ${customerContext.name || 'Quý khách'}
+- Nhóm đối tượng: ${customerContext.audience || targetAudience || 'Khách hàng'}
+- Nhu cầu / Mối quan tâm đã khảo sát: ${customerContext.concernTitle || customerContext.specificNeeds || 'Chăm sóc sức khỏe'}
+- Lưu ý sức khỏe / Bệnh nền: ${customerContext.condition || selectedCondition || 'Bình thường'}
+- Lưu ý đặc biệt: Phân biệt rõ nhu cầu bổ sung vi chất hàng ngày (như canxi cho con) với bệnh tật, xưng hô thân thiện, gọi tên khách hàng nếu có.`;
+          }
           const systemPrompt = `Bạn là Dược sĩ Lâm sàng Trưởng 24/7 của Hệ Thống Dược Phẩm & TPCN MedXpressCare.com.
-Tư vấn chuẩn xác y khoa, cá nhân hóa, đề xuất phác đồ kết hợp 1 sản phẩm Nội địa và 1 sản phẩm Nhập ngoại.
+Tư vấn chuẩn xác y khoa, cá nhân hóa, đề xuất phác đồ kết hợp 1 sản phẩm Nội địa và 1 sản phẩm Nhập ngoại khi khách cần.
+${personalizedPrompt}
 DANH MỤC SẢN PHẨM MEDXPRESSCARE:
 ${catalogSummary || ''}`;
 

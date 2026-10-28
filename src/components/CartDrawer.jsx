@@ -40,12 +40,16 @@ export const CartDrawer = ({
   // Tính discount theo voucher
   let discountAmount = 0;
   let shippingDiscount = 0;
+  let giftItem = null;
 
   if (currentVoucherObj) {
-    const res = calculateVoucherDiscount(currentVoucherObj, subtotal, 25000);
+    const res = calculateVoucherDiscount(currentVoucherObj, subtotal, 25000, cartItems);
     if (res.isValid) {
       discountAmount = res.discountAmount;
       shippingDiscount = res.shippingDiscount;
+      if (res.isGift && res.giftItem) {
+        giftItem = res.giftItem;
+      }
     }
   } else if (appliedVoucher === 'MEDXPRESS20') {
     discountAmount = 20000;
@@ -240,6 +244,32 @@ export const CartDrawer = ({
                 );
               })}
 
+              {/* Quà Tặng Kèm Đơn Hàng (Nếu đang áp dụng Voucher Tặng Quà) */}
+              {giftItem && (
+                <div className="flex gap-3 p-3 rounded-2xl border-2 border-rose-300 bg-gradient-to-r from-rose-50 via-amber-50/40 to-rose-50 shadow-2xs items-center animate-in fade-in">
+                  <img
+                    src={giftItem.image}
+                    alt={giftItem.name}
+                    className="w-14 h-14 rounded-xl object-cover border border-rose-200 shrink-0 shadow-2xs"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <span className="bg-rose-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider">
+                      QUÀ TẶNG KÈM THEO ĐƠN (0₫)
+                    </span>
+                    <h4 className="font-extrabold text-xs text-rose-950 truncate mt-0.5">
+                      {giftItem.name}
+                    </h4>
+                    <div className="text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5">
+                      <span className="line-through text-slate-400">
+                        {giftItem.value > 0 ? `${giftItem.value.toLocaleString('vi-VN')}₫` : ''}
+                      </span>
+                      <span className="font-extrabold text-emerald-700">Miễn Phí 100%</span>
+                    </div>
+                  </div>
+                  <span className="text-xl">🎁</span>
+                </div>
+              )}
+
               {/* Gợi ý mua thêm để đạt Freeship nếu còn thiếu dưới 200k */}
               {remainingForFreeship > 0 && remainingForFreeship <= 250000 && quickAddSuggestions.length > 0 && (
                 <div className="p-3 bg-amber-50/80 rounded-2xl border border-amber-200/80 space-y-2 mt-2">
@@ -346,6 +376,17 @@ export const CartDrawer = ({
                 <div className="flex justify-between text-rose-600 font-bold">
                   <span>Giảm giá Voucher:</span>
                   <span>-{discountAmount.toLocaleString('vi-VN')}₫</span>
+                </div>
+              )}
+
+              {giftItem && (
+                <div className="flex justify-between items-center text-rose-700 font-extrabold bg-rose-50 p-2 rounded-xl border border-rose-200 text-xs">
+                  <span className="flex items-center gap-1">
+                    <span>🎁 Quà tặng kèm đơn:</span>
+                  </span>
+                  <span className="truncate max-w-[160px] text-right font-black">
+                    {giftItem.name} (0₫)
+                  </span>
                 </div>
               )}
 

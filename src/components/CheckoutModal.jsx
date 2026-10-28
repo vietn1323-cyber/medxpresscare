@@ -8,6 +8,7 @@ import { calculateEarnedPoints, calculatePointsDiscount, calculateMaxPointsToUse
 import { sendTelegramOrderNotification } from '../utils/telegramHelper';
 import { DEFAULT_SHIPPING_CARRIERS } from '../data/shippingCarriers';
 import { DEFAULT_VOUCHERS, calculateVoucherDiscount } from '../data/vouchers';
+import { TwoTierAddressFields } from './TwoTierAddressFields';
 
 export const CheckoutModal = ({ 
   isOpen, 
@@ -107,12 +108,16 @@ export const CheckoutModal = ({
   const currentVoucherObj = vouchers.find(v => v.code === (appliedVoucher?.code || appliedVoucher));
   let discountAmount = 0;
   let voucherShippingDiscount = 0;
+  let giftItem = null;
 
   if (currentVoucherObj) {
-    const res = calculateVoucherDiscount(currentVoucherObj, subtotal, 25000);
+    const res = calculateVoucherDiscount(currentVoucherObj, subtotal, 25000, cartItems);
     if (res.isValid) {
       discountAmount = res.discountAmount;
       voucherShippingDiscount = res.shippingDiscount;
+      if (res.isGift && res.giftItem) {
+        giftItem = res.giftItem;
+      }
     }
   } else if (appliedVoucher === 'MEDXPRESS20') {
     discountAmount = 20000;
@@ -145,7 +150,8 @@ export const CheckoutModal = ({
     const newErrors = {};
     if (!formData.fullName.trim()) newErrors.fullName = 'Vui lòng nhập họ và tên';
     if (!formData.phone.trim()) newErrors.phone = 'Vui lòng nhập số điện thoại để Dược sĩ liên hệ';
-    if (!formData.address.trim()) newErrors.address = 'Vui lòng nhập địa chỉ nhận hàng';
+    if (!formData.district.trim()) newErrors.district = 'Vui lòng chọn hoặc nhập Xã / Phường sau sáp nhập';
+    if (!formData.address.trim()) newErrors.address = 'Vui lòng nhập địa chỉ nhận hàng chi tiết';
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -171,6 +177,7 @@ export const CheckoutModal = ({
       createdAt: new Date().toISOString(),
       customer: { ...formData },
       items: [...cartItems],
+      giftItem,
       subtotal,
       discountAmount,
       pointsUsed: actualPointsToUse,
@@ -415,6 +422,15 @@ export const CheckoutModal = ({
                       <span className="font-mono font-medium">{(item.price * item.quantity).toLocaleString('vi-VN')}₫</span>
                     </div>
                   ))}
+                  {giftItem && (
+                    <div className="flex justify-between items-center text-rose-700 bg-rose-50/80 p-1.5 rounded-lg border border-rose-200 font-bold mt-1">
+                      <span className="truncate max-w-[70%] flex items-center gap-1">
+                        <span>🎁 Quà tặng:</span>
+                        <span className="truncate">{giftItem.name}</span>
+                      </span>
+                      <span className="text-emerald-700 font-extrabold shrink-0">0₫ (Miễn phí)</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -565,46 +581,28 @@ export const CheckoutModal = ({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                  <div>
-                    <label className="block text-slate-600 font-semibold mb-1">Tỉnh / Thành phố</label>
-                    <select
-                      value={formData.province}
-                      onChange={(e) => {
-                        const newProv = e.target.value;
-                        setFormData(prev => ({
-                          ...prev,
-                          province: newProv,
-                          // Nếu chuyển sang tỉnh khác Hà Nội mà đang chọn hỏa tốc, tự động chuyển về Giao hàng nhanh (GHTK)
-                          shippingMethod: (newProv !== 'Hà Nội' && prev.shippingMethod === 'express') ? 'ghtk' : prev.shippingMethod
-                        }));
-                      }}
-                      className="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:border-emerald-500"
-                    >
-                      <option value="Hà Nội">Hà Nội (Hỗ trợ Giao Hỏa Tốc & Giao Hàng Nhanh)</option>
-                      <option value="TP. Hồ Chí Minh">TP. Hồ Chí Minh (Giao Hàng Nhanh)</option>
-                      <option value="Đà Nẵng">Đà Nẵng (Giao Hàng Nhanh)</option>
-                      <option value="Hải Phòng">Hải Phòng (Giao Hàng Nhanh)</option>
-                      <option value="Cần Thơ">Cần Thơ (Giao Hàng Nhanh)</option>
-                      <option value="Tỉnh thành khác">Tỉnh / Thành phố khác (Giao Hàng Nhanh)</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-slate-600 font-semibold mb-1">Quận / Huyện</label>
-                    <input
-                      type="text"
-                      placeholder="Quận Cầu Giấy / Quận 1..."
-                      value={formData.district}
-                      onChange={(e) => setFormData({ ...formData, district: e.target.value })}
-                      className="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:border-emerald-500"
-                    />
-                  </div>
-                </div>
+                {/* Mô Hình Địa Chỉ 2 Cấp (Cấp 1: Tỉnh/Thành phố; Cấp 2: Xã/Phường/Thị trấn sau sáp nhập) */}
+                <TwoTierAddressFields
+                  province={formData.province}
+                  ward={formData.district}
+                  onProvinceChange={(newProv) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      province: newProv,
+                      // Nếu chuyển sang tỉnh khác Hà Nội mà đang chọn hỏa tốc, tự động chuyển về Giao hàng nhanh (GHTK)
+                      shippingMethod: (newProv !== 'Hà Nội' && prev.shippingMethod === 'express') ? 'ghtk' : prev.shippingMethod
+                    }));
+                  }}
+                  onWardChange={(newWard) => {
+                    setFormData(prev => ({ ...prev, district: newWard }));
+                    if (errors.district) setErrors(prev => ({ ...prev, district: '' }));
+                  }}
+                  errorWard={errors.district}
+                />
 
                 <div className="text-xs">
                   <label className="block text-slate-600 font-semibold mb-1">
-                    Địa chỉ chi tiết (Số nhà, tên đường, tòa nhà) <span className="text-rose-500">*</span>
+                    Địa chỉ chi tiết (Số nhà, tên đường, thôn xóm, tòa nhà) <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -829,6 +827,17 @@ export const CheckoutModal = ({
                   <div className="flex justify-between text-emerald-700 font-semibold">
                     <span>Mã ưu đãi ({appliedVoucher}):</span>
                     <span>-{discountAmount.toLocaleString('vi-VN')}₫</span>
+                  </div>
+                )}
+
+                {giftItem && (
+                  <div className="flex justify-between items-center text-rose-700 font-extrabold bg-rose-50 p-2 rounded-xl border border-rose-200">
+                    <span className="flex items-center gap-1">
+                      <span>🎁 Quà tặng kèm ({appliedVoucher}):</span>
+                    </span>
+                    <span className="truncate max-w-[200px] text-right">
+                      {giftItem.name} (0₫)
+                    </span>
                   </div>
                 )}
 

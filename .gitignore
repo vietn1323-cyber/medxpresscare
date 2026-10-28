@@ -8,9 +8,11 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+# Build artifacts
 dist
 dist-ssr
 *.local
+*.zip
 
 # Editor directories and files
 .vscode/*

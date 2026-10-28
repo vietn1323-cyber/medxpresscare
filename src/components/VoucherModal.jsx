@@ -27,6 +27,7 @@ export const VoucherModal = ({
   const activeVouchers = vouchers.filter(v => v.enabled);
   const filteredVouchers = activeVouchers.filter(v => {
     if (filterType === 'all') return true;
+    if (filterType === 'gift') return v.discountType === 'gift';
     if (filterType === 'combo') return v.code.includes('COMBO') || v.title.toLowerCase().includes('combo');
     if (filterType === 'shipping') return v.discountType === 'shipping';
     if (filterType === 'fixed') return v.discountType === 'fixed';
@@ -102,6 +103,7 @@ export const VoucherModal = ({
         <div className="p-3 bg-slate-50 border-b border-slate-200/80 flex items-center gap-2 overflow-x-auto">
           {[
             { id: 'all', label: 'Tất cả mã' },
+            { id: 'gift', label: '🎁 Quà Tặng Kèm' },
             { id: 'combo', label: '🔥 Combo 3 & 6 Hộp' },
             { id: 'shipping', label: '🚚 Miễn phí vận chuyển' },
             { id: 'fixed', label: '💵 Giảm tiền mặt' },
@@ -169,6 +171,31 @@ export const VoucherModal = ({
                       {voucher.description}
                     </p>
 
+                    {/* Hiển thị chi tiết Quà Tặng nếu là loại voucher Tặng Quà */}
+                    {voucher.discountType === 'gift' && (
+                      <div className="flex items-center gap-2.5 p-2 rounded-xl bg-gradient-to-r from-rose-50 to-amber-50/50 border border-rose-200 text-xs mt-1 shadow-2xs">
+                        {voucher.giftImage ? (
+                          <img 
+                            src={voucher.giftImage} 
+                            alt={voucher.giftName || 'Quà tặng'} 
+                            className="w-10 h-10 rounded-lg object-cover border border-rose-200 shrink-0 shadow-2xs" 
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center font-black shrink-0 text-base">
+                            🎁
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <span className="font-extrabold text-rose-900 block truncate">
+                            🎁 {voucher.giftName || 'Quà tặng kèm theo đơn'}
+                          </span>
+                          <span className="text-[10px] text-rose-600 font-semibold">
+                            Trị giá: {Number(voucher.giftValue || 0).toLocaleString('vi-VN')}₫ (Miễn phí 0₫)
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-500 pt-1">
                       <span className="flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5 text-slate-400" />
@@ -221,7 +248,7 @@ export const VoucherModal = ({
                             : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                       }`}
                     >
-                      {isApplied ? 'Đang Dùng' : isEligible ? 'Áp Dụng Ngay' : 'Chưa Đủ Đk'}
+                      {isApplied ? (voucher.discountType === 'gift' ? 'Đã Nhận Quà' : 'Đang Dùng') : isEligible ? (voucher.discountType === 'gift' ? 'Nhận Quà Ngay' : 'Áp Dụng Ngay') : 'Chưa Đủ Đk'}
                     </button>
                   </div>
                 </div>

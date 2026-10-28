@@ -1,7 +1,8 @@
 import React from 'react';
 import { 
   ShieldCheck, PhoneCall, Mail, MapPin, Award, 
-  Truck, RefreshCw, FileText, Heart, Stethoscope 
+  Truck, RefreshCw, FileText, Heart, Stethoscope,
+  Smartphone, Download
 } from 'lucide-react';
 
 export const Footer = ({ 
@@ -10,6 +11,7 @@ export const Footer = ({
   onOpenAdmin, 
   onNavigateToTracking, 
   onNavigateToPolicy, 
+  onOpenPWAInstall,
   hotline = '1800 6868',
   storeConfig = {},
   policies = []
@@ -240,7 +242,7 @@ export const Footer = ({
               </div>
             </div>
 
-            {/* Badges Chứng Nhận */}
+            {/* Badges Chứng Nhận & PWA Mobile App Button */}
             <div className="flex items-center gap-2 pt-2">
               <span className="text-[10px] font-bold px-2 py-1 bg-emerald-950 text-emerald-300 rounded border border-emerald-800">
                 ĐÃ THÔNG BÁO BỘ CÔNG THƯƠNG
@@ -249,6 +251,18 @@ export const Footer = ({
                 CHUẨN GSP
               </span>
             </div>
+
+            {onOpenPWAInstall && (
+              <div className="pt-2">
+                <button
+                  onClick={onOpenPWAInstall}
+                  className="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
+                >
+                  <Smartphone className="w-4 h-4 text-amber-300" />
+                  <span>Cài App MedXpressCare Vào ĐT</span>
+                </button>
+              </div>
+            )}
           </div>
 
         </div>

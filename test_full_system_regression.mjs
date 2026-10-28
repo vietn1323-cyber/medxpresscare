@@ -134,14 +134,9 @@ runTest('Loyalty Points', 'Tích và đổi điểm thưởng thành viên (100k
 // ===================================================================
 console.log('\n--- 3. KIỂM THỬ ĐÁNH GIÁ KHÁCH HÀNG (UGC) & PHẢN HỒI ---');
 
-runTest('Reviews', 'Khởi tạo đánh giá mẫu và tính toàn vẹn dữ liệu', () => {
-  assert.ok(Array.isArray(INITIAL_REVIEWS) && INITIAL_REVIEWS.length > 0);
-  INITIAL_REVIEWS.forEach(rev => {
-    assert.ok(rev.id);
-    assert.ok(rev.productId);
-    assert.ok(rev.rating >= 1 && rev.rating <= 5);
-    assert.ok(rev.customerName, `Đánh giá ${rev.id} thiếu customerName`);
-  });
+runTest('Reviews', 'INITIAL_REVIEWS sạch sẽ không chứa dữ liệu mẫu thử nghiệm', () => {
+  assert.ok(Array.isArray(INITIAL_REVIEWS));
+  assert.strictEqual(INITIAL_REVIEWS.length, 0, 'INITIAL_REVIEWS phải rỗng để sẵn sàng cho production');
 });
 
 runTest('Reviews', 'Thêm đánh giá mới tự động tick Đã mua hàng và tính lại Rating sản phẩm', () => {

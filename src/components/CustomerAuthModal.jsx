@@ -3,6 +3,7 @@ import {
   X, User, Lock, Phone, MapPin, Mail, Award, 
   ArrowRight, Sparkles, CheckCircle2, ShieldCheck, Eye, EyeOff 
 } from 'lucide-react';
+import { TwoTierAddressFields } from './TwoTierAddressFields';
 
 export const CustomerAuthModal = ({ 
   isOpen, 
@@ -366,32 +367,18 @@ export const CustomerAuthModal = ({
 
               <div className="space-y-1.5 pt-1">
                 <label className="block text-xs font-bold text-slate-700">
-                  Địa chỉ nhận hàng mặc định (để tự động điền khi mua hàng)
+                  Địa chỉ nhận hàng mặc định (Mô hình 2 cấp tự động điền khi mua hàng)
                 </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <select
-                    value={registerForm.province}
-                    onChange={(e) => setRegisterForm({ ...registerForm, province: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"
-                  >
-                    <option value="Hà Nội">Hà Nội</option>
-                    <option value="TP. Hồ Chí Minh">TP. Hồ Chí Minh</option>
-                    <option value="Đà Nẵng">Đà Nẵng</option>
-                    <option value="Hải Phòng">Hải Phòng</option>
-                    <option value="Cần Thơ">Cần Thơ</option>
-                    <option value="Tỉnh thành khác">Tỉnh / Thành phố khác</option>
-                  </select>
-                  <input
-                    type="text"
-                    placeholder="Quận / Huyện..."
-                    value={registerForm.district}
-                    onChange={(e) => setRegisterForm({ ...registerForm, district: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"
-                  />
-                </div>
+                <TwoTierAddressFields
+                  province={registerForm.province}
+                  ward={registerForm.district}
+                  onProvinceChange={(newProv) => setRegisterForm({ ...registerForm, province: newProv, district: '' })}
+                  onWardChange={(newWard) => setRegisterForm({ ...registerForm, district: newWard })}
+                  compact={true}
+                />
                 <input
                   type="text"
-                  placeholder="Số nhà, tên đường, ngõ ngách..."
+                  placeholder="Số nhà, tên đường, thôn xóm, ngõ ngách..."
                   value={registerForm.address}
                   onChange={(e) => setRegisterForm({ ...registerForm, address: e.target.value })}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"

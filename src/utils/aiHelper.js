@@ -706,9 +706,21 @@ export const consultWithAiPharmacist = async ({
   apiKey = '',
   provider = 'gemini',
   model = 'gemini-2.5-flash',
-  chatHistory = []
+  chatHistory = [],
+  customerContext = null
 }) => {
   const query = (userMessage || '').trim();
+
+  // Tạo ngữ cảnh hồ sơ sức khỏe khách hàng cá nhân hóa
+  const customerProfileText = customerContext ? `
+THÔNG TIN KHÁCH HÀNG & HỒ SƠ Y KHOA ĐÃ LƯU TRỮ (CÁ NHÂN HÓA D1):
+- Họ và tên khách hàng: ${customerContext.name || customerContext.fullName || 'Quý khách'}
+- Điện thoại liên hệ: ${customerContext.phone || 'Chưa cung cấp'}
+- Nhu cầu / Mối quan tâm sức khỏe đã khảo sát: ${customerContext.healthProfile?.primaryConcernTitle || customerContext.lastConcern || 'Chưa có'}
+- Nhóm đối tượng chăm sóc: ${customerContext.healthProfile?.audienceTitle || ''}
+- Tiền sử / Thể trạng lưu ý: ${customerContext.healthProfile?.conditionTitle || ''}
+- Ghi chú riêng: ${customerContext.healthProfile?.specificNotes || ''}
+* NGUYÊN TẮC CÁ NHÂN HÓA: Hãy xưng hô và chào đón khách hàng bằng tên một cách tự nhiên, ân cần (ví dụ "Dược sĩ chào ${customerContext.name || customerContext.fullName || 'bạn'}..."). Nếu khách đã có hồ sơ khảo sát trước đó, hãy ghi nhận và phát triển tiếp từ nhu cầu đó!` : '';
 
   // 1. NẾU CÓ API KEY AI (GEMINI HOẶC OPENAI), GỌI API THỰC TẾ
   if (apiKey && apiKey.trim()) {
@@ -724,6 +736,7 @@ export const consultWithAiPharmacist = async ({
 
     const systemPrompt = `Bạn là Dược sĩ Lâm sàng Trưởng của Hệ Thống Chăm Sóc Sức Khỏe MedXpressCare (medxpresscare.com).
 Tôn chỉ cao nhất của bạn: "LƯƠNG Y NHƯ TỪ MẪU" — Lấy sự an tâm, sức khỏe và tính mạng người bệnh làm trọng tâm. Tuyệt đối không hành xử như nhân viên bán hàng chèo kéo.
+${customerProfileText}
 
 DANH MỤC SẢN PHẨM CỬA HÀNG HIỆN CÓ:
 ${catalogSummary}
@@ -817,9 +830,10 @@ NGUYÊN TẮC TƯ VẤN SỐNG CÒN (BẮT BUỘC TUÂN THỦ ĐỂ ĐÚNG HOÀN
             role: 'user',
             parts: [{ 
               text: `[NGỮ CẢNH TƯ VẤN HỆ THỐNG]:
+- Khách hàng: ${customerContext?.name || customerContext?.fullName || 'Khách vãng lai'}
 - Đối tượng chỉ định: ${targetAudience || 'Tự động nhận diện từ câu hỏi'}
-- Mối quan tâm sức khỏe: ${selectedConcern?.title || 'Chưa chọn cụ thể'}
-- Tiền sử bệnh nền: ${selectedCondition || 'Không có'}
+- Mối quan tâm sức khỏe: ${selectedConcern?.title || customerContext?.healthProfile?.primaryConcernTitle || 'Chưa chọn cụ thể'}
+- Tiền sử bệnh nền: ${selectedCondition || customerContext?.healthProfile?.conditionTitle || 'Không có'}
 
 [CÂU HỎI TỪ KHÁCH HÀNG]:
 "${query}"` 
@@ -857,7 +871,7 @@ NGUYÊN TẮC TƯ VẤN SỐNG CÒN (BẮT BUỘC TUÂN THỦ ĐỂ ĐÚNG HOÀN
           })),
           {
             role: 'user',
-            content: `[NGỮ CẢNH]: Đối tượng=${targetAudience || 'Tự động'}, Mối quan tâm=${selectedConcern?.title || 'Chưa rõ'}, Bệnh nền=${selectedCondition}. Câu hỏi: "${query}"`
+            content: `[NGỮ CẢNH]: Khách hàng=${customerContext?.name || 'Khách'}, Đối tượng=${targetAudience || 'Tự động'}, Mối quan tâm=${selectedConcern?.title || customerContext?.healthProfile?.primaryConcernTitle || 'Chưa rõ'}, Bệnh nền=${selectedCondition}. Câu hỏi: "${query}"`
           }
         ];
 
@@ -917,7 +931,8 @@ NGUYÊN TẮC TƯ VẤN SỐNG CÒN (BẮT BUỘC TUÂN THỦ ĐỂ ĐÚNG HOÀN
         catalogSummary,
         targetAudience,
         selectedCondition,
-        chatHistory: (chatHistory || []).slice(-4)
+        chatHistory: (chatHistory || []).slice(-4),
+        customerContext: customerContext || undefined
       })
     });
 
@@ -1022,18 +1037,30 @@ Theo đúng quy định của Luật Dược 2016 và Bộ Y Tế:
     }
   }
 
+  // Thông tin cá nhân hóa từ hồ sơ khách hàng
+  const customerName = customerContext?.name || customerContext?.fullName || '';
+  const customerConcern = customerContext?.healthProfile?.primaryConcernTitle || customerContext?.lastConcern || '';
+
   // Tinh chỉnh lời chào & đại từ xưng hô đúng ngữ cảnh
-  let greetingSalutation = 'Chào bạn!';
+  let greetingSalutation = customerName ? `Chào bạn ${customerName}!` : 'Chào bạn!';
   if (isAskingForParents) {
-    greetingSalutation = 'Chào bạn! Dược sĩ rất hiểu và xin chia sẻ cùng bạn về tình trạng sức khỏe của **Bác (bố/mẹ bạn)**';
+    greetingSalutation = customerName 
+      ? `Chào bạn ${customerName}! Dược sĩ rất hiểu và xin chia sẻ cùng bạn về tình trạng sức khỏe của **Bác (bố/mẹ bạn)**`
+      : 'Chào bạn! Dược sĩ rất hiểu và xin chia sẻ cùng bạn về tình trạng sức khỏe của **Bác (bố/mẹ bạn)**';
   } else if (isAskingForKids || audience === 'kids') {
-    greetingSalutation = 'Chào bạn! Dược sĩ rất hiểu và xin đồng hành cùng ba/mẹ chăm sóc sức khỏe cho **bé**';
+    greetingSalutation = customerName
+      ? `Chào bạn ${customerName}! Dược sĩ rất hiểu và xin đồng hành cùng ba/mẹ chăm sóc sức khỏe cho **bé**`
+      : 'Chào bạn! Dược sĩ rất hiểu và xin đồng hành cùng ba/mẹ chăm sóc sức khỏe cho **bé**';
   } else if (isAskingForPregnant) {
-    greetingSalutation = 'Chào bạn! Dược sĩ xin chia sẻ và đồng hành cùng mẹ trong giai đoạn thai kỳ';
+    greetingSalutation = customerName
+      ? `Chào bạn ${customerName}! Dược sĩ xin chia sẻ và đồng hành cùng mẹ trong giai đoạn thai kỳ`
+      : 'Chào bạn! Dược sĩ xin chia sẻ và đồng hành cùng mẹ trong giai đoạn thai kỳ';
   } else if (audience === 'elderly') {
-    greetingSalutation = 'Dược sĩ xin kính chào Bác!';
+    greetingSalutation = customerName ? `Dược sĩ xin kính chào Bác ${customerName}!` : 'Dược sĩ xin kính chào Bác!';
   } else if (audience === 'office') {
-    greetingSalutation = 'Chào bạn! Dược sĩ rất thấu hiểu nỗi vất vả của dân văn phòng chúng ta khi phải ngồi máy tính nhiều';
+    greetingSalutation = customerName
+      ? `Chào bạn ${customerName}! Dược sĩ rất thấu hiểu nỗi vất vả của dân văn phòng chúng ta khi phải ngồi máy tính nhiều`
+      : 'Chào bạn! Dược sĩ rất thấu hiểu nỗi vất vả của dân văn phòng chúng ta khi phải ngồi máy tính nhiều';
   }
 
   // Phân loại Intent của người dùng:
@@ -1060,8 +1087,14 @@ Theo đúng quy định của Luật Dược 2016 và Bộ Y Tế:
 
   // TRƯỜNG HỢP 1: CHÀO HỎI & BẮT CHUYỆN (TUYỆT ĐỐI KHÔNG BÁN HÀNG)
   if (isGreeting) {
+    const welcomeLine = customerName 
+      ? `Chào mừng bạn **${customerName}** đã quay lại với MedXpressCare!` 
+      : `Chào bạn! Tôi là **Dược sĩ Lâm Sàng của MedXpressCare**.`;
+    const concernHint = customerConcern 
+      ? `\n\n💡 *Dược sĩ đã lưu hồ sơ quan tâm trước đó của bạn về **${customerConcern}**. Hôm nay bạn cảm thấy tình trạng thế nào rồi ạ, hoặc bạn có câu hỏi mới cần Dược sĩ hỗ trợ không?*` 
+      : '';
     return {
-      reply: `Chào bạn! Tôi là **Dược sĩ Lâm Sàng của MedXpressCare**.
+      reply: `${welcomeLine}${concernHint}
 
 Rất vui được hỗ trợ bạn hôm nay! Tôi sẵn sàng giải đáp mọi thắc mắc về:
 - Các triệu chứng khó chịu bạn hoặc người thân đang gặp phải
@@ -1069,9 +1102,9 @@ Rất vui được hỗ trợ bạn hôm nay! Tôi sẵn sàng giải đáp mọ
 - Thời điểm uống, cách dùng và kiểm tra tương tác thuốc, bệnh nền an toàn
 - Liệu trình bổ sung vi chất & thảo dược lành tính khi bạn cần giải pháp chăm sóc từ gốc
 
-Bạn có thể chia sẻ cụ thể tình trạng, độ tuổi hoặc câu hỏi bạn đang băn khoăn để Dược sĩ hỗ trợ tư vấn chi tiết nhé!`,
+Bạn có thể chia sẻ cụ thể tình trạng, độ tuổi hoặc câu hỏi bạn đang băn khoăn để Dược sĩ hỗ trợ chi tiết nhé!`,
       detectedAudience: audience,
-      detectedConcern: 'Chào hỏi & Tư vấn ban đầu',
+      detectedConcern: customerConcern || 'Chào hỏi & Tư vấn ban đầu',
       recommendedProductIds: [],
       precautions: ''
     };

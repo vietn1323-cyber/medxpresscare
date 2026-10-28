@@ -356,10 +356,20 @@ export const HealthAdvisorModal = ({
   onAddToCart, 
   onOpenDetail, 
   products = PRODUCTS,
-  storeConfig = {}
+  storeConfig = {},
+  currentCustomer = null,
+  consultations = [],
+  onSaveConsultation = null,
+  onOpenAuth = null,
+  initialSession = null
 }) => {
   // Chế độ tư vấn: 'wizard' (Khảo sát 4 bước) hoặc 'chat' (Trò chuyện trực tiếp với Dược sĩ AI 24/7)
-  const [activeTab, setActiveTab] = useState('wizard');
+  const [activeTab, setActiveTab] = useState(initialSession ? 'chat' : 'wizard');
+
+  // ID phiên tư vấn hiện tại (dùng để lưu giữ và đồng bộ trên Cloudflare D1)
+  const [activeConsultationId, setActiveConsultationId] = useState(() => {
+    return initialSession?.id || ('cst-' + Date.now() + '-' + Math.floor(Math.random() * 1000));
+  });
 
   // Trạng thái Wizard
   const [step, setStep] = useState(1);
@@ -370,6 +380,36 @@ export const HealthAdvisorModal = ({
   // Ngữ cảnh tư vấn riêng cho khung Chat (Người dùng chủ động chọn hoặc để AI tự động nhận diện)
   const [chatAudience, setChatAudience] = useState('auto'); // 'auto' | 'elderly' | 'women' | 'men' | 'office' | 'kids'
   const [chatCondition, setChatCondition] = useState('none'); // 'none' | 'stomach' | 'blood_pressure' | 'diabetes'
+
+  // Trạng thái banner chào mừng cá nhân hóa
+  const [isDismissedWelcome, setIsDismissedWelcome] = useState(false);
+
+  // Nạp phiên tư vấn cũ nếu có truyền initialSession
+  useEffect(() => {
+    if (initialSession) {
+      if (initialSession.id) setActiveConsultationId(initialSession.id);
+      if (initialSession.healthProfile?.audience) {
+        setSelectedAudienceId(initialSession.healthProfile.audience);
+      }
+      if (initialSession.healthProfile?.primaryConcern) {
+        const concerns = AUDIENCE_CONCERNS[initialSession.healthProfile.audience] || [];
+        const foundConcern = concerns.find(c => c.id === initialSession.healthProfile.primaryConcern);
+        if (foundConcern) setSelectedConcern(foundConcern);
+      }
+      if (initialSession.healthProfile?.conditionId) {
+        setSelectedConditionId(initialSession.healthProfile.conditionId);
+      }
+      if (Array.isArray(initialSession.chatHistory) && initialSession.chatHistory.length > 0) {
+        setChatMessages(initialSession.chatHistory);
+        setActiveTab('chat');
+      } else {
+        setStep(4);
+      }
+    }
+  }, [initialSession]);
+
+  // Hồ sơ đã khảo sát gần nhất (từ currentCustomer hoặc danh sách consultations)
+  const customerPastProfile = currentCustomer?.healthProfile || (consultations && consultations.length > 0 ? consultations[0]?.healthProfile : null);
 
   // Trạng thái Live Chat AI
   const [chatMessages, setChatMessages] = useState([
@@ -435,6 +475,35 @@ Quý khách đang gặp tình trạng khó chịu nào hoặc cần Dược sĩ 
   const handleSelectCondition = (condId) => {
     setSelectedConditionId(condId);
     setStep(4);
+
+    // Tự động lưu hồ sơ khảo sát nhu cầu vào Cloudflare D1 & LocalStorage
+    const condObj = ADVISOR_CONDITIONS.find(c => c.id === condId) || ADVISOR_CONDITIONS[0];
+    const newRecord = {
+      id: activeConsultationId,
+      customerId: currentCustomer?.id || (currentCustomer?.phone ? `cust-${currentCustomer.phone}` : 'guest-session'),
+      customerName: currentCustomer?.fullName || currentCustomer?.name || 'Khách vãng lai',
+      customerPhone: currentCustomer?.phone || '',
+      healthProfile: {
+        audience: selectedAudienceId,
+        audienceTitle: currentAudience.title,
+        primaryConcern: activeConcern.id,
+        primaryConcernTitle: activeConcern.title,
+        conditionId: condId,
+        conditionTitle: condObj.title,
+        conditionNote: condObj.note || '',
+        lifestyleAdvice: activeConcern.lifestyle || '',
+        keyNutrients: activeConcern.keyNutrients || '',
+        updatedAt: new Date().toISOString()
+      },
+      chatHistory: chatMessages,
+      recommendedProductIds: [domesticProduct?.id, importedProduct?.id].filter(Boolean),
+      status: 'active',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    if (onSaveConsultation) {
+      onSaveConsultation(newRecord);
+    }
   };
 
   const handleResetWizard = () => {
@@ -480,6 +549,19 @@ Quý khách đang gặp tình trạng khó chịu nào hoặc cần Dược sĩ 
     setIsThinking(true);
 
     try {
+      const customerContext = {
+        name: currentCustomer?.fullName || currentCustomer?.name || '',
+        phone: currentCustomer?.phone || '',
+        healthProfile: currentCustomer?.healthProfile || {
+          audience: selectedAudienceId,
+          audienceTitle: currentAudience?.title,
+          primaryConcern: activeConcern?.id,
+          primaryConcernTitle: activeConcern?.title,
+          conditionTitle: activeCondition?.title
+        },
+        lastConcern: activeConcern?.title || currentCustomer?.lastConcern || ''
+      };
+
       const response = await consultWithAiPharmacist({
         userMessage: textToSend.trim(),
         targetAudience: chatAudience === 'auto' ? '' : chatAudience,
@@ -489,7 +571,8 @@ Quý khách đang gặp tình trạng khó chịu nào hoặc cần Dược sĩ 
         apiKey: storeConfig?.aiApiKey || '',
         provider: storeConfig?.aiProvider || 'gemini',
         model: storeConfig?.aiModel || 'gemini-2.5-flash',
-        chatHistory: chatMessages
+        chatHistory: chatMessages,
+        customerContext
       });
 
       // Lấy danh sách sản phẩm khớp từ ID trả về (CHỈ khi AI có đề xuất)
@@ -506,7 +589,32 @@ Quý khách đang gặp tình trạng khó chịu nào hoặc cần Dược sĩ 
         time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
       };
 
+      const updatedHistory = [...chatMessages, userMsg, aiMsg];
       setChatMessages(prev => [...prev, aiMsg]);
+
+      // Tự động lưu phiên tương tác AI vào Cloudflare D1 & LocalStorage
+      if (onSaveConsultation) {
+        onSaveConsultation({
+          id: activeConsultationId,
+          customerId: currentCustomer?.id || (currentCustomer?.phone ? `cust-${currentCustomer.phone}` : 'guest-session'),
+          customerName: currentCustomer?.fullName || currentCustomer?.name || 'Khách vãng lai',
+          customerPhone: currentCustomer?.phone || '',
+          healthProfile: {
+            audience: selectedAudienceId,
+            audienceTitle: currentAudience?.title,
+            primaryConcern: activeConcern?.id,
+            primaryConcernTitle: activeConcern?.title,
+            conditionId: selectedConditionId,
+            conditionTitle: activeCondition?.title,
+            conditionNote: activeCondition?.note || '',
+            updatedAt: new Date().toISOString()
+          },
+          chatHistory: updatedHistory,
+          recommendedProductIds: matchedProds.map(p => p.id),
+          status: 'active',
+          updatedAt: new Date().toISOString()
+        });
+      }
     } catch (err) {
       console.error(err);
       setChatMessages(prev => [
@@ -609,6 +717,54 @@ Quý khách đang gặp tình trạng khó chịu nào hoặc cần Dược sĩ 
             MedXpressCare chỉ cung cấp <strong>Thực phẩm bảo vệ sức khỏe (TPCN) & Dược mỹ phẩm</strong>. Website <strong>KHÔNG BÁN THUỐC KÊ ĐƠN</strong> và không cung cấp phác đồ điều trị thay thế chẩn đoán của Bác sĩ.
           </span>
         </div>
+
+        {/* BANNER CHÀO MỪNG CÁ NHÂN HÓA HỒ SƠ Y KHOA KHÁCH HÀNG */}
+        {customerPastProfile && !isDismissedWelcome && (
+          <div className="mx-3 mt-3 sm:mx-6 p-3 sm:p-4 bg-gradient-to-r from-emerald-50 via-teal-50 to-amber-50 rounded-2xl border border-emerald-200/90 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm mt-0.5">
+                <Sparkles className="w-4 h-4 text-amber-300" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-black text-emerald-950">
+                    Chào mừng {currentCustomer?.fullName || currentCustomer?.name || 'quý khách'} trở lại!
+                  </span>
+                  <span className="bg-emerald-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
+                    Hồ Sơ Đã Lưu
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  Nhu cầu khảo sát gần nhất: <strong className="text-emerald-800">{customerPastProfile.primaryConcernTitle || customerPastProfile.primaryConcern}</strong>
+                  {customerPastProfile.audienceTitle && <span className="text-slate-500"> • {customerPastProfile.audienceTitle}</span>}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 justify-end">
+              <button
+                onClick={() => {
+                  if (customerPastProfile.audience) setSelectedAudienceId(customerPastProfile.audience);
+                  const foundC = AUDIENCE_CONCERNS[customerPastProfile.audience]?.find(c => c.id === customerPastProfile.primaryConcern);
+                  if (foundC) setSelectedConcern(foundC);
+                  if (customerPastProfile.conditionId) setSelectedConditionId(customerPastProfile.conditionId);
+                  setStep(4);
+                  setIsDismissedWelcome(true);
+                }}
+                className="px-3 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5"
+              >
+                <Check className="w-3.5 h-3.5" />
+                <span>Xem lại hồ sơ này</span>
+              </button>
+              <button
+                onClick={() => setIsDismissedWelcome(true)}
+                className="px-2.5 py-1.5 rounded-xl hover:bg-slate-200/70 text-slate-600 text-xs font-medium transition-all"
+              >
+                Khảo sát mới
+              </button>
+            </div>
+          </div>
+        )}
 
           {/* Stepper Indicator nếu đang ở Wizard Mode */}
           {activeTab === 'wizard' && (
@@ -1234,6 +1390,24 @@ Quý khách đang gặp tình trạng khó chịu nào hoặc cần Dược sĩ 
 
             {/* Ô nhập tin nhắn trò chuyện */}
             <div className="p-3 bg-white border-t border-slate-200 shrink-0">
+              {!currentCustomer && onOpenAuth && (
+                <div className="mb-2 p-2 bg-emerald-50 rounded-xl border border-emerald-200/80 flex items-center justify-between gap-2 text-[11px] text-emerald-900">
+                  <span className="flex items-center gap-1.5 font-medium truncate">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                    <span>Đăng nhập để lưu lịch sử tư vấn AI & theo dõi sức khỏe dài lâu.</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      onOpenAuth();
+                    }}
+                    className="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg font-bold text-[10px] shrink-0"
+                  >
+                    Đăng Nhập
+                  </button>
+                </div>
+              )}
               <form 
                 onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}
                 className="flex items-center gap-2"

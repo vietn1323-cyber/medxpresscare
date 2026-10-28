@@ -35,7 +35,8 @@ export const ProductsPage = ({
   onToggleWishlist,
   onBackHome,
   onNavigateToProducts,
-  onOpenAdvisor
+  onOpenAdvisor,
+  vouchers = []
 }) => {
   // Thống kê số lượng theo xuất xứ
   const domesticCount = allProducts.filter(p => p.originType === 'domestic').length;
@@ -233,6 +234,8 @@ export const ProductsPage = ({
 
         {/* 4. Bộ Lọc Đa Năng Thông Minh (21 Nhóm bệnh lý, Dạng bào chế, Đối tượng, v.v.) */}
         <OriginFilterTabs
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
           originFilter={originFilter}
           setOriginFilter={setOriginFilter}
           selectedCountry={selectedCountry}
@@ -282,6 +285,7 @@ export const ProductsPage = ({
                 onOpenDetail={onOpenDetail}
                 isWishlisted={wishlist.some(item => item.id === product.id)}
                 onToggleWishlist={onToggleWishlist}
+                vouchers={vouchers}
               />
             ))}
           </div>

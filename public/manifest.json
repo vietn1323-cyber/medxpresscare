@@ -1,0 +1,104 @@
+{
+  "id": "/?source=pwa",
+  "name": "MedXpressCare - Nhà Thuốc & TPCN Chính Hãng",
+  "short_name": "MedXpressCare",
+  "description": "Nhà thuốc trực tuyến phân phối Thực phẩm chức năng cao cấp chính hãng nội địa & nhập khẩu Mỹ, Úc, Nhật, Hàn, Đức. Dược sĩ chuyên môn tư vấn 24/7.",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "window-controls-overlay"],
+  "background_color": "#f8fafc",
+  "theme_color": "#059669",
+  "orientation": "portrait-primary",
+  "lang": "vi",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "categories": [
+    "medical",
+    "shopping",
+    "health",
+    "lifestyle"
+  ],
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/maskable-icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/logo-icon.png",
+      "sizes": "900x900",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "900x900",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dược Sĩ AI Tư Vấn 24/7",
+      "short_name": "Tư vấn AI",
+      "description": "Khảo sát nhu cầu sức khỏe và nhận tư vấn chuyên môn từ Dược sĩ AI",
+      "url": "/?open=consultation",
+      "icons": [
+        {
+          "src": "/pwa-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Chương Trình Khuyến Mại",
+      "short_name": "Khuyến mại",
+      "description": "Xem mã giảm giá và quà tặng tặng kèm",
+      "url": "/?open=promotions",
+      "icons": [
+        {
+          "src": "/pwa-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Tra Cứu Đơn Hàng",
+      "short_name": "Tra cứu",
+      "description": "Kiểm tra tình trạng vận chuyển đơn hàng bằng mã vận đơn",
+      "url": "/?open=tracking",
+      "icons": [
+        {
+          "src": "/pwa-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Giỏ Hàng Của Bạn",
+      "short_name": "Giỏ hàng",
+      "description": "Xem các sản phẩm đã chọn và thanh toán nhanh chóng",
+      "url": "/?open=cart",
+      "icons": [
+        {
+          "src": "/pwa-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}

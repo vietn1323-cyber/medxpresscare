@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { 
   X, User, Award, ShoppingBag, Clock, MapPin, 
   Phone, Mail, ArrowUpRight, ArrowDownLeft, ShieldCheck, 
-  LogOut, Sparkles, CheckCircle2, ChevronRight, Truck 
+  LogOut, Sparkles, CheckCircle2, ChevronRight, Truck,
+  Stethoscope, Bot, Activity, MessageSquare, FileText
 } from 'lucide-react';
+import { TwoTierAddressFields } from './TwoTierAddressFields';
 
 export const CustomerProfileModal = ({ 
   isOpen, 
@@ -12,9 +14,11 @@ export const CustomerProfileModal = ({
   onLogout,
   orders = [],
   onUpdateCustomer,
-  onOpenOrderTracking
+  onOpenOrderTracking,
+  consultations = [],
+  onResumeConsultation = null
 }) => {
-  const [activeTab, setActiveTab] = useState('points'); // points | orders | info
+  const [activeTab, setActiveTab] = useState('points'); // points | orders | consultations | info
   const [editForm, setEditForm] = useState({
     fullName: customer?.fullName || '',
     email: customer?.email || '',
@@ -28,6 +32,12 @@ export const CustomerProfileModal = ({
   // Lấy danh sách các đơn hàng của riêng khách này
   const customerOrders = orders.filter(
     o => o.customer?.phone?.replace(/\s+/g, '') === customer.phone?.replace(/\s+/g, '')
+  );
+
+  // Lấy danh sách các phiên tư vấn AI & khảo sát sức khỏe của khách này
+  const customerConsultations = consultations.filter(
+    c => (customer.id && c.customerId === customer.id) ||
+         (customer.phone && (c.customerPhone === customer.phone || c.customerId === `cust-${customer.phone}`))
   );
 
   const handleSaveInfo = (e) => {
@@ -151,7 +161,19 @@ export const CustomerProfileModal = ({
             }`}
           >
             <ShoppingBag className="w-3.5 h-3.5" />
-            <span>Đơn Hàng Của Tôi ({customerOrders.length})</span>
+            <span>Đơn Hàng ({customerOrders.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('consultations')}
+            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+              activeTab === 'consultations'
+                ? 'bg-emerald-800 text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Stethoscope className="w-3.5 h-3.5" />
+            <span>Hồ Sơ Sức Khỏe & Chat AI ({customerConsultations.length})</span>
           </button>
 
           <button
@@ -305,6 +327,144 @@ export const CustomerProfileModal = ({
             </div>
           )}
 
+          {/* TAB: HỒ SƠ SỨC KHỎE & LỊCH SỬ TƯ VẤN DƯỢC SĨ AI */}
+          {activeTab === 'consultations' && (
+            <div className="space-y-4">
+              {/* Thẻ tóm tắt hồ sơ sức khỏe cá nhân */}
+              <div className="p-4 sm:p-5 bg-gradient-to-br from-emerald-50 via-teal-50 to-white rounded-2xl border border-emerald-200/90 shadow-xs">
+                <div className="flex items-center justify-between pb-3 border-b border-emerald-100">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-emerald-700 text-white flex items-center justify-center shadow-xs">
+                      <Stethoscope className="w-5 h-5 text-amber-300" />
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-sm text-emerald-950">Hồ Sơ Sức Khỏe Cá Nhân Hóa</h4>
+                      <p className="text-[11px] text-slate-500">Được đồng bộ bảo mật trên Cloudflare D1</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (onResumeConsultation) onResumeConsultation(null);
+                      onClose();
+                    }}
+                    className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1"
+                  >
+                    <Activity className="w-3.5 h-3.5" />
+                    <span>Tư Vấn Mới</span>
+                  </button>
+                </div>
+
+                {customer.healthProfile || customerConsultations[0]?.healthProfile ? {
+                  ...(customer.healthProfile || customerConsultations[0]?.healthProfile)
+                } : null ? (
+                  (() => {
+                    const hp = customer.healthProfile || customerConsultations[0]?.healthProfile;
+                    return (
+                      <div className="mt-3.5 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        <div className="bg-white/90 p-3 rounded-xl border border-emerald-100">
+                          <span className="text-[10px] font-bold uppercase text-slate-400 block mb-0.5">Nhóm Đối Tượng</span>
+                          <span className="font-extrabold text-emerald-900">{hp.audienceTitle || hp.audience || 'Chung'}</span>
+                        </div>
+                        <div className="bg-white/90 p-3 rounded-xl border border-emerald-100">
+                          <span className="text-[10px] font-bold uppercase text-slate-400 block mb-0.5">Nhu Cầu Khảo Sát Gần Nhất</span>
+                          <span className="font-extrabold text-slate-900">{hp.primaryConcernTitle || hp.primaryConcern || 'Tư vấn sức khỏe'}</span>
+                        </div>
+                        <div className="bg-white/90 p-3 rounded-xl border border-emerald-100 sm:col-span-2">
+                          <span className="text-[10px] font-bold uppercase text-slate-400 block mb-0.5">Thể Trạng / Lưu Ý Dược Lý</span>
+                          <span className="font-medium text-slate-700">{hp.conditionTitle || 'Cơ thể khỏe mạnh, không bệnh nền'}</span>
+                          {hp.conditionNote && (
+                            <p className="text-[11px] text-amber-800 bg-amber-50 p-2 rounded-lg mt-1.5 border border-amber-200">
+                              {hp.conditionNote}
+                            </p>
+                          )}
+                        </div>
+                        {hp.keyNutrients && (
+                          <div className="bg-white/90 p-3 rounded-xl border border-emerald-100 sm:col-span-2">
+                            <span className="text-[10px] font-bold uppercase text-emerald-700 block mb-0.5">Vi Chất Khuyên Bổ Sung</span>
+                            <span className="font-medium text-slate-800">{hp.keyNutrients}</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()
+                ) : (
+                  <div className="mt-3.5 p-4 bg-white/80 rounded-xl border border-emerald-100 text-center text-xs text-slate-500">
+                    <p className="font-medium">Quý khách chưa có hồ sơ khảo sát sức khỏe nào được lưu trữ.</p>
+                    <p className="text-[11px] text-slate-400 mt-1">Trò chuyện cùng Dược Sĩ Lâm Sàng AI để nhận liệu trình vi chất & chế độ dinh dưỡng thiết kế riêng cho bạn!</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Danh sách các phiên tương tác AI */}
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between text-xs font-bold text-slate-700 px-1">
+                  <span>Lịch Sử Các Phiên Chat & Khảo Sát ({customerConsultations.length})</span>
+                  <span className="text-[11px] text-slate-400 font-normal">Lưu trên Cloudflare D1</span>
+                </div>
+
+                {customerConsultations.length === 0 ? (
+                  <div className="p-8 text-center bg-white rounded-2xl border border-slate-200 text-slate-400 text-xs">
+                    <Bot className="w-10 h-10 mx-auto mb-2 text-slate-300" />
+                    Chưa có phiên chat AI nào được ghi nhận cho tài khoản này.
+                  </div>
+                ) : (
+                  customerConsultations.map((session, idx) => {
+                    const msgCount = Array.isArray(session.chatHistory) ? session.chatHistory.length : 0;
+                    const prodCount = Array.isArray(session.recommendedProductIds) ? session.recommendedProductIds.length : 0;
+                    const sessionDate = session.updatedAt || session.createdAt;
+
+                    return (
+                      <div 
+                        key={session.id || idx}
+                        className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-xs hover:border-emerald-500/80 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                      >
+                        <div className="space-y-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-extrabold text-slate-900 truncate">
+                              {session.healthProfile?.primaryConcernTitle || 'Phiên tư vấn sức khỏe tổng quát'}
+                            </span>
+                            {session.healthProfile?.audienceTitle && (
+                              <span className="bg-slate-100 text-slate-700 text-[10px] px-2 py-0.5 rounded-full font-bold shrink-0">
+                                {session.healthProfile.audienceTitle}
+                              </span>
+                            )}
+                          </div>
+                          
+                          <div className="flex items-center gap-3 text-[11px] text-slate-500">
+                            <span className="flex items-center gap-1 font-mono text-slate-400">
+                              <Clock className="w-3 h-3" />
+                              {sessionDate ? new Date(sessionDate).toLocaleString('vi-VN') : 'Gần đây'}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <MessageSquare className="w-3 h-3 text-emerald-600" />
+                              {msgCount} tin nhắn
+                            </span>
+                            {prodCount > 0 && (
+                              <span className="text-emerald-700 font-semibold">
+                                • {prodCount} sản phẩm đề xuất
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            if (onResumeConsultation) onResumeConsultation(session);
+                            onClose();
+                          }}
+                          className="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-600 text-emerald-800 hover:text-white rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 shrink-0 border border-emerald-200 hover:border-emerald-600 shadow-xs"
+                        >
+                          <Bot className="w-3.5 h-3.5" />
+                          <span>Mở Lại Phiên Tư Vấn</span>
+                        </button>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          )}
+
           {/* TAB 3: THÔNG TIN & ĐỊA CHỈ */}
           {activeTab === 'info' && (
             <form onSubmit={handleSaveInfo} className="bg-white p-5 rounded-2xl border border-slate-200 space-y-3.5 text-xs">
@@ -343,31 +503,17 @@ export const CustomerProfileModal = ({
               </div>
 
               <div className="space-y-1.5 pt-1">
-                <label className="block text-slate-700 font-bold">Địa chỉ nhận hàng mặc định</label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <select
-                    value={editForm.province}
-                    onChange={(e) => setEditForm({ ...editForm, province: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border rounded-xl font-medium"
-                  >
-                    <option value="Hà Nội">Hà Nội</option>
-                    <option value="TP. Hồ Chí Minh">TP. Hồ Chí Minh</option>
-                    <option value="Đà Nẵng">Đà Nẵng</option>
-                    <option value="Hải Phòng">Hải Phòng</option>
-                    <option value="Cần Thơ">Cần Thơ</option>
-                    <option value="Tỉnh thành khác">Tỉnh / Thành phố khác</option>
-                  </select>
-                  <input
-                    type="text"
-                    placeholder="Quận / Huyện..."
-                    value={editForm.district}
-                    onChange={(e) => setEditForm({ ...editForm, district: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border rounded-xl"
-                  />
-                </div>
+                <label className="block text-slate-700 font-bold">Địa chỉ nhận hàng mặc định (Mô hình 2 cấp)</label>
+                <TwoTierAddressFields
+                  province={editForm.province}
+                  ward={editForm.district}
+                  onProvinceChange={(newProv) => setEditForm({ ...editForm, province: newProv, district: '' })}
+                  onWardChange={(newWard) => setEditForm({ ...editForm, district: newWard })}
+                  compact={true}
+                />
                 <input
                   type="text"
-                  placeholder="Số nhà, tên đường, tòa nhà..."
+                  placeholder="Số nhà, tên đường, thôn xóm, tòa nhà..."
                   value={editForm.address}
                   onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
                   className="w-full px-3 py-2 bg-slate-50 border rounded-xl"

@@ -89,7 +89,7 @@ DEFAULT_VOUCHERS.forEach(v => {
   if (voucherCodes.has(v.code)) errors.push(`[VOUCHERS] Trùng lặp mã voucher: ${v.code}`);
   voucherCodes.add(v.code);
 
-  if (!['fixed', 'percent', 'shipping'].includes(v.discountType)) {
+  if (!['fixed', 'percent', 'shipping', 'gift'].includes(v.discountType)) {
     errors.push(`[VOUCHERS] ${v.code}: Loại discountType không hợp lệ: ${v.discountType}`);
   }
 });
@@ -98,6 +98,14 @@ DEFAULT_VOUCHERS.forEach(v => {
 const testVoucherFixed = DEFAULT_VOUCHERS.find(v => v.discountType === 'fixed');
 const testVoucherPercent = DEFAULT_VOUCHERS.find(v => v.discountType === 'percent');
 const testVoucherShip = DEFAULT_VOUCHERS.find(v => v.discountType === 'shipping');
+const testVoucherGift = DEFAULT_VOUCHERS.find(v => v.discountType === 'gift');
+
+if (testVoucherGift) {
+  const resGift = calculateVoucherDiscount(testVoucherGift, (testVoucherGift.minOrderValue || 0) + 10000);
+  if (!resGift.isValid || !resGift.isGift || !resGift.giftItem) {
+    errors.push(`[VOUCHERS LOGIC] calculateVoucherDiscount không trả về đúng thông tin quà tặng cho voucher gift`);
+  }
+}
 
 // Subtotal < minOrderValue
 if (testVoucherFixed) {

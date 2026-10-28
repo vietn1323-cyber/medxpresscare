@@ -32,6 +32,9 @@ import { PolicyPage } from './components/PolicyPage';
 import { POLICIES } from './data/policies';
 import { cleanPrice } from './utils/csvHelper';
 import { apiClient } from './services/apiClient';
+import { usePWAInstall } from './hooks/usePWAInstall';
+import { PWAInstallModal } from './components/PWAInstallModal';
+import { PWAInstallBanner } from './components/PWAInstallBanner';
 import { 
   initializeOrderTracking, 
   stepOrderToShipping, 
@@ -183,7 +186,11 @@ export default function App() {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
           // Lọc sạch toàn bộ các đơn hàng thử nghiệm cũ nếu còn sót lại trong cache trình duyệt
-          return parsed.filter(o => !['MXC-892410', 'MXC-741285', 'MXC-339182', 'MXC-883921'].includes(o.id));
+          const cleaned = parsed.filter(o => !['MXC-892410', 'MXC-741285', 'MXC-339182', 'MXC-883921'].includes(o.id) && !String(o.id).startsWith('MXC-TEST-'));
+          if (cleaned.length !== parsed.length) {
+            localStorage.setItem('medxpress_admin_orders', JSON.stringify(cleaned));
+          }
+          return cleaned;
         }
       }
       return [];
@@ -244,7 +251,11 @@ export default function App() {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
           // Lọc sạch toàn bộ tài khoản khách hàng mẫu
-          return parsed.filter(c => !['cust-101', 'cust-102', 'cust-103'].includes(c.id));
+          const cleaned = parsed.filter(c => !['cust-101', 'cust-102', 'cust-103'].includes(c.id) && !String(c.id).startsWith('cust-test-'));
+          if (cleaned.length !== parsed.length) {
+            localStorage.setItem('medxpress_customers_db', JSON.stringify(cleaned));
+          }
+          return cleaned;
         }
       }
       return [];
@@ -269,6 +280,21 @@ export default function App() {
       return null;
     }
   });
+
+  // Quản lý các phiên khảo sát nhu cầu & tư vấn Dược sĩ AI cá nhân hóa (Đồng bộ Cloudflare D1)
+  const [consultationsList, setConsultationsList] = useState(() => {
+    try {
+      const saved = localStorage.getItem('medxpress_consultations_db');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+      return [];
+    } catch {
+      return [];
+    }
+  });
+  const [activeAdvisorSession, setActiveAdvisorSession] = useState(null);
 
   // Cơ sở dữ liệu Số ĐKSP Bộ Y Tế (Hỗ trợ thêm/sửa thủ công & nhập hàng loạt qua file)
   const [registrationsDb, setRegistrationsDb] = useState(() => {
@@ -499,7 +525,32 @@ export default function App() {
       const saved = localStorage.getItem('medxpress_vouchers_db');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Bảo toàn và nâng cấp dữ liệu: reset lượt dùng mẫu cũ và bổ sung phạm vi
+          const voucherMap = new Map();
+          DEFAULT_VOUCHERS.forEach(v => voucherMap.set(v.id, v));
+          parsed.forEach(v => {
+            const defaultItem = voucherMap.get(v.id) || {};
+            // Nếu usedCount là số liệu mẫu cũ (142, 524, 89, 65, 41, 168, 92), reset về 0
+            const cleanUsedCount = [142, 524, 89, 65, 41, 168, 92].includes(v.usedCount) ? 0 : (v.usedCount || 0);
+            voucherMap.set(v.id, {
+              ...defaultItem,
+              ...v,
+              usedCount: cleanUsedCount,
+              startDate: v.startDate || defaultItem.startDate || '2026-01-01',
+              expiryDate: v.expiryDate || defaultItem.expiryDate || '2026-12-31',
+              applicableScope: v.applicableScope || defaultItem.applicableScope || 'all',
+              applicableCategories: Array.isArray(v.applicableCategories) ? v.applicableCategories : (defaultItem.applicableCategories || []),
+              applicableProducts: Array.isArray(v.applicableProducts) ? v.applicableProducts : (defaultItem.applicableProducts || []),
+              minQuantity: v.minQuantity || defaultItem.minQuantity || 1,
+              comboTier: v.comboTier !== undefined ? v.comboTier : (defaultItem.comboTier || null),
+              giftName: v.giftName || defaultItem.giftName || '',
+              giftValue: v.giftValue !== undefined ? v.giftValue : (defaultItem.giftValue || 0),
+              giftImage: v.giftImage || defaultItem.giftImage || ''
+            });
+          });
+          return Array.from(voucherMap.values());
+        }
       }
       return DEFAULT_VOUCHERS;
     } catch {
@@ -513,7 +564,28 @@ export default function App() {
       const saved = localStorage.getItem('medxpress_reviews_db');
       if (saved !== null) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Lọc sạch toàn bộ các đánh giá mẫu thử nghiệm cũ khỏi cache trình duyệt
+          const isSampleReview = (r) => {
+            if (!r || !r.id) return true;
+            return (
+              r.id.startsWith('rev-vn-') ||
+              r.id.startsWith('rev-us-') ||
+              r.id.startsWith('rev-au-') ||
+              r.id.startsWith('rev-jp-') ||
+              r.id.startsWith('rev-kr-') ||
+              r.id.startsWith('rev-fr-') ||
+              r.id.startsWith('rev-de-') ||
+              r.id.startsWith('rev-test-') ||
+              /^rev-\d+$/.test(r.id)
+            );
+          };
+          const cleanReviews = parsed.filter(r => !isSampleReview(r));
+          if (cleanReviews.length !== parsed.length) {
+            localStorage.setItem('medxpress_reviews_db', JSON.stringify(cleanReviews));
+          }
+          return cleanReviews;
+        }
       }
       return INITIAL_REVIEWS;
     } catch {
@@ -538,6 +610,41 @@ export default function App() {
   const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
   const [verifierInitialReg, setVerifierInitialReg] = useState('');
   const [activeProductDetail, setActiveProductDetail] = useState(null);
+
+  // PWA (Progressive Web App) State & Installation Hook
+  const {
+    deferredPrompt,
+    isInstallable,
+    isStandalone,
+    isInstalled,
+    isIOS,
+    isAndroid,
+    isBannerDismissed,
+    triggerInstall,
+    dismissBanner
+  } = usePWAInstall();
+  const [isPWAInstallModalOpen, setIsPWAInstallModalOpen] = useState(false);
+
+  // Xử lý App Shortcuts & URL Parameters khi mở từ màn hình chính PWA (?open=consultation, ?open=promotions, ...)
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const openTarget = params.get('open');
+      if (openTarget === 'consultation') {
+        setIsAdvisorOpen(true);
+      } else if (openTarget === 'promotions') {
+        setIsVoucherModalOpen(true);
+      } else if (openTarget === 'tracking') {
+        setIsOrderTrackingOpen(true);
+      } else if (openTarget === 'cart') {
+        setIsCartOpen(true);
+      } else if (openTarget === 'pwa') {
+        setIsPWAInstallModalOpen(true);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
 
   // Toast Notification State
   const [toastMessage, setToastMessage] = useState(null);
@@ -656,10 +763,28 @@ export default function App() {
           }
 
           // Reviews
-          if (Array.isArray(cloudData.reviews)) {
-            setReviewsList(cloudData.reviews);
+          if (Array.isArray(cloudData.reviews) && cloudData.reviews.length > 0) {
+            const isSampleReview = (r) => {
+              if (!r || !r.id) return true;
+              return (
+                r.id.startsWith('rev-vn-') ||
+                r.id.startsWith('rev-us-') ||
+                r.id.startsWith('rev-au-') ||
+                r.id.startsWith('rev-jp-') ||
+                r.id.startsWith('rev-kr-') ||
+                r.id.startsWith('rev-fr-') ||
+                r.id.startsWith('rev-de-') ||
+                r.id.startsWith('rev-test-') ||
+                /^rev-\d+$/.test(r.id)
+              );
+            };
+            const reviewMap = new Map();
+            INITIAL_REVIEWS.forEach(r => { if (!isSampleReview(r)) reviewMap.set(r.id, r); });
+            cloudData.reviews.forEach(r => { if (!isSampleReview(r)) reviewMap.set(r.id, r); });
+            const mergedReviews = Array.from(reviewMap.values());
+            setReviewsList(mergedReviews);
             try {
-              localStorage.setItem('medxpress_reviews_db', JSON.stringify(cloudData.reviews));
+              localStorage.setItem('medxpress_reviews_db', JSON.stringify(mergedReviews));
             } catch (e) {
               console.error(e);
             }
@@ -684,6 +809,17 @@ export default function App() {
             }
           } else {
             apiClient.saveCustomers(customersList);
+          }
+
+          // Consultations & Health Surveys
+          try {
+            const cloudConsultations = await apiClient.fetchConsultations();
+            if (Array.isArray(cloudConsultations)) {
+              setConsultationsList(cloudConsultations);
+              localStorage.setItem('medxpress_consultations_db', JSON.stringify(cloudConsultations));
+            }
+          } catch (e) {
+            console.warn('Sync consultations error:', e);
           }
         } else {
           setD1Status('offline');
@@ -971,6 +1107,50 @@ export default function App() {
       return updated;
     }));
     showToast(`Đã tặng +${bonusPoints} điểm tri ân cho khách hàng!`);
+  };
+
+  // Quản lý và đồng bộ phiên khảo sát & tư vấn Dược sĩ AI
+  const handleSaveConsultation = (consultationData) => {
+    if (!consultationData) return;
+    setConsultationsList(prev => {
+      const idx = prev.findIndex(c => c.id === consultationData.id);
+      let updated;
+      if (idx >= 0) {
+        updated = [...prev];
+        updated[idx] = { ...updated[idx], ...consultationData, updatedAt: new Date().toISOString() };
+      } else {
+        updated = [{ ...consultationData, updatedAt: new Date().toISOString() }, ...prev];
+      }
+      try {
+        localStorage.setItem('medxpress_consultations_db', JSON.stringify(updated));
+      } catch (e) {
+        console.error(e);
+      }
+      return updated;
+    });
+
+    apiClient.saveConsultation(consultationData);
+
+    // Cập nhật hồ sơ sức khỏe khách hàng vào state customers nếu có thông tin khách
+    const custId = consultationData.customerId || currentCustomer?.id;
+    const custPhone = consultationData.customerPhone || currentCustomer?.phone;
+    if (custId || custPhone) {
+      setCustomersList(prev => prev.map(c => {
+        if ((custId && c.id === custId) || (custPhone && c.phone === custPhone)) {
+          const updatedCust = {
+            ...c,
+            healthProfile: consultationData.healthProfile || c.healthProfile,
+            lastConsultationDate: consultationData.updatedAt || new Date().toISOString(),
+            lastConcern: consultationData.healthProfile?.primaryConcernTitle || c.lastConcern || ''
+          };
+          if (currentCustomer && (currentCustomer.id === c.id || currentCustomer.phone === c.phone)) {
+            setCurrentCustomer(updatedCust);
+          }
+          return updatedCust;
+        }
+        return c;
+      }));
+    }
   };
 
   // Admin Operations & Automated Logistics Tracking
@@ -1711,6 +1891,9 @@ export default function App() {
         onNavigateToProducts={handleNavigateToProducts}
         onNavigateToPolicy={handleNavigateToPolicy}
         hotline={storeConfig.hotline}
+        products={productsList}
+        onOpenProductDetail={(p) => setActiveProductDetail(p)}
+        onOpenPWAInstall={() => setIsPWAInstallModalOpen(true)}
       />
 
       {/* Hiển thị Trang Chi Tiết Bài Viết (Full-Page View), Trang Chính Sách, Trang Tra Cứu Vận Đơn, Trang Sản Phẩm Chuyên Biệt, hoặc Trang Chủ */}
@@ -1772,6 +1955,7 @@ export default function App() {
           onBackHome={handleGoHome}
           onNavigateToProducts={handleNavigateToProducts}
           onOpenAdvisor={() => setIsAdvisorOpen(true)}
+          vouchers={vouchersList}
         />
       ) : (
         <>
@@ -1890,6 +2074,8 @@ export default function App() {
 
         {/* 4. Origin & Smart Filter Navigation */}
         <OriginFilterTabs
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
           originFilter={originFilter}
           setOriginFilter={setOriginFilter}
           selectedCountry={selectedCountry}
@@ -1957,6 +2143,7 @@ export default function App() {
                 onOpenDetail={(p) => setActiveProductDetail(p)}
                 isWishlisted={wishlist.some(item => item.id === product.id)}
                 onToggleWishlist={handleToggleWishlist}
+                vouchers={vouchersList}
               />
             ))}
           </div>
@@ -2036,6 +2223,7 @@ export default function App() {
         onOpenAdmin={handleOpenAdminPortal}
         onNavigateToTracking={handleNavigateToTracking}
         onNavigateToPolicy={handleNavigateToPolicy}
+        onOpenPWAInstall={() => setIsPWAInstallModalOpen(true)}
         hotline={storeConfig.hotline}
         storeConfig={storeConfig}
         policies={policiesList}
@@ -2111,6 +2299,7 @@ export default function App() {
           storeConfig={storeConfig}
           onUpdateStoreConfig={handleUpdateStoreConfig}
           customers={customersList}
+          consultations={consultationsList}
           onBonusPoints={handleAdminBonusPoints}
           articles={articlesList}
           onAddArticle={handleAddArticle}
@@ -2155,6 +2344,7 @@ export default function App() {
           reviews={reviewsList}
           onAddReview={handleAddReview}
           onOpenVouchers={() => setIsVoucherModalOpen(true)}
+          vouchers={vouchersList}
         />
       )}
 
@@ -2216,6 +2406,11 @@ export default function App() {
           onOpenOrderTracking={(order) => {
             handleNavigateToTracking(order?.id || '');
           }}
+          consultations={consultationsList}
+          onResumeConsultation={(session) => {
+            setActiveAdvisorSession(session);
+            setIsAdvisorOpen(true);
+          }}
         />
       )}
 
@@ -2232,11 +2427,22 @@ export default function App() {
       {/* 7. Health Advisor Modal */}
       {isAdvisorOpen && (
         <HealthAdvisorModal
-          onClose={() => setIsAdvisorOpen(false)}
+          onClose={() => {
+            setIsAdvisorOpen(false);
+            setActiveAdvisorSession(null);
+          }}
           onAddToCart={handleAddToCart}
           onOpenDetail={(p) => setActiveProductDetail(p)}
           products={productsList}
           storeConfig={storeConfig}
+          currentCustomer={currentCustomer}
+          consultations={consultationsList}
+          onSaveConsultation={handleSaveConsultation}
+          onOpenAuth={() => {
+            setCustomerAuthInitialTab('login');
+            setIsCustomerAuthOpen(true);
+          }}
+          initialSession={activeAdvisorSession}
         />
       )}
 
@@ -2281,6 +2487,27 @@ export default function App() {
           appliedVoucherCode={appliedVoucher?.code || appliedVoucher}
         />
       )}
+
+      {/* 11. PWA Floating Installation Banner */}
+      <PWAInstallBanner
+        isOpen={!isStandalone && !isInstalled && !isBannerDismissed}
+        onInstall={triggerInstall}
+        onOpenModal={() => setIsPWAInstallModalOpen(true)}
+        onDismiss={() => dismissBanner(7)}
+        isIOS={isIOS}
+        hasDeferredPrompt={Boolean(deferredPrompt)}
+      />
+
+      {/* 12. PWA Installation Guide Modal */}
+      <PWAInstallModal
+        isOpen={isPWAInstallModalOpen}
+        onClose={() => setIsPWAInstallModalOpen(false)}
+        onInstall={triggerInstall}
+        isIOS={isIOS}
+        isAndroid={isAndroid}
+        isStandalone={isStandalone}
+        hasDeferredPrompt={Boolean(deferredPrompt)}
+      />
 
     </div>
   );

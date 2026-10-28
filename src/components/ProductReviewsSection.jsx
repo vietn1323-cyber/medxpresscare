@@ -28,12 +28,10 @@ export const ProductReviewsSection = ({
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
 
-  // Lọc đánh giá thuộc sản phẩm này (hoặc hiển thị đánh giá liên quan nếu sản phẩm chưa có review riêng)
-  const safeReviews = Array.isArray(reviews) && reviews.length > 0 ? reviews : INITIAL_REVIEWS;
-  const productReviews = safeReviews.filter(r => r.productId === productId && r.status === 'approved');
-  const displayReviews = productReviews.length > 0 
-    ? productReviews 
-    : safeReviews.filter(r => r.status === 'approved').slice(0, 3); // Fallback hiển thị review mẫu uy tín
+  // CHỈ hiển thị đúng các đánh giá được phê duyệt thuộc về chính sản phẩm đang xem (r.productId === productId).
+  // TUYỆT ĐỐI KHÔNG FALLBACK sang đánh giá của sản phẩm khác!
+  const safeReviews = Array.isArray(reviews) ? reviews : (INITIAL_REVIEWS || []);
+  const displayReviews = safeReviews.filter(r => r.productId === productId && (r.status === 'approved' || !r.status));
 
   // Áp dụng bộ lọc
   const filteredReviews = displayReviews.filter(rev => {
@@ -161,7 +159,9 @@ export const ProductReviewsSection = ({
             ))}
           </div>
           <div className="text-xs text-slate-500 font-semibold">
-            {displayReviews.length} lượt đánh giá thực tế
+            {displayReviews.length > 0 
+              ? `${displayReviews.length} lượt đánh giá thực tế` 
+              : 'Chưa có đánh giá thực tế'}
           </div>
         </div>
 
@@ -172,7 +172,7 @@ export const ProductReviewsSection = ({
             <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
               <div 
                 className="h-full bg-amber-400 rounded-full" 
-                style={{ width: `${displayReviews.length ? (fiveStarCount / displayReviews.length) * 100 : 90}%` }} 
+                style={{ width: `${displayReviews.length > 0 ? (fiveStarCount / displayReviews.length) * 100 : 0}%` }} 
               />
             </div>
             <span className="w-8 text-right font-semibold text-slate-500">{fiveStarCount}</span>
@@ -183,7 +183,7 @@ export const ProductReviewsSection = ({
             <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
               <div 
                 className="h-full bg-amber-400 rounded-full" 
-                style={{ width: `${displayReviews.length ? (fourStarCount / displayReviews.length) * 100 : 10}%` }} 
+                style={{ width: `${displayReviews.length > 0 ? (fourStarCount / displayReviews.length) * 100 : 0}%` }} 
               />
             </div>
             <span className="w-8 text-right font-semibold text-slate-500">{fourStarCount}</span>
@@ -399,9 +399,26 @@ export const ProductReviewsSection = ({
       {/* Danh Sách Các Đánh Giá */}
       <div className="space-y-4">
         {filteredReviews.length === 0 ? (
-          <div className="text-center py-8 text-slate-400 bg-slate-50 rounded-2xl border border-slate-200">
-            <MessageSquare className="w-10 h-10 mx-auto text-slate-300 mb-2" />
-            <p className="text-xs font-bold text-slate-600">Chưa có đánh giá nào trong bộ lọc này.</p>
+          <div className="text-center py-10 px-4 text-slate-400 bg-slate-50/80 rounded-2xl border border-slate-200">
+            <MessageSquare className="w-10 h-10 mx-auto text-slate-300 mb-2.5" />
+            <p className="text-sm font-bold text-slate-700">
+              {displayReviews.length === 0 ? 'Chưa có đánh giá nào cho sản phẩm này.' : 'Chưa có đánh giá nào phù hợp với bộ lọc này.'}
+            </p>
+            <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+              {displayReviews.length === 0 
+                ? `Hãy là khách hàng đầu tiên chia sẻ cảm nhận và trải nghiệm thực tế về ${productName || 'sản phẩm'}!` 
+                : 'Vui lòng chọn bộ lọc khác để xem thêm đánh giá.'}
+            </p>
+            {displayReviews.length === 0 && (
+              <button
+                type="button"
+                onClick={() => setShowReviewForm(true)}
+                className="mt-3.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs inline-flex items-center gap-1.5"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Viết Đánh Giá Đầu Tiên</span>
+              </button>
+            )}
           </div>
         ) : (
           filteredReviews.map((rev) => (

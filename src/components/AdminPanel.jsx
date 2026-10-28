@@ -18,7 +18,7 @@ import { testTelegramConnection } from '../utils/telegramHelper';
 import { DEFAULT_SHIPPING_CARRIERS, testCarrierConnection } from '../data/shippingCarriers';
 import { slugify, calculateSeoScore } from '../data/articles';
 import { testAiConnection, rewriteArticleWithAi } from '../utils/aiHelper';
-import { DEFAULT_VOUCHERS } from '../data/vouchers';
+import { DEFAULT_VOUCHERS, getVoucherTimeStatus, isVoucherTimeValid } from '../data/vouchers';
 import { DEFAULT_HERO_BANNERS } from '../data/banners';
 import { INITIAL_REVIEWS } from '../data/reviews';
 import { BulkImportModal } from './BulkImportModal';
@@ -48,6 +48,7 @@ export const AdminPanel = ({
   storeConfig,
   onUpdateStoreConfig,
   customers = [],
+  consultations = [],
   onBonusPoints,
   articles = [],
   onAddArticle,
@@ -81,6 +82,7 @@ export const AdminPanel = ({
   });
   const [selectedPolicySlug, setSelectedPolicySlug] = useState('chinh-sach-giao-hang');
   const [policySaveStatus, setPolicySaveStatus] = useState('');
+  const [selectedCustomerForConsultation, setSelectedCustomerForConsultation] = useState(null);
 
   useEffect(() => {
     if (Array.isArray(policies) && policies.length > 0) {
@@ -627,6 +629,7 @@ export const AdminPanel = ({
   const [filterVoucherType, setFilterVoucherType] = useState('all');
   const [showAddVoucherModal, setShowAddVoucherModal] = useState(false);
   const [editingVoucher, setEditingVoucher] = useState(null);
+  const [voucherProductSearch, setVoucherProductSearch] = useState('');
   const [voucherFormData, setVoucherFormData] = useState({
     code: '',
     title: '',
@@ -634,9 +637,18 @@ export const AdminPanel = ({
     discountValue: 50000,
     minOrderValue: 400000,
     maxDiscount: 50000,
+    minQuantity: 1,
+    comboTier: null,
+    giftName: '',
+    giftValue: 0,
+    giftImage: '',
     usageLimit: 500,
     usedCount: 0,
+    startDate: '2026-01-01',
     expiryDate: '2026-12-31',
+    applicableScope: 'all', // 'all' | 'category' | 'specific'
+    applicableCategories: [],
+    applicableProducts: [],
     enabled: true,
     badgeText: 'Giảm 50.000₫',
     description: ''
@@ -2663,6 +2675,18 @@ export const AdminPanel = ({
                               </span>
                             </div>
                           ))}
+
+                          {order.giftItem && (
+                            <div className="flex justify-between items-center bg-rose-50 border border-rose-200 p-2 rounded-lg text-rose-800 text-xs font-bold">
+                              <span className="flex items-center gap-1.5 truncate max-w-[70%]">
+                                <span>🎁 Quà tặng kèm:</span>
+                                <span className="truncate">{order.giftItem.name}</span>
+                              </span>
+                              <span className="text-[10px] font-black bg-rose-600 text-white px-2 py-0.5 rounded-full shrink-0">
+                                Đóng gói quà (0₫)
+                              </span>
+                            </div>
+                          )}
                           
                           <div className="flex justify-between pt-2 border-t border-slate-200 text-sm font-black text-slate-900">
                             <span>Tổng thanh toán:</span>
@@ -4347,6 +4371,7 @@ export const AdminPanel = ({
                   <div className="flex items-center gap-1 overflow-x-auto">
                     {[
                       { id: 'all', label: 'Tất cả' },
+                      { id: 'gift', label: '🎁 Tặng Quà' },
                       { id: 'fixed', label: 'Giảm tiền' },
                       { id: 'percent', label: 'Giảm %' },
                       { id: 'shipping', label: 'Freeship' }
@@ -4374,38 +4399,49 @@ export const AdminPanel = ({
                     setVoucherFormData({
                       code: '',
                       title: '',
-                      discountType: 'fixed',
-                      discountValue: 50000,
-                      minOrderValue: 400000,
-                      maxDiscount: 50000,
+                      discountType: 'gift',
+                      discountValue: 0,
+                      giftName: '',
+                      giftValue: 120000,
+                      giftImage: 'https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=600&auto=format&fit=crop&q=80',
+                      minOrderValue: 500000,
+                      maxDiscount: 0,
+                      minQuantity: 1,
+                      comboTier: null,
                       usageLimit: 500,
                       usedCount: 0,
+                      startDate: new Date().toISOString().slice(0, 10),
                       expiryDate: '2026-12-31',
+                      applicableScope: 'all',
+                      applicableCategories: [],
+                      applicableProducts: [],
                       enabled: true,
-                      badgeText: 'Giảm 50.000₫',
+                      badgeText: 'Tặng Quà Tri Ân',
                       description: ''
                     });
+                    setVoucherProductSearch('');
                     setShowAddVoucherModal(true);
                   }}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all shrink-0"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all shrink-0 cursor-pointer"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>Tạo Mã Voucher Mới</span>
+                  <span>Tạo Chương Trình Khuyến Mại Mới</span>
                 </button>
               </div>
 
-              {/* Bảng Danh Sách Voucher */}
+              {/* Bảng Danh Sách Voucher & Chương Trình Khuyến Mại */}
               <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
                     <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-extrabold uppercase text-[10px] tracking-wider">
                       <tr>
-                        <th className="p-3.5">Mã Voucher</th>
+                        <th className="p-3.5">Mã & Gói Combo</th>
                         <th className="p-3.5">Tên Chương Trình</th>
                         <th className="p-3.5">Mức Giảm</th>
-                        <th className="p-3.5">Đơn Tối Thiểu</th>
+                        <th className="p-3.5">Đơn / SL Tối Thiểu</th>
+                        <th className="p-3.5">Phạm Vi Sản Phẩm</th>
+                        <th className="p-3.5">Thời Gian Áp Dụng</th>
                         <th className="p-3.5">Đã Dùng / Giới Hạn</th>
-                        <th className="p-3.5">Hạn Sử Dụng</th>
                         <th className="p-3.5 text-center">Trạng Thái</th>
                         <th className="p-3.5 text-right">Thao Tác</th>
                       </tr>
@@ -4418,132 +4454,218 @@ export const AdminPanel = ({
                           const matchType = filterVoucherType === 'all' || v.discountType === filterVoucherType;
                           return matchSearch && matchType;
                         })
-                        .map(v => (
-                          <tr key={v.id} className="hover:bg-slate-50/60 transition-colors">
-                            <td className="p-3.5 whitespace-nowrap">
-                              <div className="flex items-center gap-1.5">
-                                <span className="font-mono font-black text-xs px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200">
-                                  {v.code}
-                                </span>
-                              </div>
-                            </td>
-
-                            <td className="p-3.5">
-                              <div className="font-extrabold text-slate-900">{v.title}</div>
-                              <div className="text-[11px] text-slate-500 line-clamp-1">{v.description}</div>
-                            </td>
-
-                            <td className="p-3.5 whitespace-nowrap">
-                              <span className="font-extrabold text-rose-600 text-xs">
-                                {v.discountType === 'shipping' ? (
-                                  'Freeship 100%'
-                                ) : v.discountType === 'percent' ? (
-                                  `Giảm ${v.discountValue}% (Tối đa ${(v.maxDiscount || 0).toLocaleString('vi-VN')}₫)`
-                                ) : (
-                                  `-${v.discountValue.toLocaleString('vi-VN')}₫`
-                                )}
-                              </span>
-                            </td>
-
-                            <td className="p-3.5 whitespace-nowrap font-semibold text-slate-700">
-                              {(v.minOrderValue || 0).toLocaleString('vi-VN')}₫
-                            </td>
-
-                            <td className="p-3.5 whitespace-nowrap">
-                              <div className="font-bold text-slate-800">{v.usedCount || 0} / {v.usageLimit || '∞'}</div>
-                              {v.usageLimit && (
-                                <div className="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden mt-1">
-                                  <div 
-                                    className="h-full bg-emerald-500 rounded-full" 
-                                    style={{ width: `${Math.min(100, ((v.usedCount || 0) / v.usageLimit) * 100)}%` }} 
-                                  />
+                        .map(v => {
+                          const timeStatus = getVoucherTimeStatus(v);
+                          return (
+                            <tr key={v.id} className="hover:bg-slate-50/60 transition-colors">
+                              <td className="p-3.5 whitespace-nowrap">
+                                <div className="space-y-1">
+                                  <span className="font-mono font-black text-xs px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 inline-block">
+                                    {v.code}
+                                  </span>
+                                  {v.minQuantity > 1 && (
+                                    <div className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 w-fit">
+                                      {v.minQuantity === 3 ? '⭐ Combo 3 Hộp' : (v.minQuantity === 6 ? '👑 Combo 6 Hộp' : `Mua ≥ ${v.minQuantity} hộp`)}
+                                    </div>
+                                  )}
                                 </div>
-                              )}
-                            </td>
+                              </td>
 
-                            <td className="p-3.5 whitespace-nowrap font-medium text-slate-600">
-                              {v.expiryDate || 'Vô thời hạn'}
-                            </td>
+                              <td className="p-3.5">
+                                <div className="font-extrabold text-slate-900">{v.title}</div>
+                                <div className="text-[11px] text-slate-500 line-clamp-1">{v.description}</div>
+                              </td>
 
-                            <td className="p-3.5 text-center whitespace-nowrap">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  if (onUpdateVoucher) {
-                                    onUpdateVoucher({ ...v, enabled: !v.enabled });
-                                  }
-                                }}
-                                className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition-all ${
-                                  v.enabled
-                                    ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
-                                    : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
-                                }`}
-                              >
-                                {v.enabled ? '● Đang chạy' : '○ Tạm tắt'}
-                              </button>
-                            </td>
+                              <td className="p-3.5 whitespace-nowrap">
+                                <span className="font-extrabold text-rose-600 text-xs">
+                                  {v.discountType === 'shipping' ? (
+                                    'Freeship 100%'
+                                  ) : v.discountType === 'gift' ? (
+                                    <span className="flex items-center gap-1 text-rose-700">
+                                      <span>🎁 Tặng:</span>
+                                      <span className="truncate max-w-[150px]">{v.giftName || 'Quà tặng'}</span>
+                                      <span className="text-[10px] text-slate-500 font-normal">({(v.giftValue || 0).toLocaleString('vi-VN')}₫)</span>
+                                    </span>
+                                  ) : v.discountType === 'percent' ? (
+                                    `Giảm ${v.discountValue}% (Tối đa ${(v.maxDiscount || 0).toLocaleString('vi-VN')}₫)`
+                                  ) : (
+                                    `-${v.discountValue.toLocaleString('vi-VN')}₫`
+                                  )}
+                                </span>
+                              </td>
 
-                            <td className="p-3.5 text-right whitespace-nowrap">
-                              <div className="flex items-center justify-end gap-1">
+                              <td className="p-3.5 whitespace-nowrap">
+                                <div className="font-semibold text-slate-700">
+                                  {v.minOrderValue > 0 ? `${(v.minOrderValue).toLocaleString('vi-VN')}₫` : 'Không giới hạn'}
+                                </div>
+                                <div className="text-[10px] text-slate-500">
+                                  Tối thiểu: <strong>{v.minQuantity || 1} hộp</strong>
+                                </div>
+                              </td>
+
+                              {/* Phạm Vi Sản Phẩm Áp Dụng */}
+                              <td className="p-3.5 whitespace-nowrap">
+                                {(!v.applicableScope || v.applicableScope === 'all') && (
+                                  <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 font-bold border border-emerald-200 text-[10px]">
+                                    ✓ Toàn bộ kho hàng
+                                  </span>
+                                )}
+                                {v.applicableScope === 'category' && (
+                                  <div>
+                                    <span className="px-2 py-0.5 rounded-md bg-purple-50 text-purple-800 font-bold border border-purple-200 text-[10px]">
+                                      {(v.applicableCategories || []).length} danh mục
+                                    </span>
+                                    <div className="text-[10px] text-slate-500 mt-0.5 max-w-[140px] truncate" title={(v.applicableCategories || []).join(', ')}>
+                                      {(v.applicableCategories || []).map(cid => CATEGORIES.find(c => c.id === cid)?.name || cid).join(', ')}
+                                    </div>
+                                  </div>
+                                )}
+                                {v.applicableScope === 'specific' && (
+                                  <div>
+                                    <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 font-bold border border-blue-200 text-[10px]">
+                                      {(v.applicableProducts || []).length} sản phẩm
+                                    </span>
+                                    <div className="text-[10px] text-slate-500 mt-0.5 max-w-[140px] truncate" title={(v.applicableProducts || []).join(', ')}>
+                                      {(v.applicableProducts || []).join(', ')}
+                                    </div>
+                                  </div>
+                                )}
+                              </td>
+
+                              {/* Thời Gian Áp Dụng */}
+                              <td className="p-3.5 whitespace-nowrap">
+                                <div className="text-[11px] font-medium text-slate-700">
+                                  {v.startDate ? v.startDate : 'Ngay'} → {v.expiryDate || 'Vô hạn'}
+                                </div>
+                                <div className="mt-0.5">
+                                  {timeStatus === 'upcoming' && (
+                                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200">
+                                      ⏳ Sắp diễn ra
+                                    </span>
+                                  )}
+                                  {timeStatus === 'active' && (
+                                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                      ● Đang hiệu lực
+                                    </span>
+                                  )}
+                                  {timeStatus === 'expired' && (
+                                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 border border-rose-200">
+                                      ✕ Đã hết hạn
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+
+                              <td className="p-3.5 whitespace-nowrap">
+                                <div className="font-bold text-slate-800">{v.usedCount || 0} / {v.usageLimit || '∞'}</div>
+                                {v.usageLimit && (
+                                  <div className="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden mt-1">
+                                    <div 
+                                      className="h-full bg-emerald-500 rounded-full" 
+                                      style={{ width: `${Math.min(100, ((v.usedCount || 0) / v.usageLimit) * 100)}%` }} 
+                                    />
+                                  </div>
+                                )}
+                              </td>
+
+                              <td className="p-3.5 text-center whitespace-nowrap">
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    setEditingVoucher(v);
-                                    setVoucherFormData({ ...v });
-                                    setShowAddVoucherModal(true);
-                                  }}
-                                  className="p-1.5 text-slate-400 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
-                                  title="Chỉnh sửa voucher"
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    if (window.confirm(`Xóa mã voucher "${v.code}"?`)) {
-                                      if (onDeleteVoucher) onDeleteVoucher(v.id);
+                                    if (onUpdateVoucher) {
+                                      onUpdateVoucher({ ...v, enabled: !v.enabled });
                                     }
                                   }}
-                                  className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                                  title="Xóa voucher"
+                                  className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition-all cursor-pointer ${
+                                    v.enabled
+                                      ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                                      : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
+                                  }`}
                                 >
-                                  <Trash2 className="w-4 h-4" />
+                                  {v.enabled ? '● Đang chạy' : '○ Tạm tắt'}
                                 </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
+                              </td>
+
+                              <td className="p-3.5 text-right whitespace-nowrap">
+                                <div className="flex items-center justify-end gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEditingVoucher(v);
+                                      setVoucherFormData({
+                                        ...v,
+                                        startDate: v.startDate || '',
+                                        expiryDate: v.expiryDate || '',
+                                        applicableScope: v.applicableScope || 'all',
+                                        applicableCategories: Array.isArray(v.applicableCategories) ? v.applicableCategories : [],
+                                        applicableProducts: Array.isArray(v.applicableProducts) ? v.applicableProducts : [],
+                                        minQuantity: v.minQuantity || 1,
+                                        comboTier: v.comboTier || null,
+                                        giftName: v.giftName || '',
+                                        giftValue: v.giftValue || 0,
+                                        giftImage: v.giftImage || ''
+                                      });
+                                      setVoucherProductSearch('');
+                                      setShowAddVoucherModal(true);
+                                    }}
+                                    className="p-1.5 text-slate-400 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
+                                    title="Chỉnh sửa voucher"
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (window.confirm(`Xóa chương trình khuyến mại "${v.code}"?`)) {
+                                        if (onDeleteVoucher) onDeleteVoucher(v.id);
+                                      }
+                                    }}
+                                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                                    title="Xóa voucher"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
                     </tbody>
                   </table>
                 </div>
 
                 {vouchers.length === 0 && (
                   <div className="p-8 text-center text-slate-400 text-xs">
-                    Chưa có mã voucher nào. Hãy bấm "Tạo Mã Voucher Mới" để bắt đầu!
+                    Chưa có chương trình khuyến mại nào. Hãy bấm "Tạo Chương Trình Khuyến Mại Mới" để bắt đầu!
                   </div>
                 )}
               </div>
 
-              {/* Modal Thêm / Chỉnh Sửa Voucher */}
+              {/* Modal Thêm / Chỉnh Sửa Voucher & Khuyến Mại (Đầy đủ Cài Đặt Thời Gian & Phạm Vi Sản Phẩm) */}
               {showAddVoucherModal && (
                 <div 
                   className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/65 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-in fade-in"
                   onClick={() => setShowAddVoucherModal(false)}
                 >
                   <div 
-                    className="bg-white w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden border border-slate-100 my-4"
+                    className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden border border-slate-100 my-4 max-h-[92vh] flex flex-col"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="bg-gradient-to-r from-emerald-800 to-teal-800 text-white p-5 flex items-center justify-between">
+                    <div className="bg-gradient-to-r from-emerald-800 to-teal-800 text-white p-5 flex items-center justify-between shrink-0">
                       <div className="flex items-center gap-2.5">
                         <Tag className="w-5 h-5 text-amber-300" />
-                        <h4 className="font-extrabold text-sm sm:text-base">
-                          {editingVoucher ? `Chỉnh Sửa Voucher: ${editingVoucher.code}` : 'Tạo Mã Giảm Giá & Voucher Mới'}
-                        </h4>
+                        <div>
+                          <h4 className="font-extrabold text-sm sm:text-base">
+                            {editingVoucher ? `Chỉnh Sửa Khuyến Mại: ${editingVoucher.code}` : 'Tạo Chương Trình Khuyến Mại & Voucher Mới'}
+                          </h4>
+                          <p className="text-[11px] text-emerald-200 mt-0.5">
+                            Cấu hình chiết khấu, gói combo số lượng, phạm vi thời gian và sản phẩm áp dụng
+                          </p>
+                        </div>
                       </div>
                       <button 
                         onClick={() => setShowAddVoucherModal(false)}
-                        className="p-1.5 rounded-full hover:bg-white/10 text-white"
+                        className="p-1.5 rounded-full hover:bg-white/10 text-white cursor-pointer"
                       >
                         <X className="w-5 h-5" />
                       </button>
@@ -4559,10 +4681,16 @@ export const AdminPanel = ({
                           ...voucherFormData,
                           code: cleanedCode,
                           id: editingVoucher ? editingVoucher.id : 'vouch-' + Date.now(),
-                          discountValue: Number(voucherFormData.discountValue),
-                          minOrderValue: Number(voucherFormData.minOrderValue),
-                          maxDiscount: Number(voucherFormData.maxDiscount),
-                          usageLimit: Number(voucherFormData.usageLimit)
+                          discountValue: Number(voucherFormData.discountValue) || 0,
+                          minOrderValue: Number(voucherFormData.minOrderValue) || 0,
+                          maxDiscount: Number(voucherFormData.maxDiscount) || 0,
+                          minQuantity: Number(voucherFormData.minQuantity) || 1,
+                          usageLimit: Number(voucherFormData.usageLimit) || 1000,
+                          giftName: voucherFormData.giftName ? voucherFormData.giftName.trim() : '',
+                          giftValue: Number(voucherFormData.giftValue) || 0,
+                          giftImage: voucherFormData.giftImage ? voucherFormData.giftImage.trim() : '',
+                          applicableCategories: Array.isArray(voucherFormData.applicableCategories) ? voucherFormData.applicableCategories : [],
+                          applicableProducts: Array.isArray(voucherFormData.applicableProducts) ? voucherFormData.applicableProducts : []
                         };
 
                         if (editingVoucher) {
@@ -4572,124 +4700,548 @@ export const AdminPanel = ({
                         }
                         setShowAddVoucherModal(false);
                       }}
-                      className="p-5 sm:p-6 space-y-4 text-xs"
+                      className="p-5 sm:p-6 space-y-5 text-xs overflow-y-auto flex-1 no-scrollbar"
                     >
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-slate-700 font-bold mb-1">Mã Voucher (Code): *</label>
-                          <input
-                            type="text"
-                            required
-                            placeholder="VD: MEDXPRESS100"
-                            value={voucherFormData.code}
-                            onChange={(e) => setVoucherFormData({ ...voucherFormData, code: e.target.value.toUpperCase() })}
-                            className="w-full px-3 py-2 bg-slate-50 border rounded-xl font-mono font-bold uppercase focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                          />
+                      {/* 1. THÔNG TIN CƠ BẢN */}
+                      <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/90 space-y-3">
+                        <div className="font-bold text-slate-800 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
+                          <span>📌 1. Thông Tin Cơ Bản & Mức Chiết Khấu</span>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-slate-700 font-bold mb-1">Mã Voucher (Code): *</label>
+                            <input
+                              type="text"
+                              required
+                              placeholder="VD: COMBO3HOP, FREESHIP, TRIAN10"
+                              value={voucherFormData.code}
+                              onChange={(e) => setVoucherFormData({ ...voucherFormData, code: e.target.value.toUpperCase() })}
+                              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-mono font-bold uppercase focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-slate-700 font-bold mb-1">Tên Chương Trình: *</label>
+                            <input
+                              type="text"
+                              required
+                              placeholder="VD: Khuyến Mại Combo Liệu Trình 3 Hộp"
+                              value={voucherFormData.title}
+                              onChange={(e) => setVoucherFormData({ ...voucherFormData, title: e.target.value })}
+                              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-bold focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div>
+                            <label className="block text-slate-700 font-bold mb-1">Loại Chiết Khấu / Ưu Đãi:</label>
+                            <select
+                              value={voucherFormData.discountType}
+                              onChange={(e) => setVoucherFormData({ ...voucherFormData, discountType: e.target.value })}
+                              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                            >
+                              <option value="percent">Theo phần trăm (%)</option>
+                              <option value="fixed">Số tiền cố định (₫)</option>
+                              <option value="shipping">Miễn phí ship (Freeship)</option>
+                              <option value="gift">🎁 Tặng Quà Kèm (Free Gift)</option>
+                            </select>
+                          </div>
+
+                          {voucherFormData.discountType === 'gift' ? (
+                            <div className="col-span-1 sm:col-span-2 p-3 bg-rose-50/70 border border-rose-200 rounded-xl space-y-2.5">
+                              <div className="font-extrabold text-rose-900 text-xs flex items-center gap-1.5">
+                                <span>🎁 Cài Đặt Quà Tặng Kèm Đơn Hàng</span>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                <div>
+                                  <label className="block text-slate-700 font-bold mb-1">Tên Quà Tặng: *</label>
+                                  <input
+                                    type="text"
+                                    required
+                                    placeholder="VD: Hộp Trà Thảo Mộc Đông Trùng 15 Gói"
+                                    value={voucherFormData.giftName || ''}
+                                    onChange={(e) => setVoucherFormData({ ...voucherFormData, giftName: e.target.value })}
+                                    className="w-full px-3 py-1.5 bg-white border border-rose-200 rounded-xl font-bold focus:ring-2 focus:ring-rose-500 focus:outline-none"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-slate-700 font-bold mb-1">Trị Giá Ước Tính (₫):</label>
+                                  <input
+                                    type="number"
+                                    placeholder="VD: 120000"
+                                    value={voucherFormData.giftValue || 0}
+                                    onChange={(e) => setVoucherFormData({ ...voucherFormData, giftValue: e.target.value })}
+                                    className="w-full px-3 py-1.5 bg-white border border-rose-200 rounded-xl font-bold focus:ring-2 focus:ring-rose-500 focus:outline-none"
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <label className="block text-slate-700 font-bold mb-1">Link Ảnh Quà Tặng:</label>
+                                <input
+                                  type="text"
+                                  placeholder="https://images.unsplash.com/..."
+                                  value={voucherFormData.giftImage || ''}
+                                  onChange={(e) => setVoucherFormData({ ...voucherFormData, giftImage: e.target.value })}
+                                  className="w-full px-3 py-1.5 bg-white border border-rose-200 rounded-xl text-xs focus:ring-2 focus:ring-rose-500 focus:outline-none"
+                                />
+                                {/* Quick gift presets */}
+                                <div className="flex flex-wrap items-center gap-1.5 mt-2 pt-1 border-t border-rose-200/60 text-[10px]">
+                                  <span className="text-slate-500 font-bold">Mẫu gợi ý:</span>
+                                  {[
+                                    { name: 'Hộp Trà Thảo Mộc Đông Trùng', val: 120000, img: 'https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=600&auto=format&fit=crop&q=80' },
+                                    { name: 'Bình Giữ Nhiệt MedXpress 500ml', val: 180000, img: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=600&auto=format&fit=crop&q=80' },
+                                    { name: 'Hộp Khẩu Trang 4 Lớp Kháng Khuẩn', val: 45000, img: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=600&auto=format&fit=crop&q=80' }
+                                  ].map((pr, idx) => (
+                                    <button
+                                      key={idx}
+                                      type="button"
+                                      onClick={() => setVoucherFormData({
+                                        ...voucherFormData,
+                                        giftName: pr.name,
+                                        giftValue: pr.val,
+                                        giftImage: pr.img,
+                                        badgeText: `Tặng ${pr.name}`
+                                      })}
+                                      className="px-2 py-0.5 rounded-lg bg-white hover:bg-rose-100 text-rose-800 border border-rose-200 font-semibold transition-colors cursor-pointer"
+                                    >
+                                      + {pr.name}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <div>
+                                <label className="block text-slate-700 font-bold mb-1">
+                                  {voucherFormData.discountType === 'percent' ? 'Mức giảm (%)' : 'Mức giảm (₫)'}: *
+                                </label>
+                                <input
+                                  type="number"
+                                  required
+                                  value={voucherFormData.discountValue}
+                                  onChange={(e) => setVoucherFormData({ ...voucherFormData, discountValue: e.target.value })}
+                                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-black text-rose-600 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-slate-700 font-bold mb-1">Giảm Tối Đa (₫):</label>
+                                <input
+                                  type="number"
+                                  value={voucherFormData.maxDiscount}
+                                  onChange={(e) => setVoucherFormData({ ...voucherFormData, maxDiscount: e.target.value })}
+                                  placeholder="0 = Không giới hạn"
+                                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-bold focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                                />
+                              </div>
+                            </>
+                          )}
                         </div>
 
                         <div>
-                          <label className="block text-slate-700 font-bold mb-1">Tên Chương Trình: *</label>
-                          <input
-                            type="text"
-                            required
-                            placeholder="VD: Tri ân khách hàng thân thiết"
-                            value={voucherFormData.title}
-                            onChange={(e) => setVoucherFormData({ ...voucherFormData, title: e.target.value })}
-                            className="w-full px-3 py-2 bg-slate-50 border rounded-xl font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div>
-                          <label className="block text-slate-700 font-bold mb-1">Loại Chiết Khấu:</label>
-                          <select
-                            value={voucherFormData.discountType}
-                            onChange={(e) => setVoucherFormData({ ...voucherFormData, discountType: e.target.value })}
-                            className="w-full px-3 py-2 bg-slate-50 border rounded-xl font-medium focus:bg-white"
-                          >
-                            <option value="fixed">Số tiền cố định (₫)</option>
-                            <option value="percent">Theo phần trăm (%)</option>
-                            <option value="shipping">Miễn phí ship (Freeship)</option>
-                          </select>
-                        </div>
-
-                        <div>
-                          <label className="block text-slate-700 font-bold mb-1">
-                            {voucherFormData.discountType === 'percent' ? 'Mức giảm (%)' : 'Mức giảm (₫)'}:
-                          </label>
-                          <input
-                            type="number"
-                            required
-                            value={voucherFormData.discountValue}
-                            onChange={(e) => setVoucherFormData({ ...voucherFormData, discountValue: e.target.value })}
-                            className="w-full px-3 py-2 bg-slate-50 border rounded-xl font-bold"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-slate-700 font-bold mb-1">Giảm Tối Đa (₫):</label>
-                          <input
-                            type="number"
-                            value={voucherFormData.maxDiscount}
-                            onChange={(e) => setVoucherFormData({ ...voucherFormData, maxDiscount: e.target.value })}
-                            className="w-full px-3 py-2 bg-slate-50 border rounded-xl font-bold"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div>
-                          <label className="block text-slate-700 font-bold mb-1">Đơn Tối Thiểu (₫):</label>
+                          <label className="block text-slate-700 font-bold mb-1">Đơn Hàng Tối Thiểu (₫):</label>
                           <input
                             type="number"
                             value={voucherFormData.minOrderValue}
                             onChange={(e) => setVoucherFormData({ ...voucherFormData, minOrderValue: e.target.value })}
-                            className="w-full px-3 py-2 bg-slate-50 border rounded-xl font-bold"
+                            placeholder="0 = Áp dụng mọi giá trị đơn"
+                            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-bold focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                           />
+                        </div>
+                      </div>
+
+                      {/* 2. CÀI ĐẶT BẬC COMBO & SỐ LƯỢNG TỐI THIỂU */}
+                      <div className="p-3.5 bg-amber-50/60 rounded-2xl border border-amber-200/80 space-y-3">
+                        <div className="font-bold text-amber-950 flex items-center justify-between text-[11px] uppercase tracking-wider">
+                          <span>🎁 2. Gói Combo & Số Lượng Hộp Tối Thiểu (Liên kết Frontend)</span>
+                          <span className="text-[10px] lowercase font-normal text-amber-800">
+                            Hiển thị trực tiếp vào nút mua 3 hộp & 6 hộp
+                          </span>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setVoucherFormData(prev => ({ 
+                              ...prev, 
+                              minQuantity: 1, 
+                              comboTier: null,
+                              badgeText: prev.discountType === 'percent' ? `Giảm ${prev.discountValue}%` : prev.badgeText
+                            }))}
+                            className={`px-3 py-1.5 rounded-xl font-bold border transition-all cursor-pointer ${
+                              (!voucherFormData.comboTier || voucherFormData.minQuantity === 1)
+                                ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
+                                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                            }`}
+                          >
+                            Đơn thường (≥ 1 hộp)
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setVoucherFormData(prev => ({ 
+                              ...prev, 
+                              minQuantity: 3, 
+                              comboTier: 3,
+                              code: prev.code || 'COMBO3HOP',
+                              title: prev.title || 'Khuyến Mại Combo Liệu Trình 3 Hộp',
+                              discountType: 'percent',
+                              discountValue: prev.discountValue || 10,
+                              badgeText: `Combo 3 Hộp -${prev.discountValue || 10}%`
+                            }))}
+                            className={`px-3 py-1.5 rounded-xl font-bold border transition-all cursor-pointer flex items-center gap-1 ${
+                              voucherFormData.comboTier === 3 || voucherFormData.minQuantity === 3
+                                ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                                : 'bg-white text-emerald-800 border-emerald-200 hover:bg-emerald-50'
+                            }`}
+                          >
+                            <span>⭐ Gói Combo 3 Hộp (Liệu trình)</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setVoucherFormData(prev => ({ 
+                              ...prev, 
+                              minQuantity: 6, 
+                              comboTier: 6,
+                              code: prev.code || 'COMBO6HOP',
+                              title: prev.title || 'Khuyến Mại Combo Chuyên Sâu 6 Hộp',
+                              discountType: 'percent',
+                              discountValue: prev.discountValue || 20,
+                              badgeText: `Combo 6 Hộp -${prev.discountValue || 20}%`
+                            }))}
+                            className={`px-3 py-1.5 rounded-xl font-bold border transition-all cursor-pointer flex items-center gap-1 ${
+                              voucherFormData.comboTier === 6 || voucherFormData.minQuantity === 6
+                                ? 'bg-amber-700 text-white border-amber-700 shadow-xs'
+                                : 'bg-white text-amber-900 border-amber-200 hover:bg-amber-50'
+                            }`}
+                          >
+                            <span>👑 Gói Combo 6 Hộp (Chuyên sâu)</span>
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                          <div>
+                            <label className="block text-slate-700 font-bold mb-1">Số lượng hộp tối thiểu để hưởng ưu đãi: *</label>
+                            <input
+                              type="number"
+                              min="1"
+                              required
+                              value={voucherFormData.minQuantity || 1}
+                              onChange={(e) => {
+                                const val = Number(e.target.value) || 1;
+                                setVoucherFormData({ 
+                                  ...voucherFormData, 
+                                  minQuantity: val,
+                                  comboTier: val === 3 ? 3 : (val === 6 ? 6 : null)
+                                });
+                              }}
+                              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-bold focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-slate-700 font-bold mb-1">Nhận diện bậc combo:</label>
+                            <select
+                              value={voucherFormData.comboTier || ''}
+                              onChange={(e) => {
+                                const val = e.target.value ? Number(e.target.value) : null;
+                                setVoucherFormData({ 
+                                  ...voucherFormData, 
+                                  comboTier: val,
+                                  minQuantity: val ? val : voucherFormData.minQuantity
+                                });
+                              }}
+                              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                            >
+                              <option value="">Không gán bậc (Đơn thông thường)</option>
+                              <option value="3">Bậc 3 Hộp (Hiển thị thẻ Liệu trình 3 hộp ở Frontend)</option>
+                              <option value="6">Bậc 6 Hộp (Hiển thị thẻ Chuyên sâu 6 hộp ở Frontend)</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 3. CÀI ĐẶT PHẠM VI THỜI GIAN ÁP DỤNG */}
+                      <div className="p-3.5 bg-blue-50/60 rounded-2xl border border-blue-200/80 space-y-3">
+                        <div className="font-bold text-blue-950 flex items-center justify-between text-[11px] uppercase tracking-wider">
+                          <span>⏰ 3. Phạm Vi Thời Gian Áp Dụng</span>
+                          <span className="text-[10px] lowercase font-normal text-blue-800">
+                            Tự động kích hoạt & hết hạn theo ngày
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-slate-700 font-bold mb-1">Ngày Bắt Đầu Hiệu Lực:</label>
+                            <input
+                              type="date"
+                              value={voucherFormData.startDate || ''}
+                              onChange={(e) => setVoucherFormData({ ...voucherFormData, startDate: e.target.value })}
+                              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                            />
+                            <p className="text-[10px] text-slate-500 mt-0.5">Để trống nếu áp dụng ngay lập tức</p>
+                          </div>
+
+                          <div>
+                            <label className="block text-slate-700 font-bold mb-1">Ngày Kết Thúc (Hạn Sử Dụng):</label>
+                            <input
+                              type="date"
+                              value={voucherFormData.expiryDate || ''}
+                              onChange={(e) => setVoucherFormData({ ...voucherFormData, expiryDate: e.target.value })}
+                              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                            />
+                            <p className="text-[10px] text-slate-500 mt-0.5">Để trống nếu không giới hạn hạn chót</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 4. CÀI ĐẶT PHẠM VI SẢN PHẨM ÁP DỤNG */}
+                      <div className="p-3.5 bg-emerald-50/50 rounded-2xl border border-emerald-200/80 space-y-3">
+                        <div className="font-bold text-emerald-950 flex items-center justify-between text-[11px] uppercase tracking-wider">
+                          <span>📦 4. Phạm Vi Sản Phẩm Áp Dụng (Đảm bảo khớp thông tin Frontend)</span>
+                          <span className="text-[10px] font-bold text-emerald-800">
+                            {voucherFormData.applicableScope === 'all' && 'Toàn bộ kho hàng'}
+                            {voucherFormData.applicableScope === 'category' && `${(voucherFormData.applicableCategories || []).length} danh mục`}
+                            {voucherFormData.applicableScope === 'specific' && `${(voucherFormData.applicableProducts || []).length} sản phẩm`}
+                          </span>
+                        </div>
+
+                        {/* Chọn chế độ scope */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                          <label className={`p-2.5 rounded-xl border flex items-center gap-2 cursor-pointer transition-all ${
+                            voucherFormData.applicableScope === 'all'
+                              ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs font-bold'
+                              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                          }`}>
+                            <input
+                              type="radio"
+                              name="applicableScope"
+                              value="all"
+                              checked={voucherFormData.applicableScope === 'all'}
+                              onChange={() => setVoucherFormData({ ...voucherFormData, applicableScope: 'all' })}
+                              className="text-emerald-600 focus:ring-emerald-500"
+                            />
+                            <span>Tất Cả Sản Phẩm</span>
+                          </label>
+
+                          <label className={`p-2.5 rounded-xl border flex items-center gap-2 cursor-pointer transition-all ${
+                            voucherFormData.applicableScope === 'category'
+                              ? 'bg-purple-600 text-white border-purple-600 shadow-xs font-bold'
+                              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                          }`}>
+                            <input
+                              type="radio"
+                              name="applicableScope"
+                              value="category"
+                              checked={voucherFormData.applicableScope === 'category'}
+                              onChange={() => setVoucherFormData({ ...voucherFormData, applicableScope: 'category' })}
+                              className="text-purple-600 focus:ring-purple-500"
+                            />
+                            <span>Theo Danh Mục</span>
+                          </label>
+
+                          <label className={`p-2.5 rounded-xl border flex items-center gap-2 cursor-pointer transition-all ${
+                            voucherFormData.applicableScope === 'specific'
+                              ? 'bg-blue-600 text-white border-blue-600 shadow-xs font-bold'
+                              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                          }`}>
+                            <input
+                              type="radio"
+                              name="applicableScope"
+                              value="specific"
+                              checked={voucherFormData.applicableScope === 'specific'}
+                              onChange={() => setVoucherFormData({ ...voucherFormData, applicableScope: 'specific' })}
+                              className="text-blue-600 focus:ring-blue-500"
+                            />
+                            <span>Sản Phẩm Cụ Thể</span>
+                          </label>
+                        </div>
+
+                        {/* Chi tiết Scope Danh mục */}
+                        {voucherFormData.applicableScope === 'category' && (
+                          <div className="bg-white p-3 rounded-xl border border-slate-200 space-y-2">
+                            <div className="flex items-center justify-between text-xs pb-1 border-b">
+                              <span className="font-bold text-slate-700">Chọn danh mục áp dụng:</span>
+                              <div className="flex gap-2 text-[11px]">
+                                <button
+                                  type="button"
+                                  onClick={() => setVoucherFormData({
+                                    ...voucherFormData,
+                                    applicableCategories: CATEGORIES.filter(c => c.id !== 'all').map(c => c.id)
+                                  })}
+                                  className="text-emerald-600 hover:underline font-bold cursor-pointer"
+                                >
+                                  Chọn tất cả
+                                </button>
+                                <span className="text-slate-300">|</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setVoucherFormData({ ...voucherFormData, applicableCategories: [] })}
+                                  className="text-rose-600 hover:underline font-bold cursor-pointer"
+                                >
+                                  Bỏ chọn
+                                </button>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-40 overflow-y-auto no-scrollbar pt-1">
+                              {CATEGORIES.filter(c => c.id !== 'all').map(cat => {
+                                const isChecked = (voucherFormData.applicableCategories || []).includes(cat.id);
+                                return (
+                                  <label 
+                                    key={cat.id} 
+                                    className={`flex items-center gap-2 p-1.5 rounded-lg border cursor-pointer text-xs ${
+                                      isChecked ? 'bg-purple-50 text-purple-900 border-purple-200 font-bold' : 'hover:bg-slate-50 text-slate-700 border-slate-100'
+                                    }`}
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={isChecked}
+                                      onChange={() => {
+                                        const current = voucherFormData.applicableCategories || [];
+                                        const updated = isChecked 
+                                          ? current.filter(id => id !== cat.id) 
+                                          : [...current, cat.id];
+                                        setVoucherFormData({ ...voucherFormData, applicableCategories: updated });
+                                      }}
+                                      className="rounded text-purple-600"
+                                    />
+                                    <span className="truncate">{cat.name}</span>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Chi tiết Scope Sản phẩm cụ thể */}
+                        {voucherFormData.applicableScope === 'specific' && (
+                          <div className="bg-white p-3 rounded-xl border border-slate-200 space-y-2">
+                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 pb-1 border-b">
+                              <span className="font-bold text-slate-700 text-xs">
+                                Chọn sản phẩm áp dụng ({voucherFormData.applicableProducts?.length || 0} đã chọn):
+                              </span>
+                              <div className="flex items-center gap-2">
+                                <div className="relative flex-1 sm:w-48">
+                                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2" />
+                                  <input
+                                    type="text"
+                                    placeholder="Tìm tên hoặc mã SP..."
+                                    value={voucherProductSearch}
+                                    onChange={(e) => setVoucherProductSearch(e.target.value)}
+                                    className="w-full pl-8 pr-2 py-1 bg-slate-50 border rounded-lg text-xs"
+                                  />
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => setVoucherFormData({
+                                    ...voucherFormData,
+                                    applicableProducts: (products || []).map(p => p.id)
+                                  })}
+                                  className="text-xs text-emerald-600 hover:underline font-bold cursor-pointer shrink-0"
+                                >
+                                  Tất cả
+                                </button>
+                                <span className="text-slate-300">|</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setVoucherFormData({ ...voucherFormData, applicableProducts: [] })}
+                                  className="text-xs text-rose-600 hover:underline font-bold cursor-pointer shrink-0"
+                                >
+                                  Bỏ chọn
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="max-h-48 overflow-y-auto space-y-1 no-scrollbar pt-1">
+                              {(products || [])
+                                .filter(p => {
+                                  if (!voucherProductSearch.trim()) return true;
+                                  const q = voucherProductSearch.toLowerCase().trim();
+                                  return p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q);
+                                })
+                                .map(prod => {
+                                  const isChecked = (voucherFormData.applicableProducts || []).includes(prod.id);
+                                  return (
+                                    <label
+                                      key={prod.id}
+                                      className={`flex items-center justify-between p-2 rounded-xl border cursor-pointer transition-colors ${
+                                        isChecked ? 'bg-blue-50 text-blue-900 border-blue-200 font-semibold' : 'hover:bg-slate-50 border-slate-100 text-slate-700'
+                                      }`}
+                                    >
+                                      <div className="flex items-center gap-2 min-w-0">
+                                        <input
+                                          type="checkbox"
+                                          checked={isChecked}
+                                          onChange={() => {
+                                            const current = voucherFormData.applicableProducts || [];
+                                            const updated = isChecked
+                                              ? current.filter(id => id !== prod.id)
+                                              : [...current, prod.id];
+                                            setVoucherFormData({ ...voucherFormData, applicableProducts: updated });
+                                          }}
+                                          className="rounded text-blue-600 shrink-0"
+                                        />
+                                        <img 
+                                          src={prod.image || '/logo-icon.png'} 
+                                          alt={prod.name} 
+                                          className="w-8 h-8 object-contain rounded bg-slate-100 shrink-0 border"
+                                        />
+                                        <div className="min-w-0">
+                                          <p className="text-xs truncate font-bold">{prod.name}</p>
+                                          <p className="text-[10px] text-slate-500 font-mono">Mã: {prod.id} • {prod.countryName || 'Chính hãng'}</p>
+                                        </div>
+                                      </div>
+                                      <span className="text-xs font-black text-rose-600 shrink-0 ml-2">
+                                        {typeof prod.price === 'number' ? prod.price.toLocaleString('vi-VN') + '₫' : prod.price}
+                                      </span>
+                                    </label>
+                                  );
+                                })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 5. MÔ TẢ & LƯỢT DÙNG */}
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-slate-700 font-bold mb-1">Giới Hạn Lượt Dùng Toàn Sàn:</label>
+                            <input
+                              type="number"
+                              value={voucherFormData.usageLimit}
+                              onChange={(e) => setVoucherFormData({ ...voucherFormData, usageLimit: e.target.value })}
+                              placeholder="1000"
+                              className="w-full px-3 py-2 bg-slate-50 border rounded-xl font-bold"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-slate-700 font-bold mb-1">Huy Hiệu Hiển Thị (Badge):</label>
+                            <input
+                              type="text"
+                              placeholder="VD: Combo 3 Hộp -10% / Giảm 50k"
+                              value={voucherFormData.badgeText}
+                              onChange={(e) => setVoucherFormData({ ...voucherFormData, badgeText: e.target.value })}
+                              className="w-full px-3 py-2 bg-slate-50 border rounded-xl font-bold"
+                            />
+                          </div>
                         </div>
 
                         <div>
-                          <label className="block text-slate-700 font-bold mb-1">Giới Hạn Lượt Dùng:</label>
-                          <input
-                            type="number"
-                            value={voucherFormData.usageLimit}
-                            onChange={(e) => setVoucherFormData({ ...voucherFormData, usageLimit: e.target.value })}
-                            className="w-full px-3 py-2 bg-slate-50 border rounded-xl font-bold"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-slate-700 font-bold mb-1">Hạn Sử Dụng:</label>
-                          <input
-                            type="date"
-                            value={voucherFormData.expiryDate}
-                            onChange={(e) => setVoucherFormData({ ...voucherFormData, expiryDate: e.target.value })}
+                          <label className="block text-slate-700 font-bold mb-1">Mô Tả Chi Tiết Điều Kiện Áp Dụng:</label>
+                          <textarea
+                            rows={2}
+                            placeholder="VD: Giảm ngay 10% khi đặt mua Combo 3 hộp liệu trình chăm sóc sức khỏe..."
+                            value={voucherFormData.description}
+                            onChange={(e) => setVoucherFormData({ ...voucherFormData, description: e.target.value })}
                             className="w-full px-3 py-2 bg-slate-50 border rounded-xl font-medium"
                           />
                         </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-slate-700 font-bold mb-1">Huy Hiệu Hiển Thị (Badge):</label>
-                        <input
-                          type="text"
-                          placeholder="VD: Giảm 50k / Freeship 100%"
-                          value={voucherFormData.badgeText}
-                          onChange={(e) => setVoucherFormData({ ...voucherFormData, badgeText: e.target.value })}
-                          className="w-full px-3 py-2 bg-slate-50 border rounded-xl font-medium"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-slate-700 font-bold mb-1">Mô Tả Điều Kiện Áp Dụng:</label>
-                        <textarea
-                          rows={2}
-                          placeholder="VD: Áp dụng cho mọi đơn hàng Thực phẩm chức năng từ 400.000₫ trở lên..."
-                          value={voucherFormData.description}
-                          onChange={(e) => setVoucherFormData({ ...voucherFormData, description: e.target.value })}
-                          className="w-full px-3 py-2 bg-slate-50 border rounded-xl font-medium"
-                        />
                       </div>
 
                       <div className="flex items-center justify-between pt-3 border-t">
@@ -4698,24 +5250,24 @@ export const AdminPanel = ({
                             type="checkbox"
                             checked={voucherFormData.enabled}
                             onChange={(e) => setVoucherFormData({ ...voucherFormData, enabled: e.target.checked })}
-                            className="w-4 h-4 text-emerald-600 rounded"
+                            className="w-4 h-4 text-emerald-600 rounded cursor-pointer"
                           />
-                          <span className="font-bold text-slate-800">Kích hoạt voucher ngay lập tức</span>
+                          <span className="font-bold text-slate-800">Kích hoạt chương trình ngay lập tức</span>
                         </label>
 
                         <div className="flex gap-2">
                           <button
                             type="button"
                             onClick={() => setShowAddVoucherModal(false)}
-                            className="px-4 py-2 border rounded-xl text-slate-700 font-bold hover:bg-slate-50"
+                            className="px-4 py-2 border rounded-xl text-slate-700 font-bold hover:bg-slate-50 cursor-pointer"
                           >
                             Hủy
                           </button>
                           <button
                             type="submit"
-                            className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl shadow-xs"
+                            className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl shadow-xs cursor-pointer"
                           >
-                            {editingVoucher ? 'Lưu Thay Đổi' : 'Tạo Voucher'}
+                            {editingVoucher ? 'Lưu Thay Đổi' : 'Tạo Chương Trình'}
                           </button>
                         </div>
                       </div>
@@ -5448,7 +6000,7 @@ export const AdminPanel = ({
               </div>
 
               {/* Cards thống kê điểm thưởng */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                 <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs">
                   <div className="text-xs text-slate-500 font-semibold uppercase">Tổng Thành Viên</div>
                   <div className="text-2xl font-black text-slate-900 mt-1">
@@ -5465,6 +6017,14 @@ export const AdminPanel = ({
                   <div className="text-[11px] text-amber-700/80 mt-0.5">
                     = {(customers.reduce((acc, c) => acc + (c.points || 0), 0) * 1000).toLocaleString('vi-VN')}₫ giá trị quy đổi
                   </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-white border border-teal-200 shadow-xs">
+                  <div className="text-xs text-teal-800 font-semibold uppercase">Hồ Sơ & Chat AI</div>
+                  <div className="text-2xl font-black text-teal-700 mt-1">
+                    {consultations.length} phiên
+                  </div>
+                  <div className="text-[11px] text-teal-600 mt-0.5">Lưu trữ trên Cloudflare D1</div>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-white border border-emerald-200 shadow-xs">
@@ -5484,63 +6044,237 @@ export const AdminPanel = ({
                       <tr>
                         <th className="p-3.5">Khách Hàng</th>
                         <th className="p-3.5">Số Điện Thoại</th>
-                        <th className="p-3.5">Hạng Thành Viên</th>
-                        <th className="p-3.5">Điểm Thưởng</th>
-                        <th className="p-3.5">Giá Trị Quy Đổi</th>
+                        <th className="p-3.5">Hồ Sơ Y Khoa / Nhu Cầu</th>
+                        <th className="p-3.5">Hạng & Điểm</th>
                         <th className="p-3.5 text-right">Thao Tác</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {customers.length === 0 && (
                         <tr>
-                          <td colSpan="6" className="p-8 text-center text-slate-400">
+                          <td colSpan="5" className="p-8 text-center text-slate-400">
                             Chưa có khách hàng đăng ký tài khoản. Danh sách sẽ tự động cập nhật khi khách hàng tạo tài khoản hoặc đặt hàng.
                           </td>
                         </tr>
                       )}
-                      {customers.map(c => (
-                        <tr key={c.id} className="hover:bg-slate-50 transition-colors">
-                          <td className="p-3.5 font-bold text-slate-900">
-                            <div>{c.fullName}</div>
-                            {c.email && <div className="text-[10px] text-slate-400 font-normal">{c.email}</div>}
-                          </td>
-                          <td className="p-3.5 font-mono text-emerald-700 font-bold">
-                            {c.phone}
-                          </td>
-                          <td className="p-3.5">
-                            <span className="px-2 py-0.5 bg-amber-50 text-amber-800 border border-amber-200 rounded-md font-bold text-[10px]">
-                              {c.tier || 'Thành viên'}
-                            </span>
-                          </td>
-                          <td className="p-3.5 font-black text-amber-600 text-sm">
-                            {c.points || 0} điểm
-                          </td>
-                          <td className="p-3.5 font-bold text-slate-700">
-                            {((c.points || 0) * 1000).toLocaleString('vi-VN')}₫
-                          </td>
-                          <td className="p-3.5 text-right">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const pts = prompt(`Tặng thêm điểm tri ân cho khách hàng ${c.fullName}:`, '10');
-                                if (pts && !isNaN(pts) && Number(pts) > 0) {
-                                  if (onBonusPoints) {
-                                    onBonusPoints(c.id, Number(pts));
+                      {customers.map(c => {
+                        const custConsultations = consultations.filter(
+                          cs => (c.id && cs.customerId === c.id) || (c.phone && (cs.customerPhone === c.phone || cs.customerId === `cust-${c.phone}`))
+                        );
+                        const hp = c.healthProfile || custConsultations[0]?.healthProfile;
+
+                        return (
+                          <tr key={c.id} className="hover:bg-slate-50 transition-colors">
+                            <td className="p-3.5 font-bold text-slate-900">
+                              <div>{c.fullName}</div>
+                              {c.email && <div className="text-[10px] text-slate-400 font-normal">{c.email}</div>}
+                            </td>
+                            <td className="p-3.5 font-mono text-emerald-700 font-bold">
+                              {c.phone}
+                            </td>
+                            <td className="p-3.5 max-w-[220px]">
+                              {hp ? (
+                                <div>
+                                  <div className="font-bold text-slate-900 truncate">
+                                    {hp.primaryConcernTitle || hp.primaryConcern || c.lastConcern}
+                                  </div>
+                                  <div className="text-[10px] text-emerald-700 font-medium truncate">
+                                    {hp.audienceTitle || hp.audience || 'Đã khảo sát'}
+                                  </div>
+                                </div>
+                              ) : (
+                                <span className="text-[11px] text-slate-400 italic">Chưa khảo sát</span>
+                              )}
+                            </td>
+                            <td className="p-3.5">
+                              <span className="px-2 py-0.5 bg-amber-50 text-amber-800 border border-amber-200 rounded-md font-bold text-[10px]">
+                                {c.tier || 'Thành viên'}
+                              </span>
+                              <div className="font-black text-amber-600 text-xs mt-0.5">
+                                {c.points || 0} điểm (={((c.points || 0) * 1000).toLocaleString('vi-VN')}₫)
+                              </div>
+                            </td>
+                            <td className="p-3.5 text-right space-x-1.5 whitespace-nowrap">
+                              <button
+                                type="button"
+                                onClick={() => setSelectedCustomerForConsultation(c)}
+                                className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg text-xs font-bold transition-colors inline-flex items-center gap-1 shadow-xs"
+                                title="Xem hồ sơ sức khỏe & lịch sử chat AI"
+                              >
+                                <Stethoscope className="w-3 h-3 text-emerald-700" />
+                                <span>Hồ Sơ & Chat AI ({custConsultations.length})</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const pts = prompt(`Tặng thêm điểm tri ân cho khách hàng ${c.fullName}:`, '10');
+                                  if (pts && !isNaN(pts) && Number(pts) > 0) {
+                                    if (onBonusPoints) {
+                                      onBonusPoints(c.id, Number(pts));
+                                    }
                                   }
-                                }
-                              }}
-                              className="px-2.5 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-lg text-xs font-bold transition-colors inline-flex items-center gap-1"
-                            >
-                              <Sparkles className="w-3 h-3 text-amber-600" />
-                              <span>+ Tặng Điểm</span>
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                                }}
+                                className="px-2.5 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-lg text-xs font-bold transition-colors inline-flex items-center gap-1"
+                              >
+                                <Sparkles className="w-3 h-3 text-amber-600" />
+                                <span>+ Điểm</span>
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
               </div>
+
+              {/* MODAL XEM HỒ SƠ Y KHOA & CHAT AI CỦA KHÁCH HÀNG */}
+              {selectedCustomerForConsultation && (
+                <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-in fade-in">
+                  <div 
+                    className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden border border-slate-100 flex flex-col my-4 max-h-[90vh]"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {/* Modal Header */}
+                    <div className="bg-gradient-to-r from-emerald-800 to-teal-800 text-white p-5 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center text-white">
+                          <Stethoscope className="w-5 h-5 text-amber-300" />
+                        </div>
+                        <div>
+                          <h3 className="font-black text-base">Hồ Sơ Sức Khỏe & Lịch Sử Chat AI</h3>
+                          <p className="text-xs text-emerald-200">
+                            Khách hàng: <strong>{selectedCustomerForConsultation.fullName}</strong> • SĐT: {selectedCustomerForConsultation.phone}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setSelectedCustomerForConsultation(null)}
+                        className="p-1.5 rounded-full hover:bg-white/20 text-white transition-colors"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+
+                    {/* Modal Body */}
+                    <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-4 text-xs bg-slate-50/50">
+                      {/* Tóm tắt hồ sơ y khoa */}
+                      {(() => {
+                        const custCsts = consultations.filter(
+                          cs => (selectedCustomerForConsultation.id && cs.customerId === selectedCustomerForConsultation.id) || 
+                                (selectedCustomerForConsultation.phone && (cs.customerPhone === selectedCustomerForConsultation.phone || cs.customerId === `cust-${selectedCustomerForConsultation.phone}`))
+                        );
+                        const hp = selectedCustomerForConsultation.healthProfile || custCsts[0]?.healthProfile;
+
+                        return (
+                          <>
+                            <div className="p-4 bg-white rounded-2xl border border-emerald-200/90 shadow-xs space-y-2.5">
+                              <div className="flex items-center gap-2 font-black text-emerald-900 uppercase text-[11px] tracking-wide">
+                                <Activity className="w-4 h-4 text-emerald-600" />
+                                <span>Hồ Sơ Khảo Sát Y Khoa Lâm Sàng</span>
+                              </div>
+                              {hp ? (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                                    <span className="text-[10px] text-slate-400 block font-bold">Đối Tượng:</span>
+                                    <span className="font-bold text-slate-900">{hp.audienceTitle || hp.audience || 'Chưa rõ'}</span>
+                                  </div>
+                                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                                    <span className="text-[10px] text-slate-400 block font-bold">Nhu Cầu Chính:</span>
+                                    <span className="font-bold text-emerald-800">{hp.primaryConcernTitle || hp.primaryConcern || 'Tư vấn sức khỏe'}</span>
+                                  </div>
+                                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 sm:col-span-2">
+                                    <span className="text-[10px] text-slate-400 block font-bold">Bệnh Nền / Lưu Ý Thể Trạng:</span>
+                                    <span className="font-medium text-slate-800">{hp.conditionTitle || 'Khỏe mạnh, không có bệnh nền'}</span>
+                                    {hp.conditionNote && (
+                                      <p className="mt-1 text-[11px] text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200">
+                                        {hp.conditionNote}
+                                      </p>
+                                    )}
+                                  </div>
+                                  {hp.keyNutrients && (
+                                    <div className="p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-100 sm:col-span-2">
+                                      <span className="text-[10px] text-emerald-800 block font-bold">Vi Chất Khuyên Bổ Sung:</span>
+                                      <span className="font-medium text-emerald-950">{hp.keyNutrients}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <p className="text-slate-400 italic">Khách hàng chưa hoàn thành khảo sát nhu cầu y khoa.</p>
+                              )}
+                            </div>
+
+                            {/* Lịch sử chat */}
+                            <div className="space-y-3">
+                              <div className="font-extrabold text-slate-800 text-xs flex items-center justify-between">
+                                <span>Nhật Ký Các Phiên Tương Tác Dược Sĩ AI ({custCsts.length} phiên)</span>
+                                <span className="text-[10px] text-slate-400 font-normal">Dữ liệu Cloudflare D1</span>
+                              </div>
+
+                              {custCsts.length === 0 ? (
+                                <div className="p-6 text-center bg-white rounded-2xl border border-slate-200 text-slate-400">
+                                  Chưa có nhật ký chat AI nào với khách hàng này.
+                                </div>
+                              ) : (
+                                custCsts.map((cs, idx) => (
+                                  <div key={cs.id || idx} className="p-4 bg-white rounded-2xl border border-slate-200 space-y-3 shadow-xs">
+                                    <div className="flex items-center justify-between border-b pb-2">
+                                      <div>
+                                        <span className="font-bold text-slate-900">
+                                          {cs.healthProfile?.primaryConcernTitle || 'Phiên tư vấn'}
+                                        </span>
+                                        <span className="text-[10px] text-slate-400 block font-mono">
+                                          Mã: {cs.id} • {cs.updatedAt ? new Date(cs.updatedAt).toLocaleString('vi-VN') : 'Gần đây'}
+                                        </span>
+                                      </div>
+                                      {cs.recommendedProductIds?.length > 0 && (
+                                        <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full font-bold text-[10px]">
+                                          {cs.recommendedProductIds.length} SP gợi ý
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    {/* Chat messages */}
+                                    <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                                      {(cs.chatHistory || []).map((m, mIdx) => (
+                                        <div 
+                                          key={m.id || mIdx}
+                                          className={`p-2.5 rounded-xl ${
+                                            m.sender === 'user' 
+                                              ? 'bg-slate-100 text-slate-800 mr-8' 
+                                              : 'bg-emerald-50 text-emerald-950 ml-8 border border-emerald-100'
+                                          }`}
+                                        >
+                                          <div className="flex items-center justify-between text-[10px] font-bold mb-1 opacity-70">
+                                            <span>{m.sender === 'user' ? '👤 Khách Hàng' : '🩺 Dược Sĩ Lâm Sàng AI'}</span>
+                                            <span>{m.time}</span>
+                                          </div>
+                                          <div className="whitespace-pre-line text-[11px] leading-relaxed">
+                                            {m.text}
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                ))
+                              )}
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+
+                    <div className="p-4 bg-white border-t border-slate-200 flex justify-end">
+                      <button
+                        onClick={() => setSelectedCustomerForConsultation(null)}
+                        className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-bold text-xs"
+                      >
+                        Đóng
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -8953,6 +9687,17 @@ export const AdminPanel = ({
                             <td className="p-2 text-right font-mono">{(it.price * it.quantity).toLocaleString('vi-VN')}₫</td>
                           </tr>
                         ))}
+                        {printingOrder.giftItem && (
+                          <tr className="bg-rose-50 text-rose-800 font-bold">
+                            <td className="p-2 font-mono text-center">🎁</td>
+                            <td className="p-2">
+                              <span>Quà tặng tri ân: {printingOrder.giftItem.name}</span>
+                              <div className="text-[10px] text-rose-600 font-normal">Đóng gói kèm trong kiện hàng</div>
+                            </td>
+                            <td className="p-2 text-center font-bold">x1</td>
+                            <td className="p-2 text-right font-mono text-emerald-700">0₫ (Tặng)</td>
+                          </tr>
+                        )}
                       </tbody>
                     </table>
                   </div>

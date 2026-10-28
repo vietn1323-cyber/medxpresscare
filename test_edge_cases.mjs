@@ -65,6 +65,11 @@ assert('Voucher quá hạn trả về isValid: false', calculateVoucherDiscount(
 const voucherOutOfUses = { code: 'MAX', discountType: 'fixed', discountValue: 50000, minOrderValue: 0, enabled: true, usageLimit: 10, usedCount: 10 };
 assert('Voucher hết lượt dùng trả về isValid: false', calculateVoucherDiscount(voucherOutOfUses, 500000).isValid === false, calculateVoucherDiscount(voucherOutOfUses, 500000));
 
+const voucherGift = { code: 'GIFT_TEST', discountType: 'gift', giftName: 'Bình Giữ Nhiệt Test', giftValue: 150000, minOrderValue: 200000, enabled: true };
+assert('Voucher quà tặng chưa đủ giá trị tối thiểu phải bị từ chối', calculateVoucherDiscount(voucherGift, 150000).isValid === false);
+const resGiftOk = calculateVoucherDiscount(voucherGift, 250000);
+assert('Voucher quà tặng đạt điều kiện phải trả về quà tặng kèm', resGiftOk.isValid === true && resGiftOk.isGift === true && resGiftOk.giftItem.name === 'Bình Giữ Nhiệt Test');
+
 // 4. Loyalty Points Edge Cases
 console.log('\n4. Test Loyalty Points Edge Cases:');
 assert('calculateEarnedPoints với số âm trả về 0', calculateEarnedPoints(-50000) === 0, calculateEarnedPoints(-50000));

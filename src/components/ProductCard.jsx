@@ -4,15 +4,19 @@ import {
   CheckCircle2, Sparkles, Zap, Flame 
 } from 'lucide-react';
 import { CATEGORIES, cleanCountryName } from '../data/products';
+import { getProductComboPromotions, getProductGiftPromotions, DEFAULT_VOUCHERS } from '../data/vouchers';
 
 export const ProductCard = ({ 
   product, 
   onAddToCart, 
   onOpenDetail, 
   isWishlisted, 
-  onToggleWishlist 
+  onToggleWishlist,
+  vouchers = DEFAULT_VOUCHERS
 }) => {
   const isDomestic = product.originType === 'domestic';
+  const comboPromo = getProductComboPromotions(product, vouchers);
+  const giftPromos = getProductGiftPromotions(product, vouchers);
 
   return (
     <div className="group bg-white rounded-2xl border border-slate-200/90 hover:border-emerald-300 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden relative">
@@ -65,11 +69,19 @@ export const ProductCard = ({
           </div>
         )}
 
-        <div className="absolute bottom-2.5 right-2.5 bg-emerald-950/85 backdrop-blur-xs text-emerald-300 text-[10px] font-extrabold px-2 py-0.5 rounded-md shadow border border-emerald-500/30 flex items-center gap-1">
-          <span>🎁 Combo 3h -10%</span>
-          <span className="text-emerald-500">•</span>
-          <span className="text-amber-300">6h -20%</span>
-        </div>
+        {/* Dynamic Combo Tier Badge & Gift Badge derived from active promotion program */}
+        {(comboPromo.hasAnyCombo || (giftPromos && giftPromos.length > 0)) && (
+          <div className="absolute bottom-2.5 right-2.5 bg-emerald-950/85 backdrop-blur-xs text-emerald-300 text-[10px] font-extrabold px-2 py-0.5 rounded-md shadow border border-emerald-500/30 flex items-center gap-1">
+            {comboPromo.promo3 && <span>Combo 3h -{comboPromo.promo3.discountPercent}%</span>}
+            {comboPromo.promo3 && comboPromo.promo6 && <span className="text-emerald-500">•</span>}
+            {comboPromo.promo6 && <span className="text-amber-300">6h -{comboPromo.promo6.discountPercent}%</span>}
+            {giftPromos && giftPromos.length > 0 && (
+              <span className="text-rose-300 flex items-center gap-0.5">
+                <span>🎁</span> Tặng Quà
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Quick View Button overlay on hover */}
         <div className="absolute inset-0 bg-slate-900/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">

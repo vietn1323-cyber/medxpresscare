@@ -165,5 +165,67 @@ export const apiClient = {
         console.warn('D1 Sync Customers error:', e);
       }
     });
+  },
+
+  // Lưu phiên tư vấn Dược sĩ AI & khảo sát nhu cầu cá nhân hóa - Debounced
+  saveConsultation(consultation) {
+    debounceCall(`consultation_${consultation.id || 'current'}`, async () => {
+      try {
+        await fetch('/api/consultations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(consultation)
+        });
+      } catch (e) {
+        console.warn('D1 Sync Consultation error:', e);
+      }
+    }, 300);
+  },
+
+  // Lưu tức thì phiên tư vấn (dùng khi khách hoàn thành khảo sát hoặc gửi tin nhắn quan trọng)
+  async saveConsultationNow(consultation) {
+    try {
+      const res = await fetch('/api/consultations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(consultation)
+      });
+      if (res.ok) {
+        const json = await res.json();
+        return json?.consultation || consultation;
+      }
+    } catch (e) {
+      console.warn('D1 Save Consultation Now error:', e);
+    }
+    return consultation;
+  },
+
+  // Lấy lịch sử tư vấn Dược sĩ AI (theo khách hàng hoặc toàn bộ)
+  async fetchConsultations(customerId = null, phone = null) {
+    try {
+      let url = '/api/consultations';
+      const params = new URLSearchParams();
+      if (customerId) params.append('customerId', customerId);
+      if (phone) params.append('phone', phone);
+      const queryStr = params.toString();
+      if (queryStr) url += `?${queryStr}`;
+
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      const json = await res.json();
+      return json?.consultations || [];
+    } catch (e) {
+      console.warn('D1 Fetch Consultations error:', e);
+      return null;
+    }
+  },
+
+  // Xóa phiên tư vấn
+  async deleteConsultation(id) {
+    try {
+      await fetch(`/api/consultations?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    } catch (e) {
+      console.warn('D1 Delete Consultation error:', e);
+    }
   }
 };
