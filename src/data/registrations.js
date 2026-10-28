@@ -31,7 +31,7 @@ export const VERIFIED_REGISTRATIONS = {
     date: '15/04/2021',
     type: 'Thực phẩm bảo vệ sức khỏe Nhập Khẩu',
     inspectStandard: 'USP & FDA Hoa Kỳ / Cục ATTP Bộ Y Tế',
-    origin: 'Mỹ (USA)'
+    origin: 'Mỹ'
   },
 
   // 2. Nhóm Tim Mạch & Huyết Áp
@@ -42,7 +42,7 @@ export const VERIFIED_REGISTRATIONS = {
     date: '10/05/2021',
     type: 'Thực phẩm bảo vệ sức khỏe Nhập Khẩu',
     inspectStandard: 'TGA Australia & Cục ATTP Bộ Y Tế',
-    origin: 'Úc (Australia)'
+    origin: 'Úc'
   },
   '8912/2020/ĐKSP': {
     name: 'CoQ10 Nature Made 200mg Hỗ Trợ Tim Mạch',
@@ -51,7 +51,7 @@ export const VERIFIED_REGISTRATIONS = {
     date: '14/09/2020',
     type: 'Thực phẩm bảo vệ sức khỏe Nhập Khẩu',
     inspectStandard: 'USP Hoa Kỳ & GMP Bộ Y Tế',
-    origin: 'Mỹ (USA)'
+    origin: 'Mỹ'
   },
 
   // 3. Nhóm Bồi Bổ, Đông Trùng & Tiểu Đường
@@ -82,7 +82,7 @@ export const VERIFIED_REGISTRATIONS = {
     date: '18/07/2021',
     type: 'Thực phẩm bảo vệ sức khỏe Nhập Khẩu',
     inspectStandard: 'TGA Australia & Cục ATTP Bộ Y Tế',
-    origin: 'Úc (Australia)'
+    origin: 'Úc'
   },
 
   // 5. Nhóm Não Bộ & Thần Kinh
@@ -93,7 +93,7 @@ export const VERIFIED_REGISTRATIONS = {
     date: '22/10/2020',
     type: 'Thực phẩm bảo vệ sức khỏe Nhập Khẩu',
     inspectStandard: 'FDA Hoa Kỳ & Cục ATTP Bộ Y Tế',
-    origin: 'Mỹ (USA)'
+    origin: 'Mỹ'
   },
   '9012/2021/ĐKSP': {
     name: 'Hoạt Huyết Dưỡng Não Cebraton Traphaco',
@@ -113,7 +113,7 @@ export const VERIFIED_REGISTRATIONS = {
     date: '19/03/2022',
     type: 'Thực phẩm bảo vệ sức khỏe Nhập Khẩu',
     inspectStandard: 'TGA Australia & Cục ATTP',
-    origin: 'Úc (Australia)'
+    origin: 'Úc'
   },
   '4481/2021/ĐKSP': {
     name: 'Boganic Forte Traphaco - Bổ Gan Giải Độc',

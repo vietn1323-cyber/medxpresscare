@@ -29,6 +29,7 @@ import { CustomerProfileModal } from './components/CustomerProfileModal';
 import { OrderTrackingModal } from './components/OrderTrackingModal';
 import { OrderTrackingPage } from './components/OrderTrackingPage';
 import { PolicyPage } from './components/PolicyPage';
+import { POLICIES } from './data/policies';
 import { cleanPrice } from './utils/csvHelper';
 import { apiClient } from './services/apiClient';
 import { 
@@ -59,7 +60,19 @@ const DEFAULT_CONFIG = {
   heroBanners: DEFAULT_HERO_BANNERS,
   aiProvider: 'gemini',
   aiModel: 'gemini-2.5-flash',
-  aiApiKey: ''
+  aiApiKey: '',
+  companyName: 'Công ty Cổ phần Dược phẩm MedXpressCare Việt Nam',
+  dkkdNumber: '0108923412 - Sở KH&ĐT TP. Hà Nội cấp',
+  pharmacyCert: 'Số 452/ĐKKDD-BYT',
+  pharmacistInCharge: 'DS. Nguyễn Thu Trang',
+  headquartersAddress: 'Tầng 6, Tòa nhà Dược Phẩm MedXpress, Số 168 Cầu Giấy, Quan Hoa, Q. Cầu Giấy, Hà Nội.',
+  warehouseAddress: 'KCN Đài Tư, Q. Long Biên, TP. Hà Nội.',
+  deliveryScope: 'Hỏa tốc nội thành Hà Nội & Giao hàng nhanh toàn quốc qua đối tác bưu cục.',
+  emailPharmacist: 'duocsi@medxpresscare.com',
+  emailContract: 'hopdong@medxpresscare.com',
+  workingHours: '8:00 - 22:00 tất cả các ngày trong tuần',
+  aboutDesc: 'Hệ thống bán lẻ & phân phối Thực phẩm chức năng cao cấp chuẩn Y Khoa. Đảm bảo nguồn gốc xuất xứ minh bạch: Hàng Nội Địa Chuẩn GMP-WHO và Hàng Nhập Ngoại Chính Ngạch (Mỹ, Úc, Nhật, Hàn, Đức).',
+  regulatoryWarning: '⚠️ LƯU Ý QUAN TRỌNG TỪ BỘ Y TẾ: Thực phẩm chức năng (Thực phẩm bảo vệ sức khỏe) không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh. Tác dụng của sản phẩm tùy thuộc vào cơ địa và mức độ dung nạp của từng người. Đọc kỹ hướng dẫn sử dụng trước khi dùng.'
 };
 
 export default function App() {
@@ -221,6 +234,30 @@ export default function App() {
       return DEFAULT_ARTICLES;
     }
   });
+
+  // Policies State (Danh mục chính sách hoạt động & pháp chế lưu localStorage)
+  const [policiesList, setPoliciesList] = useState(() => {
+    try {
+      const saved = localStorage.getItem('medxpress_policies_db');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+      return POLICIES;
+    } catch {
+      return POLICIES;
+    }
+  });
+
+  const handleUpdatePolicies = (newPolicies) => {
+    setPoliciesList(newPolicies);
+    try {
+      localStorage.setItem('medxpress_policies_db', JSON.stringify(newPolicies));
+    } catch (e) {
+      console.error('Lỗi lưu danh sách chính sách:', e);
+    }
+    showToast('🛡️ Đã cập nhật và lưu danh sách chính sách thành công!');
+  };
 
   // Dedicated Article Detail Page View (Hiển thị bài viết trên trang riêng thay vì modal nổi)
   const [viewingArticle, setViewingArticle] = useState(null);
@@ -1287,19 +1324,19 @@ export default function App() {
       }
 
       if (countryStr.includes('mỹ') || countryStr.includes('usa') || countryStr.includes('us')) {
-        return { originType: 'imported', countryCode: 'US', countryName: 'Mỹ (USA)', flag: '🇺🇸' };
+        return { originType: 'imported', countryCode: 'US', countryName: 'Mỹ', flag: '🇺🇸' };
       }
       if (countryStr.includes('úc') || countryStr.includes('australia') || countryStr.includes('au')) {
-        return { originType: 'imported', countryCode: 'AU', countryName: 'Úc (Australia)', flag: '🇦🇺' };
+        return { originType: 'imported', countryCode: 'AU', countryName: 'Úc', flag: '🇦🇺' };
       }
       if (countryStr.includes('nhật') || countryStr.includes('japan') || countryStr.includes('jp')) {
-        return { originType: 'imported', countryCode: 'JP', countryName: 'Nhật Bản (Japan)', flag: '🇯🇵' };
+        return { originType: 'imported', countryCode: 'JP', countryName: 'Nhật Bản', flag: '🇯🇵' };
       }
       if (countryStr.includes('hàn') || countryStr.includes('korea') || countryStr.includes('kr')) {
-        return { originType: 'imported', countryCode: 'KR', countryName: 'Hàn Quốc (Korea)', flag: '🇰🇷' };
+        return { originType: 'imported', countryCode: 'KR', countryName: 'Hàn Quốc', flag: '🇰🇷' };
       }
       if (countryStr.includes('đức') || countryStr.includes('germany') || countryStr.includes('de')) {
-        return { originType: 'imported', countryCode: 'DE', countryName: 'Đức (Germany)', flag: '🇩🇪' };
+        return { originType: 'imported', countryCode: 'DE', countryName: 'Đức', flag: '🇩🇪' };
       }
 
       return {
@@ -1646,6 +1683,7 @@ export default function App() {
           onGoHome={handleGoHome}
           onOpenAdvisor={() => setIsAdvisorOpen(true)}
           hotline={storeConfig.hotline}
+          policies={policiesList}
         />
       ) : currentView === 'tracking' ? (
         <OrderTrackingPage
@@ -1944,6 +1982,8 @@ export default function App() {
         onNavigateToTracking={handleNavigateToTracking}
         onNavigateToPolicy={handleNavigateToPolicy}
         hotline={storeConfig.hotline}
+        storeConfig={storeConfig}
+        policies={policiesList}
       />
 
       {/* Floating Call to Action Buttons (Dành riêng cho khách hàng: Dược sĩ tư vấn & Hotline) */}
@@ -2038,6 +2078,9 @@ export default function App() {
           onFailAndReturnOrder={handleFailAndReturnOrder}
           onWarehouseArrival={handleWarehouseArrival}
           onConfirmReturnedOrder={handleConfirmReturnedOrder}
+          policies={policiesList}
+          onUpdatePolicies={handleUpdatePolicies}
+          onNavigateToPolicy={handleNavigateToPolicy}
           onOpenOrderTracking={(order) => {
             handleNavigateToTracking(order?.id || '');
           }}

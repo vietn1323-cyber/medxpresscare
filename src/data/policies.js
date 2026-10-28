@@ -281,13 +281,14 @@ export const POLICIES = [
   }
 ];
 
-export const getPolicyBySlug = (slugOrAlias) => {
-  if (!slugOrAlias) return POLICIES[0];
+export const getPolicyBySlug = (slugOrAlias, policiesList = POLICIES) => {
+  const list = (Array.isArray(policiesList) && policiesList.length > 0) ? policiesList : POLICIES;
+  if (!slugOrAlias) return list[0];
   const clean = slugOrAlias.trim().toLowerCase().replace(/^#/, '');
-  const found = POLICIES.find(p => 
+  const found = list.find(p => 
     p.id === clean || 
     p.slug === clean || 
     (Array.isArray(p.legacyAliases) && p.legacyAliases.includes(clean))
   );
-  return found || POLICIES[0];
+  return found || list[0];
 };

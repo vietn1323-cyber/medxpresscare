@@ -54,7 +54,7 @@ export const BulkImportModal = ({
           date: '15/04/2021',
           type: 'Thực phẩm bảo vệ sức khỏe Nhập Khẩu',
           inspectStandard: 'USP & FDA Hoa Kỳ / Cục ATTP Bộ Y Tế',
-          origin: 'Mỹ (USA)',
+          origin: 'Mỹ',
           status: 'Đã cấp phép & thông quan Hải quan chính ngạch'
         },
         {
@@ -92,7 +92,7 @@ export const BulkImportModal = ({
           originalPrice: 420000,
           categories: 'brain_nerve, eye_care, cardio',
           originType: 'imported',
-          countryName: 'Mỹ (USA)',
+          countryName: 'Mỹ',
           regNumber: '7824/2020/ĐKSP',
           packaging: 'Hộp 300 viên nang mềm',
           shortDesc: 'Hỗ trợ tuần hoàn máu não, tăng cường trí nhớ và giảm nhức mỏi mắt khi dùng máy tính.',

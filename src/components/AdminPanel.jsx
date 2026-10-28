@@ -23,6 +23,7 @@ import { DEFAULT_HERO_BANNERS } from '../data/banners';
 import { INITIAL_REVIEWS } from '../data/reviews';
 import { BulkImportModal } from './BulkImportModal';
 import { RETURN_REASONS } from '../utils/logisticsHelper';
+import { POLICIES } from '../data/policies';
 
 export const AdminPanel = ({ 
   isOpen, 
@@ -69,9 +70,23 @@ export const AdminPanel = ({
   onOpenOrderTracking,
   onFailAndReturnOrder,
   onWarehouseArrival,
-  onConfirmReturnedOrder
+  onConfirmReturnedOrder,
+  policies = POLICIES,
+  onUpdatePolicies,
+  onNavigateToPolicy
 }) => {
-  const [activeTab, setActiveTab] = useState('products'); // products | orders | vouchers | reviews | customers | reorder | articles | registrations | stats | shipping | settings
+  const [activeTab, setActiveTab] = useState('products'); // products | orders | vouchers | reviews | customers | reorder | articles | registrations | stats | shipping | settings | policies
+  const [localPolicies, setLocalPolicies] = useState(() => {
+    return Array.isArray(policies) && policies.length > 0 ? policies : POLICIES;
+  });
+  const [selectedPolicySlug, setSelectedPolicySlug] = useState('chinh-sach-giao-hang');
+  const [policySaveStatus, setPolicySaveStatus] = useState('');
+
+  useEffect(() => {
+    if (Array.isArray(policies) && policies.length > 0) {
+      setLocalPolicies(policies);
+    }
+  }, [policies]);
   const [orderFilter, setOrderFilter] = useState('all');
   const [searchOrder, setSearchOrder] = useState('');
 
@@ -762,14 +777,147 @@ export const AdminPanel = ({
     });
   };
 
-  // State for editing store settings & shipping carriers
+  // State for editing store settings & shipping carriers & footer info
   const [tempConfig, setTempConfig] = useState(() => ({
+    companyName: 'Công ty Cổ phần Dược phẩm MedXpressCare Việt Nam',
+    dkkdNumber: '0108923412 - Sở KH&ĐT TP. Hà Nội cấp',
+    pharmacyCert: 'Số 452/ĐKKDD-BYT',
+    pharmacistInCharge: 'DS. Nguyễn Thu Trang',
+    headquartersAddress: 'Tầng 6, Tòa nhà Dược Phẩm MedXpress, Số 168 Cầu Giấy, Quan Hoa, Q. Cầu Giấy, Hà Nội.',
+    warehouseAddress: 'KCN Đài Tư, Q. Long Biên, TP. Hà Nội.',
+    deliveryScope: 'Hỏa tốc nội thành Hà Nội & Giao hàng nhanh toàn quốc qua đối tác bưu cục.',
+    emailPharmacist: 'duocsi@medxpresscare.com',
+    emailContract: 'hopdong@medxpresscare.com',
+    workingHours: '8:00 - 22:00 tất cả các ngày trong tuần',
+    aboutDesc: 'Hệ thống bán lẻ & phân phối Thực phẩm chức năng cao cấp chuẩn Y Khoa. Đảm bảo nguồn gốc xuất xứ minh bạch: Hàng Nội Địa Chuẩn GMP-WHO và Hàng Nhập Ngoại Chính Ngạch (Mỹ, Úc, Nhật, Hàn, Đức).',
+    regulatoryWarning: '⚠️ LƯU Ý QUAN TRỌNG TỪ BỘ Y TẾ: Thực phẩm chức năng (Thực phẩm bảo vệ sức khỏe) không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh. Tác dụng của sản phẩm tùy thuộc vào cơ địa và mức độ dung nạp của từng người. Đọc kỹ hướng dẫn sử dụng trước khi dùng.',
     ...storeConfig,
     shippingCarriers: storeConfig?.shippingCarriers && storeConfig.shippingCarriers.length > 0 
       ? storeConfig.shippingCarriers 
       : DEFAULT_SHIPPING_CARRIERS,
     freeShipThreshold: storeConfig?.freeShipThreshold || 500000
   }));
+
+  useEffect(() => {
+    if (storeConfig) {
+      setTempConfig(prev => ({
+        ...prev,
+        ...storeConfig
+      }));
+    }
+  }, [storeConfig]);
+
+  // Policy Handlers
+  const currentEditingPolicy = useMemo(() => {
+    return localPolicies.find(p => p.slug === selectedPolicySlug || p.id === selectedPolicySlug) || localPolicies[0] || POLICIES[0];
+  }, [localPolicies, selectedPolicySlug]);
+
+  const handleUpdatePolicyField = (field, value) => {
+    if (!currentEditingPolicy) return;
+    setLocalPolicies(prev => prev.map(p => {
+      if (p.slug === currentEditingPolicy.slug || p.id === currentEditingPolicy.id) {
+        return { ...p, [field]: value };
+      }
+      return p;
+    }));
+  };
+
+  const handleUpdateSection = (index, field, value) => {
+    if (!currentEditingPolicy) return;
+    setLocalPolicies(prev => prev.map(p => {
+      if (p.slug === currentEditingPolicy.slug || p.id === currentEditingPolicy.id) {
+        const sections = [...(p.sections || [])];
+        sections[index] = { ...sections[index], [field]: value };
+        return { ...p, sections };
+      }
+      return p;
+    }));
+  };
+
+  const handleAddSection = () => {
+    if (!currentEditingPolicy) return;
+    setLocalPolicies(prev => prev.map(p => {
+      if (p.slug === currentEditingPolicy.slug || p.id === currentEditingPolicy.id) {
+        const sections = [...(p.sections || [])];
+        sections.push({
+          heading: `${sections.length + 1}. Điều Khoản Bổ Sung Mới`,
+          content: 'Nội dung quy định chi tiết...'
+        });
+        return { ...p, sections };
+      }
+      return p;
+    }));
+  };
+
+  const handleDeleteSection = (index) => {
+    if (!currentEditingPolicy) return;
+    if (!window.confirm('Bạn có chắc muốn xóa điều khoản này?')) return;
+    setLocalPolicies(prev => prev.map(p => {
+      if (p.slug === currentEditingPolicy.slug || p.id === currentEditingPolicy.id) {
+        const sections = (p.sections || []).filter((_, i) => i !== index);
+        return { ...p, sections };
+      }
+      return p;
+    }));
+  };
+
+  const handleUpdateFaq = (index, field, value) => {
+    if (!currentEditingPolicy) return;
+    setLocalPolicies(prev => prev.map(p => {
+      if (p.slug === currentEditingPolicy.slug || p.id === currentEditingPolicy.id) {
+        const faqs = [...(p.faqs || [])];
+        faqs[index] = { ...faqs[index], [field]: value };
+        return { ...p, faqs };
+      }
+      return p;
+    }));
+  };
+
+  const handleAddFaq = () => {
+    if (!currentEditingPolicy) return;
+    setLocalPolicies(prev => prev.map(p => {
+      if (p.slug === currentEditingPolicy.slug || p.id === currentEditingPolicy.id) {
+        const faqs = [...(p.faqs || [])];
+        faqs.push({
+          q: 'Câu hỏi thắc mắc mới của khách hàng?',
+          a: 'Dược sĩ chuyên môn phản hồi giải đáp...'
+        });
+        return { ...p, faqs };
+      }
+      return p;
+    }));
+  };
+
+  const handleDeleteFaq = (index) => {
+    if (!currentEditingPolicy) return;
+    if (!window.confirm('Bạn có chắc muốn xóa câu hỏi FAQ này?')) return;
+    setLocalPolicies(prev => prev.map(p => {
+      if (p.slug === currentEditingPolicy.slug || p.id === currentEditingPolicy.id) {
+        const faqs = (p.faqs || []).filter((_, i) => i !== index);
+        return { ...p, faqs };
+      }
+      return p;
+    }));
+  };
+
+  const handleSavePolicies = () => {
+    if (onUpdatePolicies) {
+      onUpdatePolicies(localPolicies);
+      setPolicySaveStatus('success');
+      setTimeout(() => setPolicySaveStatus(''), 3000);
+    }
+  };
+
+  const handleResetPoliciesToDefault = () => {
+    if (window.confirm('Bạn có chắc muốn khôi phục toàn bộ 6 trang chính sách về nội dung gốc mặc định?')) {
+      setLocalPolicies(POLICIES);
+      if (onUpdatePolicies) {
+        onUpdatePolicies(POLICIES);
+      }
+      setPolicySaveStatus('reset');
+      setTimeout(() => setPolicySaveStatus(''), 3000);
+    }
+  };
   const [testingCarrierId, setTestingCarrierId] = useState(null);
   const [carrierTestResults, setCarrierTestResults] = useState({});
 
@@ -1970,7 +2118,27 @@ export const AdminPanel = ({
                     </span>
                   </button>
 
-                  {/* 8. Cấu Hình VietQR & Hotline */}
+                  {/* 8. Quản Lý Chính Sách & Quy Định */}
+                  <button
+                    onClick={() => setActiveTab('policies')}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all text-left ${
+                      activeTab === 'policies'
+                        ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-950/40 border border-emerald-500/40'
+                        : 'text-slate-300 hover:text-white hover:bg-slate-800/80'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <FileText className={`w-4 h-4 shrink-0 ${activeTab === 'policies' ? 'text-white' : 'text-teal-400'}`} />
+                      <span className="truncate">Chính Sách (6 Pages)</span>
+                    </div>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold shrink-0 ${
+                      activeTab === 'policies' ? 'bg-emerald-700/90 text-white' : 'bg-slate-800 text-slate-400'
+                    }`}>
+                      {localPolicies.length} Trang
+                    </span>
+                  </button>
+
+                  {/* 9. Cấu Hình VietQR, Footer & Hotline */}
                   <button
                     onClick={() => setActiveTab('settings')}
                     className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all text-left ${
@@ -1981,7 +2149,7 @@ export const AdminPanel = ({
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <Settings className={`w-4 h-4 shrink-0 ${activeTab === 'settings' ? 'text-white' : 'text-slate-400'}`} />
-                      <span className="truncate">Cấu Hình VietQR & Hotline</span>
+                      <span className="truncate">Cấu Hình Footer & VietQR</span>
                     </div>
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold shrink-0 ${
                       activeTab === 'settings' ? 'bg-emerald-700/90 text-white' : 'bg-slate-800 text-slate-400'
@@ -2037,6 +2205,7 @@ export const AdminPanel = ({
                   {activeTab === 'registrations' && <FileCheck2 className="w-5 h-5 text-teal-600" />}
                   {activeTab === 'stats' && <DollarSign className="w-5 h-5 text-emerald-600" />}
                   {activeTab === 'shipping' && <Truck className="w-5 h-5 text-sky-600" />}
+                  {activeTab === 'policies' && <FileText className="w-5 h-5 text-teal-600" />}
                   {activeTab === 'settings' && <Settings className="w-5 h-5 text-slate-600" />}
                 </div>
                 <div>
@@ -2052,7 +2221,8 @@ export const AdminPanel = ({
                     {activeTab === 'registrations' && 'Cơ Sở Dữ Liệu Số ĐKSP Bộ Y Tế'}
                     {activeTab === 'stats' && 'Báo Cáo Doanh Thu & Thống Kê'}
                     {activeTab === 'shipping' && 'Đối Tác Vận Chuyển & Cổng Giao Hàng'}
-                    {activeTab === 'settings' && 'Cấu Hình Thanh Toán VietQR & Hotline'}
+                    {activeTab === 'policies' && 'Quản Lý & Chỉnh Sửa Các Trang Chính Sách (6 Policy Pages)'}
+                    {activeTab === 'settings' && 'Cấu Hình Chân Trang (Footer), VietQR & Hotline'}
                   </h3>
                   <p className="text-xs text-slate-500">
                     {activeTab === 'products' && 'Thêm mới, chỉnh sửa thông tin, bảng giá, thành phần dược liệu và tồn kho'}
@@ -2066,7 +2236,8 @@ export const AdminPanel = ({
                     {activeTab === 'registrations' && 'Quản lý số công bố lưu hành toàn quốc, cập nhật thủ công & nhập file Excel/CSV'}
                     {activeTab === 'stats' && 'Tổng quan doanh số bán hàng, đơn hoàn tất và phân bổ nguồn thu'}
                     {activeTab === 'shipping' && 'Kết nối API GHTK, GHN, Viettel Post... Bật/tắt hãng hiển thị lúc khách đặt hàng'}
-                    {activeTab === 'settings' && 'Thiết lập tài khoản ngân hàng vẽ mã QR, Hotline và thông báo Telegram'}
+                    {activeTab === 'policies' && 'Chỉnh sửa tiêu đề, quy chuẩn vận chuyển GSP, đổi trả 30 ngày, đồng kiểm, bảo mật và FAQs'}
+                    {activeTab === 'settings' && 'Thiết lập tài khoản ngân hàng vẽ mã QR, Hotline, thông tin Footer doanh nghiệp và Telegram'}
                   </p>
                 </div>
               </div>
@@ -2846,7 +3017,7 @@ export const AdminPanel = ({
                             ...newProduct,
                             originType: e.target.value,
                             countryCode: isDom ? 'VN' : 'US',
-                            countryName: isDom ? 'Việt Nam' : 'Mỹ (USA)',
+                            countryName: isDom ? 'Việt Nam' : 'Mỹ',
                             flag: isDom ? '🇻🇳' : '🇺🇸'
                           });
                         }}
@@ -6060,6 +6231,160 @@ export const AdminPanel = ({
                     </div>
                   )}
                 </div>
+
+                {/* CẤU HÌNH THÔNG TIN PHÁP LÝ & CHÂN TRANG (FOOTER) */}
+                <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
+                  <div className="flex items-center justify-between border-b pb-2.5">
+                    <div className="font-extrabold text-slate-900 text-sm flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                      <span>Thông Tin Pháp Lý, Liên Hệ & Chân Trang (Footer)</span>
+                    </div>
+                    <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2.5 py-0.5 rounded-full">
+                      Hiển Thị Chân Trang
+                    </span>
+                  </div>
+
+                  <p className="text-[11px] text-slate-500">
+                    Cập nhật thông tin pháp lý doanh nghiệp, chứng chỉ Dược, dược sĩ phụ trách, hệ thống kho bãi và cảnh báo y tế hiển thị công khai ở Footer website.
+                  </p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="sm:col-span-2">
+                      <label className="block text-slate-700 font-bold mb-1">Tên Công Ty / Đơn Vị Sở Hữu</label>
+                      <input
+                        type="text"
+                        value={tempConfig.companyName || ''}
+                        onChange={(e) => setTempConfig({ ...tempConfig, companyName: e.target.value })}
+                        className="w-full px-3 py-2 bg-white border rounded-xl font-bold text-slate-800"
+                        placeholder="VD: Công ty Cổ phần Dược phẩm MedXpressCare Việt Nam"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-slate-700 font-medium mb-1">Số ĐKKD (Giấy phép kinh doanh)</label>
+                      <input
+                        type="text"
+                        value={tempConfig.dkkdNumber || ''}
+                        onChange={(e) => setTempConfig({ ...tempConfig, dkkdNumber: e.target.value })}
+                        className="w-full px-3 py-2 bg-white border rounded-xl"
+                        placeholder="VD: 0108923412 - Sở KH&ĐT TP. Hà Nội cấp"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-slate-700 font-medium mb-1">Số Chứng Chỉ Đủ ĐK Kinh Doanh Dược</label>
+                      <input
+                        type="text"
+                        value={tempConfig.pharmacyCert || ''}
+                        onChange={(e) => setTempConfig({ ...tempConfig, pharmacyCert: e.target.value })}
+                        className="w-full px-3 py-2 bg-white border rounded-xl"
+                        placeholder="VD: Số 452/ĐKKDD-BYT"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-slate-700 font-medium mb-1">Dược Sĩ Phụ Trách Chuyên Môn</label>
+                      <input
+                        type="text"
+                        value={tempConfig.pharmacistInCharge || ''}
+                        onChange={(e) => setTempConfig({ ...tempConfig, pharmacistInCharge: e.target.value })}
+                        className="w-full px-3 py-2 bg-white border rounded-xl font-bold text-emerald-800"
+                        placeholder="VD: DS. Nguyễn Thu Trang"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-slate-700 font-medium mb-1">Thời Gian Làm Việc / Trực Tư Vấn</label>
+                      <input
+                        type="text"
+                        value={tempConfig.workingHours || ''}
+                        onChange={(e) => setTempConfig({ ...tempConfig, workingHours: e.target.value })}
+                        className="w-full px-3 py-2 bg-white border rounded-xl"
+                        placeholder="VD: 8:00 - 22:00 tất cả các ngày trong tuần"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-slate-700 font-medium mb-1">Email Dược Sĩ Tư Vấn</label>
+                      <input
+                        type="email"
+                        value={tempConfig.emailPharmacist || ''}
+                        onChange={(e) => setTempConfig({ ...tempConfig, emailPharmacist: e.target.value })}
+                        className="w-full px-3 py-2 bg-white border rounded-xl font-mono text-[11px]"
+                        placeholder="duocsi@medxpresscare.com"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-slate-700 font-medium mb-1">Email Hợp Tác & Hợp Đồng</label>
+                      <input
+                        type="email"
+                        value={tempConfig.emailContract || ''}
+                        onChange={(e) => setTempConfig({ ...tempConfig, emailContract: e.target.value })}
+                        className="w-full px-3 py-2 bg-white border rounded-xl font-mono text-[11px]"
+                        placeholder="hopdong@medxpresscare.com"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label className="block text-slate-700 font-medium mb-1">Địa Chỉ Trụ Sở Chính (Hà Nội)</label>
+                      <input
+                        type="text"
+                        value={tempConfig.headquartersAddress || ''}
+                        onChange={(e) => setTempConfig({ ...tempConfig, headquartersAddress: e.target.value })}
+                        className="w-full px-3 py-2 bg-white border rounded-xl"
+                        placeholder="Tầng 6, Tòa nhà Dược Phẩm MedXpress, Số 168 Cầu Giấy, Quan Hoa, Q. Cầu Giấy, Hà Nội."
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label className="block text-slate-700 font-medium mb-1">Địa Chỉ Tổng Kho Phân Phối</label>
+                      <input
+                        type="text"
+                        value={tempConfig.warehouseAddress || ''}
+                        onChange={(e) => setTempConfig({ ...tempConfig, warehouseAddress: e.target.value })}
+                        className="w-full px-3 py-2 bg-white border rounded-xl"
+                        placeholder="KCN Đài Tư, Q. Long Biên, TP. Hà Nội."
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label className="block text-slate-700 font-medium mb-1">Phạm Vi Giao Hàng</label>
+                      <input
+                        type="text"
+                        value={tempConfig.deliveryScope || ''}
+                        onChange={(e) => setTempConfig({ ...tempConfig, deliveryScope: e.target.value })}
+                        className="w-full px-3 py-2 bg-white border rounded-xl"
+                        placeholder="Hỏa tốc nội thành Hà Nội & Giao hàng nhanh toàn quốc qua đối tác bưu cục."
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label className="block text-slate-700 font-medium mb-1">Giới Thiệu Ngắn (Cột 1 Footer)</label>
+                      <textarea
+                        rows={2}
+                        value={tempConfig.aboutDesc || ''}
+                        onChange={(e) => setTempConfig({ ...tempConfig, aboutDesc: e.target.value })}
+                        className="w-full px-3 py-2 bg-white border rounded-xl text-xs leading-relaxed"
+                        placeholder="Giới thiệu sứ mệnh phân phối TPCN chuẩn GMP-WHO..."
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label className="block text-amber-900 font-bold mb-1 flex items-center gap-1.5">
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                        <span>Cảnh Báo Bắt Buộc Từ Bộ Y Tế (Khung trên cùng Footer)</span>
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={tempConfig.regulatoryWarning || ''}
+                        onChange={(e) => setTempConfig({ ...tempConfig, regulatoryWarning: e.target.value })}
+                        className="w-full px-3 py-2 bg-amber-50/50 border border-amber-200 rounded-xl text-xs text-amber-900 leading-relaxed font-medium"
+                        placeholder="⚠️ LƯU Ý QUAN TRỌNG TỪ BỘ Y TẾ: Thực phẩm chức năng..."
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Dọn Dẹp Dữ Liệu Thử Nghiệm */}
@@ -6096,6 +6421,302 @@ export const AdminPanel = ({
                 </button>
               </div>
             </form>
+          )}
+
+          {/* TAB: QUẢN LÝ & CHỈNH SỬA CÁC TRANG CHÍNH SÁCH (6 POLICY PAGES) */}
+          {activeTab === 'policies' && (
+            <div className="space-y-6">
+              {/* Notification Banner when saved or reset */}
+              {policySaveStatus === 'success' && (
+                <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs font-bold flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span>Đã lưu toàn bộ thay đổi chính sách vào hệ thống và đồng bộ trực tiếp lên website!</span>
+                  </div>
+                </div>
+              )}
+              {policySaveStatus === 'reset' && (
+                <div className="p-3.5 rounded-2xl bg-blue-50 border border-blue-300 text-blue-900 text-xs font-bold flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <RefreshCw className="w-4 h-4 text-blue-600" />
+                    <span>Đã khôi phục toàn bộ chính sách về nội dung gốc mặc định ban đầu!</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Policy Selector Pills */}
+              <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-xs space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-3">
+                  <div className="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-emerald-600" />
+                    <span>Chọn Trang Chính Sách Cần Chỉnh Sửa</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleResetPoliciesToDefault}
+                      className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer"
+                      title="Khôi phục lại nội dung mặc định của toàn bộ 6 trang"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Khôi Phục Mặc Định</span>
+                    </button>
+                    {onNavigateToPolicy && (
+                      <button
+                        type="button"
+                        onClick={() => onNavigateToPolicy(currentEditingPolicy?.slug)}
+                        className="px-3 py-1.5 bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold text-xs rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer border border-sky-200"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Xem Trang Này</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+                  {localPolicies.map((p) => {
+                    const isSelected = p.slug === currentEditingPolicy?.slug || p.id === currentEditingPolicy?.id;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setSelectedPolicySlug(p.slug || p.id)}
+                        className={`p-3 rounded-2xl text-left transition-all border cursor-pointer ${
+                          isSelected
+                            ? 'bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-950/20'
+                            : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200/80'
+                        }`}
+                      >
+                        <div className="text-[10px] font-mono opacity-80 uppercase tracking-wider line-clamp-1 mb-1">
+                          #{p.slug}
+                        </div>
+                        <div className={`text-xs font-bold leading-snug line-clamp-2 ${isSelected ? 'text-white' : 'text-slate-900'}`}>
+                          {p.title}
+                        </div>
+                        <div className={`text-[10px] mt-2 font-medium ${isSelected ? 'text-emerald-100' : 'text-slate-500'}`}>
+                          {(p.sections || []).length} điều khoản • {(p.faqs || []).length} FAQs
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Policy Editor Form */}
+              {currentEditingPolicy && (
+                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-6">
+                  {/* General Policy Meta */}
+                  <div className="border-b pb-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <h4 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
+                          <Edit className="w-4 h-4 text-emerald-600" />
+                          <span>Chỉnh Sửa: {currentEditingPolicy.title}</span>
+                        </h4>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Mã định danh URL: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-emerald-700 font-mono font-bold">#chinh-sach?tab={currentEditingPolicy.slug}</code>
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleSavePolicies}
+                        className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>Lưu Thay Đổi Chính Sách</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Form fields */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                    <div className="sm:col-span-2">
+                      <label className="block text-slate-700 font-bold mb-1">Tiêu Đề Trang Chính Sách</label>
+                      <input
+                        type="text"
+                        value={currentEditingPolicy.title || ''}
+                        onChange={(e) => handleUpdatePolicyField('title', e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-white border rounded-xl font-bold text-slate-900"
+                        placeholder="VD: Chính Sách Vận Chuyển & Giao Hàng Chuẩn GSP"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-slate-700 font-bold mb-1">Huy Hiệu (Badge)</label>
+                      <input
+                        type="text"
+                        value={currentEditingPolicy.badge || ''}
+                        onChange={(e) => handleUpdatePolicyField('badge', e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-white border rounded-xl font-semibold text-emerald-700"
+                        placeholder="VD: Chuẩn GSP Bộ Y Tế"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-slate-700 font-bold mb-1">Ngày Cập Nhật (Hiển Thị)</label>
+                      <input
+                        type="text"
+                        value={currentEditingPolicy.lastUpdated || ''}
+                        onChange={(e) => handleUpdatePolicyField('lastUpdated', e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-white border rounded-xl font-mono"
+                        placeholder="18/10/2026"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label className="block text-slate-700 font-bold mb-1">Tóm Tắt Ngắn (Mô tả phần đầu trang)</label>
+                      <input
+                        type="text"
+                        value={currentEditingPolicy.shortDesc || ''}
+                        onChange={(e) => handleUpdatePolicyField('shortDesc', e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-white border rounded-xl"
+                        placeholder="Tóm tắt ngắn gọn quy định..."
+                      />
+                    </div>
+                  </div>
+
+                  {/* SECTIONS LIST */}
+                  <div className="space-y-4 pt-2">
+                    <div className="flex items-center justify-between border-b pb-2">
+                      <div className="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                        <Layers className="w-4 h-4 text-emerald-600" />
+                        <span>Danh Sách Điều Khoản & Quy Định ({((currentEditingPolicy.sections) || []).length} mục)</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleAddSection}
+                        className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold text-xs rounded-xl transition-colors flex items-center gap-1 cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Thêm Điều Khoản Mới</span>
+                      </button>
+                    </div>
+
+                    <div className="space-y-4">
+                      {((currentEditingPolicy.sections) || []).map((sec, idx) => (
+                        <div key={idx} className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="text-xs font-bold text-slate-500 bg-slate-200 px-2 py-0.5 rounded-lg">
+                              Mục #{idx + 1}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteSection(idx)}
+                              className="text-xs font-semibold text-rose-600 hover:text-rose-800 flex items-center gap-1 hover:bg-rose-50 px-2 py-1 rounded-lg transition-colors cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Xóa mục này</span>
+                            </button>
+                          </div>
+
+                          <div>
+                            <label className="block text-slate-700 font-bold text-xs mb-1">Tiêu Đề Điều Khoản</label>
+                            <input
+                              type="text"
+                              value={sec.heading || ''}
+                              onChange={(e) => handleUpdateSection(idx, 'heading', e.target.value)}
+                              className="w-full px-3 py-2 bg-white border rounded-xl font-bold text-slate-800 text-xs"
+                              placeholder="VD: 1. Phạm Vi Áp Dụng & Hình Thức Giao Hàng"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-slate-700 font-medium text-xs mb-1">
+                              Nội Dung Chi Tiết (Hỗ trợ gạch đầu dòng -, in đậm **, xuống dòng)
+                            </label>
+                            <textarea
+                              rows={5}
+                              value={sec.content || ''}
+                              onChange={(e) => handleUpdateSection(idx, 'content', e.target.value)}
+                              className="w-full px-3.5 py-2.5 bg-white border rounded-xl font-mono text-xs leading-relaxed"
+                              placeholder="Nhập nội dung quy định..."
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* FAQS LIST */}
+                  <div className="space-y-4 pt-4 border-t">
+                    <div className="flex items-center justify-between border-b pb-2">
+                      <div className="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                        <MessageSquare className="w-4 h-4 text-amber-500" />
+                        <span>Câu Hỏi Thường Gặp (FAQs - {((currentEditingPolicy.faqs) || []).length} câu hỏi)</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleAddFaq}
+                        className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-bold text-xs rounded-xl transition-colors flex items-center gap-1 cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Thêm Câu Hỏi Mới</span>
+                      </button>
+                    </div>
+
+                    <div className="space-y-3">
+                      {((currentEditingPolicy.faqs) || []).map((faq, fIdx) => (
+                        <div key={fIdx} className="p-4 rounded-2xl bg-amber-50/40 border border-amber-200 space-y-2.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-bold text-amber-900 bg-amber-100 px-2 py-0.5 rounded">
+                              FAQ #{fIdx + 1}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteFaq(fIdx)}
+                              className="text-xs font-semibold text-rose-600 hover:text-rose-800 flex items-center gap-1 hover:bg-rose-50 px-2 py-1 rounded-lg transition-colors cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Xóa FAQ</span>
+                            </button>
+                          </div>
+
+                          <div>
+                            <label className="block text-slate-700 font-bold text-xs mb-1">Câu hỏi của khách:</label>
+                            <input
+                              type="text"
+                              value={faq.q || ''}
+                              onChange={(e) => handleUpdateFaq(fIdx, 'q', e.target.value)}
+                              className="w-full px-3 py-2 bg-white border rounded-xl font-bold text-slate-800 text-xs"
+                              placeholder="VD: Tôi có được kiểm tra hàng trước khi thanh toán không?"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-slate-700 font-medium text-xs mb-1">Phản hồi của Dược sĩ / MedXpressCare:</label>
+                            <textarea
+                              rows={3}
+                              value={faq.a || ''}
+                              onChange={(e) => handleUpdateFaq(fIdx, 'a', e.target.value)}
+                              className="w-full px-3.5 py-2 bg-white border rounded-xl text-xs leading-relaxed"
+                              placeholder="Nhập câu trả lời..."
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Save Button Bottom */}
+                  <div className="pt-4 border-t flex items-center justify-between">
+                    <p className="text-xs text-slate-500">
+                      💡 Mọi thay đổi sau khi nhấn Lưu sẽ được đồng bộ ngay tức thì lên toàn bộ website và người xem.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleSavePolicies}
+                      className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg transition-all flex items-center gap-2 cursor-pointer"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Lưu Thay Đổi Toàn Bộ Chính Sách</span>
+                    </button>
+                  </div>
+
+                </div>
+              )}
+            </div>
           )}
 
           </main>
@@ -6183,7 +6804,7 @@ export const AdminPanel = ({
                           ...editingProduct,
                           originType: e.target.value,
                           countryCode: isDom ? 'VN' : (editingProduct.countryCode === 'VN' ? 'US' : editingProduct.countryCode),
-                          countryName: isDom ? 'Việt Nam' : (editingProduct.countryName === 'Việt Nam' ? 'Mỹ (USA)' : editingProduct.countryName),
+                          countryName: isDom ? 'Việt Nam' : (editingProduct.countryName === 'Việt Nam' ? 'Mỹ' : editingProduct.countryName),
                           flag: isDom ? '🇻🇳' : '🌍'
                         });
                       }}
@@ -6657,7 +7278,7 @@ export const AdminPanel = ({
                     </label>
                     <input
                       type="text"
-                      placeholder="VD: Việt Nam, Mỹ (USA), Úc (Australia)..."
+                      placeholder="VD: Việt Nam, Mỹ, Úc..."
                       value={regForm.origin}
                       onChange={(e) => setRegForm({ ...regForm, origin: e.target.value })}
                       className="w-full px-3 py-2 bg-slate-50 border rounded-xl"

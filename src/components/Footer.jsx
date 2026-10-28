@@ -4,7 +4,30 @@ import {
   Truck, RefreshCw, FileText, Heart, Stethoscope 
 } from 'lucide-react';
 
-export const Footer = ({ onOpenVerifier, onOpenAdvisor, onOpenAdmin, onNavigateToTracking, onNavigateToPolicy, hotline = '1800 6868' }) => {
+export const Footer = ({ 
+  onOpenVerifier, 
+  onOpenAdvisor, 
+  onOpenAdmin, 
+  onNavigateToTracking, 
+  onNavigateToPolicy, 
+  hotline = '1800 6868',
+  storeConfig = {},
+  policies = []
+}) => {
+  const currentHotline = storeConfig?.hotline || hotline || '1800 6868';
+  const companyName = storeConfig?.companyName || 'Công ty Cổ phần Dược phẩm MedXpressCare Việt Nam';
+  const dkkdNumber = storeConfig?.dkkdNumber || '0108923412 - Sở KH&ĐT TP. Hà Nội cấp';
+  const pharmacyCert = storeConfig?.pharmacyCert || 'Số 452/ĐKKDD-BYT';
+  const pharmacistInCharge = storeConfig?.pharmacistInCharge || 'DS. Nguyễn Thu Trang';
+  const headquartersAddress = storeConfig?.headquartersAddress || 'Tầng 6, Tòa nhà Dược Phẩm MedXpress, Số 168 Cầu Giấy, Quan Hoa, Q. Cầu Giấy, Hà Nội.';
+  const warehouseAddress = storeConfig?.warehouseAddress || 'KCN Đài Tư, Q. Long Biên, TP. Hà Nội.';
+  const deliveryScope = storeConfig?.deliveryScope || 'Hỏa tốc nội thành Hà Nội & Giao hàng nhanh toàn quốc qua đối tác bưu cục.';
+  const emailPharmacist = storeConfig?.emailPharmacist || 'duocsi@medxpresscare.com';
+  const emailContract = storeConfig?.emailContract || 'hopdong@medxpresscare.com';
+  const workingHours = storeConfig?.workingHours || '8:00 - 22:00 tất cả các ngày trong tuần';
+  const aboutDesc = storeConfig?.aboutDesc || 'Hệ thống bán lẻ & phân phối Thực phẩm chức năng cao cấp chuẩn Y Khoa. Đảm bảo nguồn gốc xuất xứ minh bạch: Hàng Nội Địa Chuẩn GMP-WHO và Hàng Nhập Ngoại Chính Ngạch (Mỹ, Úc, Nhật, Hàn, Đức).';
+  const regulatoryWarning = storeConfig?.regulatoryWarning || '⚠️ LƯU Ý QUAN TRỌNG TỪ BỘ Y TẾ: Thực phẩm chức năng (Thực phẩm bảo vệ sức khỏe) không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh. Tác dụng của sản phẩm tùy thuộc vào cơ địa và mức độ dung nạp của từng người. Đọc kỹ hướng dẫn sử dụng trước khi dùng.';
+
   return (
     <footer className="bg-slate-900 text-slate-300 mt-20 pt-14 pb-8 border-t border-slate-800">
       <div className="max-w-7xl mx-auto px-4">
@@ -12,7 +35,7 @@ export const Footer = ({ onOpenVerifier, onOpenAdvisor, onOpenAdmin, onNavigateT
         {/* Mandatory Regulatory Warning Box */}
         <div className="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 text-center mb-12">
           <p className="text-xs text-amber-400 font-semibold leading-relaxed">
-            ⚠️ <strong>LƯU Ý QUAN TRỌNG TỪ BỘ Y TẾ:</strong> Thực phẩm chức năng (Thực phẩm bảo vệ sức khỏe) không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh. Tác dụng của sản phẩm tùy thuộc vào cơ địa và mức độ dung nạp của từng người. Đọc kỹ hướng dẫn sử dụng trước khi dùng.
+            {regulatoryWarning}
           </p>
         </div>
 
@@ -39,13 +62,14 @@ export const Footer = ({ onOpenVerifier, onOpenAdvisor, onOpenAdmin, onNavigateT
             </div>
 
             <p className="text-xs text-slate-400 leading-relaxed">
-              Hệ thống bán lẻ & phân phối Thực phẩm chức năng cao cấp chuẩn Y Khoa. Đảm bảo nguồn gốc xuất xứ minh bạch: Hàng Nội Địa Chuẩn GMP-WHO và Hàng Nhập Ngoại Chính Ngạch (Mỹ, Úc, Nhật, Hàn, Đức).
+              {aboutDesc}
             </p>
 
             <div className="pt-1 space-y-1.5 text-xs text-slate-400">
-              <div>• <strong>ĐKKD số:</strong> 0108923412 - Sở KH&ĐT TP. Hà Nội cấp</div>
-              <div>• <strong>Chứng chỉ Dược:</strong> Số 452/ĐKKDD-BYT</div>
-              <div>• <strong>Dược sĩ phụ trách CM:</strong> DS. Nguyễn Thu Trang</div>
+              <div>• <strong>Đơn vị sở hữu:</strong> {companyName}</div>
+              <div>• <strong>ĐKKD số:</strong> {dkkdNumber}</div>
+              <div>• <strong>Chứng chỉ Dược:</strong> {pharmacyCert}</div>
+              <div>• <strong>Dược sĩ phụ trách CM:</strong> {pharmacistInCharge}</div>
             </div>
           </div>
 
@@ -58,21 +82,21 @@ export const Footer = ({ onOpenVerifier, onOpenAdvisor, onOpenAdmin, onNavigateT
               <div className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                 <span>
-                  <strong className="text-slate-200">Địa chỉ (Duy nhất tại Hà Nội):</strong> Tầng 6, Tòa nhà Dược Phẩm MedXpress, Số 168 Cầu Giấy, Quan Hoa, Q. Cầu Giấy, Hà Nội.
+                  <strong className="text-slate-200">Địa chỉ (Trụ sở chính):</strong> {headquartersAddress}
                 </span>
               </div>
 
               <div className="flex items-start gap-2">
                 <Truck className="w-4 h-4 text-teal-400 shrink-0 mt-0.5" />
                 <span>
-                  <strong className="text-slate-200">Tổng kho phân phối:</strong> KCN Đài Tư, Q. Long Biên, TP. Hà Nội.
+                  <strong className="text-slate-200">Tổng kho phân phối:</strong> {warehouseAddress}
                 </span>
               </div>
 
               <div className="flex items-start gap-2">
                 <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                 <span>
-                  <strong className="text-slate-200">Phạm vi giao hàng:</strong> Hỏa tốc nội thành Hà Nội & Giao hàng nhanh toàn quốc qua đối tác bưu cục.
+                  <strong className="text-slate-200">Phạm vi giao hàng:</strong> {deliveryScope}
                 </span>
               </div>
             </div>
@@ -95,7 +119,7 @@ export const Footer = ({ onOpenVerifier, onOpenAdvisor, onOpenAdmin, onNavigateT
               <li>
                 <button 
                   onClick={onOpenVerifier}
-                  className="hover:text-emerald-400 transition-colors flex items-center gap-1.5"
+                  className="hover:text-emerald-400 transition-colors flex items-center gap-1.5 cursor-pointer"
                 >
                   <span>🔍</span> Tra cứu Số ĐKSP Bộ Y Tế
                 </button>
@@ -103,59 +127,85 @@ export const Footer = ({ onOpenVerifier, onOpenAdvisor, onOpenAdmin, onNavigateT
               <li>
                 <button 
                   onClick={onOpenAdvisor}
-                  className="hover:text-emerald-400 transition-colors flex items-center gap-1.5"
+                  className="hover:text-emerald-400 transition-colors flex items-center gap-1.5 cursor-pointer"
                 >
                   <span>🩺</span> Dược Sĩ AI Tư Vấn Liệu Trình 24/7
                 </button>
               </li>
-              <li>
-                <button 
-                  onClick={() => onNavigateToPolicy ? onNavigateToPolicy('chinh-sach-giao-hang') : window.location.hash = '#rules'}
-                  className="hover:text-emerald-400 transition-colors flex items-center gap-1.5 text-left cursor-pointer"
-                >
-                  <span>📦</span> Chính sách giao hỏa tốc HN & Giao nhanh GSP
-                </button>
-              </li>
-              <li>
-                <button 
-                  onClick={() => onNavigateToPolicy ? onNavigateToPolicy('chinh-sach-doi-tra') : window.location.hash = '#return'}
-                  className="hover:text-emerald-400 transition-colors flex items-center gap-1.5 text-left cursor-pointer"
-                >
-                  <span>🔄</span> Chính sách đổi trả 30 ngày & Bồi hoàn 300%
-                </button>
-              </li>
-              <li>
-                <button 
-                  onClick={() => onNavigateToPolicy ? onNavigateToPolicy('chinh-sach-kiem-hang') : window.location.hash = '#kiem-hang'}
-                  className="hover:text-emerald-400 transition-colors flex items-center gap-1.5 text-left cursor-pointer"
-                >
-                  <span>🛡️</span> Chính sách đồng kiểm 100% khi nhận hàng
-                </button>
-              </li>
-              <li>
-                <button 
-                  onClick={() => onNavigateToPolicy ? onNavigateToPolicy('chinh-sach-bao-mat') : window.location.hash = '#privacy'}
-                  className="hover:text-emerald-400 transition-colors flex items-center gap-1.5 text-left cursor-pointer"
-                >
-                  <span>🔒</span> Bảo mật hồ sơ thông tin sức khỏe (NĐ 13/2023)
-                </button>
-              </li>
-              <li>
-                <button 
-                  onClick={() => onNavigateToPolicy ? onNavigateToPolicy('chinh-sach-thanh-toan') : window.location.hash = '#thanh-toan'}
-                  className="hover:text-emerald-400 transition-colors flex items-center gap-1.5 text-left cursor-pointer"
-                >
-                  <span>💳</span> Hướng dẫn thanh toán VietQR & COD
-                </button>
-              </li>
-              <li>
-                <button 
-                  onClick={() => onNavigateToPolicy ? onNavigateToPolicy('dieu-khoan-su-dung') : window.location.hash = '#dieu-khoan'}
-                  className="hover:text-emerald-400 transition-colors flex items-center gap-1.5 text-left cursor-pointer"
-                >
-                  <span>📜</span> Điều khoản dịch vụ & Quy chế hoạt động
-                </button>
-              </li>
+              
+              {/* Dynamic Policy Links */}
+              {Array.isArray(policies) && policies.length > 0 ? (
+                policies.map((p) => {
+                  const iconEmoji = 
+                    p.id.includes('giao-hang') ? '📦' :
+                    p.id.includes('doi-tra') ? '🔄' :
+                    p.id.includes('kiem-hang') ? '🛡️' :
+                    p.id.includes('bao-mat') ? '🔒' :
+                    p.id.includes('thanh-toan') ? '💳' : '📜';
+                  return (
+                    <li key={p.id}>
+                      <button 
+                        onClick={() => onNavigateToPolicy ? onNavigateToPolicy(p.slug) : (window.location.hash = `#chinh-sach?tab=${p.slug}`)}
+                        className="hover:text-emerald-400 transition-colors flex items-center gap-1.5 text-left cursor-pointer"
+                        title={p.title}
+                      >
+                        <span>{iconEmoji}</span> <span className="line-clamp-1">{p.title}</span>
+                      </button>
+                    </li>
+                  );
+                })
+              ) : (
+                <>
+                  <li>
+                    <button 
+                      onClick={() => onNavigateToPolicy ? onNavigateToPolicy('chinh-sach-giao-hang') : (window.location.hash = '#rules')}
+                      className="hover:text-emerald-400 transition-colors flex items-center gap-1.5 text-left cursor-pointer"
+                    >
+                      <span>📦</span> Chính sách giao hỏa tốc HN & Giao nhanh GSP
+                    </button>
+                  </li>
+                  <li>
+                    <button 
+                      onClick={() => onNavigateToPolicy ? onNavigateToPolicy('chinh-sach-doi-tra') : (window.location.hash = '#return')}
+                      className="hover:text-emerald-400 transition-colors flex items-center gap-1.5 text-left cursor-pointer"
+                    >
+                      <span>🔄</span> Chính sách đổi trả 30 ngày & Bồi hoàn 300%
+                    </button>
+                  </li>
+                  <li>
+                    <button 
+                      onClick={() => onNavigateToPolicy ? onNavigateToPolicy('chinh-sach-kiem-hang') : (window.location.hash = '#kiem-hang')}
+                      className="hover:text-emerald-400 transition-colors flex items-center gap-1.5 text-left cursor-pointer"
+                    >
+                      <span>🛡️</span> Chính sách đồng kiểm 100% khi nhận hàng
+                    </button>
+                  </li>
+                  <li>
+                    <button 
+                      onClick={() => onNavigateToPolicy ? onNavigateToPolicy('chinh-sach-bao-mat') : (window.location.hash = '#privacy')}
+                      className="hover:text-emerald-400 transition-colors flex items-center gap-1.5 text-left cursor-pointer"
+                    >
+                      <span>🔒</span> Bảo mật hồ sơ thông tin sức khỏe (NĐ 13/2023)
+                    </button>
+                  </li>
+                  <li>
+                    <button 
+                      onClick={() => onNavigateToPolicy ? onNavigateToPolicy('chinh-sach-thanh-toan') : (window.location.hash = '#thanh-toan')}
+                      className="hover:text-emerald-400 transition-colors flex items-center gap-1.5 text-left cursor-pointer"
+                    >
+                      <span>💳</span> Hướng dẫn thanh toán VietQR & COD
+                    </button>
+                  </li>
+                  <li>
+                    <button 
+                      onClick={() => onNavigateToPolicy ? onNavigateToPolicy('dieu-khoan-su-dung') : (window.location.hash = '#dieu-khoan')}
+                      className="hover:text-emerald-400 transition-colors flex items-center gap-1.5 text-left cursor-pointer"
+                    >
+                      <span>📜</span> Điều khoản dịch vụ & Quy chế hoạt động
+                    </button>
+                  </li>
+                </>
+              )}
             </ul>
           </div>
 
@@ -170,23 +220,23 @@ export const Footer = ({ onOpenVerifier, onOpenAdvisor, onOpenAdmin, onNavigateT
                 Tư vấn chuyên môn miễn phí
               </div>
               <a 
-                href={`tel:${(hotline || '1800 6868').replace(/\s+/g, '')}`}
+                href={`tel:${currentHotline.replace(/\s+/g, '')}`}
                 className="text-xl font-extrabold text-amber-400 hover:text-white transition-colors flex items-center gap-2"
               >
                 <PhoneCall className="w-5 h-5 animate-pulse" />
-                {hotline || '1800 6868'}
+                {currentHotline}
               </a>
-              <div className="text-[10px] text-slate-400">8:00 - 22:00 tất cả các ngày trong tuần</div>
+              <div className="text-[10px] text-slate-400">{workingHours}</div>
             </div>
 
             <div className="space-y-1.5 text-xs text-slate-400">
               <div className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-emerald-400" />
-                <span>duocsi@medxpresscare.com</span>
+                <Mail className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>{emailPharmacist}</span>
               </div>
               <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-emerald-400" />
-                <span>hopdong@medxpresscare.com</span>
+                <FileText className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>{emailContract}</span>
               </div>
             </div>
 
@@ -210,7 +260,7 @@ export const Footer = ({ onOpenVerifier, onOpenAdvisor, onOpenAdmin, onNavigateT
             className="cursor-default select-none"
             title="MedXpressCare Pharmacy Platform"
           >
-            © 2026 MedXpressCare.com - Bản quyền thuộc về Công ty Cổ phần Dược phẩm MedXpressCare Việt Nam.
+            © 2026 MedXpressCare.com - Bản quyền thuộc về {companyName}.
           </div>
           <div className="flex items-center gap-2.5">
             <span className="text-slate-500 text-[11px] font-medium hidden sm:inline">Phương thức thanh toán:</span>

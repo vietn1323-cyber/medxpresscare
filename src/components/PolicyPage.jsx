@@ -11,10 +11,12 @@ export const PolicyPage = ({
   initialSlug = 'chinh-sach-giao-hang', 
   onGoHome, 
   onOpenAdvisor, 
-  hotline = '1800 6868' 
+  hotline = '1800 6868',
+  policies = POLICIES
 }) => {
+  const currentPolicies = (Array.isArray(policies) && policies.length > 0) ? policies : POLICIES;
   const [activeSlug, setActiveSlug] = useState(() => {
-    return initialSlug || 'chinh-sach-giao-hang';
+    return initialSlug || currentPolicies[0]?.slug || 'chinh-sach-giao-hang';
   });
   const [expandedFaqIndex, setExpandedFaqIndex] = useState(null);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -27,7 +29,7 @@ export const PolicyPage = ({
     }
   }, [initialSlug]);
 
-  const activePolicy = getPolicyBySlug(activeSlug);
+  const activePolicy = getPolicyBySlug(activeSlug, currentPolicies);
 
   const handleSelectPolicy = (slug) => {
     setActiveSlug(slug);
@@ -153,7 +155,7 @@ export const PolicyPage = ({
               </div>
 
               <div className="space-y-1.5">
-                {POLICIES.map((p) => {
+                {currentPolicies.map((p) => {
                   const isActive = p.slug === activePolicy.slug || p.id === activePolicy.id;
                   return (
                     <button
