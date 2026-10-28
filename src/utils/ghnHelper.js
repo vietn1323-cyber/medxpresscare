@@ -16,13 +16,39 @@ export { GHN_PROVINCES, GHN_DISTRICTS, GHN_WARDS, getGhnDistricts, getGhnWards, 
 
 /**
  * Lấy danh sách Tỉnh/Thành phố chuẩn từ GHN Master Data API
+ * Bảo mật Token: Gọi qua Cloudflare Functions proxy /functions/get-ghn-data
  */
 export async function fetchGhnProvinces(apiKey = '') {
+  // 1. Ưu tiên Cloudflare Pages Functions proxy /functions/get-ghn-data (không cần gửi token từ client)
+  try {
+    const cfRes = await fetch('/functions/get-ghn-data?type=provinces');
+    if (cfRes.ok) {
+      const json = await cfRes.json();
+      if (json && (json.code === 200 || json.success) && Array.isArray(json.data) && json.data.length > 0) {
+        return json.data;
+      }
+    }
+  } catch (_) {
+    // Tiếp tục fallback bên dưới nếu không chạy trong môi trường Pages Functions
+  }
+
+  // 2. Dự phòng qua Cloudflare Worker /get-ghn-data
+  try {
+    const cfRes2 = await fetch('/get-ghn-data?type=provinces');
+    if (cfRes2.ok) {
+      const json2 = await cfRes2.json();
+      if (json2 && (json2.code === 200 || json2.success) && Array.isArray(json2.data) && json2.data.length > 0) {
+        return json2.data;
+      }
+    }
+  } catch (_) {}
+
+  // 3. Dự phòng qua Worker master-data endpoint
   try {
     const res = await fetch('/api/shipping/ghn/master-data/provinces', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ apiKey })
+      body: JSON.stringify({ apiKey: apiKey || '' })
     });
     const result = await res.json();
     return result.data || GHN_PROVINCES;
@@ -33,13 +59,39 @@ export async function fetchGhnProvinces(apiKey = '') {
 
 /**
  * Lấy danh sách Quận/Huyện của GHN theo ProvinceID
+ * Bảo mật Token: Gọi qua Cloudflare Functions proxy /functions/get-ghn-data
  */
 export async function fetchGhnDistricts(provinceId, apiKey = '') {
+  if (!provinceId) return [];
+
+  // 1. Ưu tiên Cloudflare Pages Functions proxy /functions/get-ghn-data
+  try {
+    const cfRes = await fetch(`/functions/get-ghn-data?type=districts&province_id=${provinceId}`);
+    if (cfRes.ok) {
+      const json = await cfRes.json();
+      if (json && (json.code === 200 || json.success) && Array.isArray(json.data) && json.data.length > 0) {
+        return json.data;
+      }
+    }
+  } catch (_) {}
+
+  // 2. Dự phòng qua Cloudflare Worker /get-ghn-data
+  try {
+    const cfRes2 = await fetch(`/get-ghn-data?type=districts&province_id=${provinceId}`);
+    if (cfRes2.ok) {
+      const json2 = await cfRes2.json();
+      if (json2 && (json2.code === 200 || json2.success) && Array.isArray(json2.data) && json2.data.length > 0) {
+        return json2.data;
+      }
+    }
+  } catch (_) {}
+
+  // 3. Dự phòng qua Worker master-data endpoint
   try {
     const res = await fetch('/api/shipping/ghn/master-data/districts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ provinceId, apiKey })
+      body: JSON.stringify({ provinceId, apiKey: apiKey || '' })
     });
     const result = await res.json();
     return result.data || getGhnDistricts(provinceId);
@@ -50,13 +102,39 @@ export async function fetchGhnDistricts(provinceId, apiKey = '') {
 
 /**
  * Lấy danh sách Phường/Xã chuẩn của GHN theo to_district_id kèm WardCode
+ * Bảo mật Token: Gọi qua Cloudflare Functions proxy /functions/get-ghn-data
  */
 export async function fetchGhnWards(districtId, apiKey = '') {
+  if (!districtId) return [];
+
+  // 1. Ưu tiên Cloudflare Pages Functions proxy /functions/get-ghn-data
+  try {
+    const cfRes = await fetch(`/functions/get-ghn-data?type=wards&district_id=${districtId}`);
+    if (cfRes.ok) {
+      const json = await cfRes.json();
+      if (json && (json.code === 200 || json.success) && Array.isArray(json.data) && json.data.length > 0) {
+        return json.data;
+      }
+    }
+  } catch (_) {}
+
+  // 2. Dự phòng qua Cloudflare Worker /get-ghn-data
+  try {
+    const cfRes2 = await fetch(`/get-ghn-data?type=wards&district_id=${districtId}`);
+    if (cfRes2.ok) {
+      const json2 = await cfRes2.json();
+      if (json2 && (json2.code === 200 || json2.success) && Array.isArray(json2.data) && json2.data.length > 0) {
+        return json2.data;
+      }
+    }
+  } catch (_) {}
+
+  // 3. Dự phòng qua Worker master-data endpoint
   try {
     const res = await fetch('/api/shipping/ghn/master-data/wards', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ districtId, apiKey })
+      body: JSON.stringify({ districtId, apiKey: apiKey || '' })
     });
     const result = await res.json();
     return result.data || getGhnWards(districtId);

@@ -907,7 +907,7 @@ export const CheckoutModal = ({
                   districtId={formData.to_district_id || formData.districtId}
                   ward={formData.ward}
                   wardCode={formData.to_ward_code || formData.wardCode}
-                  apiKey={storeConfig?.shippingCarriers?.find(c => c.id === 'ghn')?.apiKey}
+                  // Bảo mật Token tuyệt đối: Không truyền apiKey ở client-side, gọi qua Cloudflare Pages Functions proxy /functions/get-ghn-data
                   onProvinceChange={(newProv, newProvId) => {
                     setFormData(prev => ({
                       ...prev,

@@ -1,5 +1,5 @@
 # BÁO CÁO KIỂM THỬ HỒI QUY TOÀN DIỆN (FULL REGRESSION TEST REPORT)
-**Dự Án:** MedXpressCare - Nền tảng Dược phẩm & TPCN chuẩn GSP  
+**Dự Án:** MedXpressCare - Nền tảng Dược phẩm & TPCN Chuẩn Y Khoa  
 **Phiên bản kiểm thử:** Production Candidate (v0.0.0-rc2)  
 **Thời gian kiểm thử:** 23/10/2026 (Cập nhật sau kiểm thử hồi quy toàn diện)  
 **Chuyên viên QA:** Senior QA Engineer & Test Automation Specialist  

@@ -1,5 +1,5 @@
 # BÁO CÁO KIỂM TOÁN AN NINH TOÀN DIỆN (FULL SECURITY CODE AUDIT REPORT)
-**Dự án:** Hệ thống Thương mại Điện tử Dược phẩm & TPCN Chuẩn GSP - MedXpressCare.com  
+**Dự án:** Hệ thống Thương mại Điện tử Dược phẩm & TPCN Chuẩn Y Khoa - MedXpressCare.com  
 **Đơn vị thực hiện:** Senior Application Security Engineer & Cybersecurity Auditor  
 **Tiêu chuẩn kiểm định:** OWASP Top 10 (2021/2025), Nghị định 13/2023/NĐ-CP (Bảo vệ Dữ liệu Cá nhân), Tiêu chuẩn An toàn Dữ liệu Y tế & Luồng Thanh toán Điện tử  
 **Ngày kiểm toán:** 23/10/2026  
@@ -23,7 +23,7 @@ Cuộc rà soát an ninh mã nguồn tĩnh (SAST) và phân tích kiến trúc a
   - `npm audit` ghi nhận **0 lỗ hổng bảo mật** trên toàn bộ 106 package phụ thuộc (React 19, Vite 8, Tailwind v4).
   - Không phát hiện việc sử dụng hàm nguy hiểm `eval()` hay `dangerouslySetInnerHTML` ở Frontend.
   - Luồng giao diện có ý thức che giấu số điện thoại trên giao diện đánh giá UGC công khai (`0987***321`).
-  - Giao diện Admin có cơ chế kiểm soát biên bản kiểm nhận hàng hoàn chuẩn GSP với chữ ký xác nhận của Dược sĩ.
+  - Giao diện Admin có cơ chế kiểm soát biên bản kiểm nhận hàng hoàn với chữ ký xác nhận của Dược sĩ.
 
 - **Các rủi ro nghiêm trọng (Critical / High Risks) cần xử lý ngay:**
   1. **Lỗ hổng Upload file cho phép RCE (Remote Code Execution)** tại `public/api/upload.php` do chỉ kiểm tra MIME type từ Header Client và không whitelist đuôi tệp.

@@ -974,6 +974,102 @@ Viết bài y khoa chuẩn SEO On-Page. Trả về JSON: {"title": "...", "summa
         return '';
       }
 
+      // ==========================================
+      // CLOUDFLARE FUNCTIONS & WORKER PROXY: /functions/get-ghn-data & /get-ghn-data
+      // ==========================================
+      if (pathname === '/functions/get-ghn-data' || pathname === '/get-ghn-data') {
+        if (request.method === 'OPTIONS') {
+          return new Response(null, {
+            status: 204,
+            headers: {
+              'Access-Control-Allow-Origin': '*',
+              'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+              'Access-Control-Allow-Headers': 'Content-Type, Authorization, Token',
+              'Access-Control-Max-Age': '86400'
+            }
+          });
+        }
+
+        try {
+          let type = url.searchParams.get('type') || '';
+          let provinceId = url.searchParams.get('province_id') || url.searchParams.get('provinceId') || '';
+          let districtId = url.searchParams.get('district_id') || url.searchParams.get('districtId') || '';
+
+          if (request.method === 'POST') {
+            try {
+              const body = await request.clone().json().catch(() => ({}));
+              if (body) {
+                if (body.type) type = body.type;
+                if (body.province_id || body.provinceId) provinceId = body.province_id || body.provinceId;
+                if (body.district_id || body.districtId) districtId = body.district_id || body.districtId;
+              }
+            } catch (_) {}
+          }
+
+          type = String(type).trim().toLowerCase();
+          const token = await resolveGhnToken();
+          const baseUrl = 'https://online-gateway.ghn.vn/shiip/public-api';
+
+          if (type === 'provinces' || type === 'province') {
+            if (token) {
+              try {
+                const ghnRes = await fetch(`${baseUrl}/master-data/province`, {
+                  headers: { 'Content-Type': 'application/json', 'Token': token }
+                });
+                const data = await ghnRes.json().catch(() => ({}));
+                if (data.code === 200 && Array.isArray(data.data) && data.data.length > 0) {
+                  return jsonResponse({ success: true, code: 200, message: 'Success', data: data.data });
+                }
+              } catch (_) {}
+            }
+            return jsonResponse({ success: true, code: 200, message: 'Success (Local Fallback)', data: GHN_PROVINCES });
+          }
+
+          if (type === 'districts' || type === 'district') {
+            const pId = Number(provinceId);
+            if (token && pId) {
+              try {
+                const ghnRes = await fetch(`${baseUrl}/master-data/district`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', 'Token': token },
+                  body: JSON.stringify({ province_id: pId })
+                });
+                const data = await ghnRes.json().catch(() => ({}));
+                if (data.code === 200 && Array.isArray(data.data) && data.data.length > 0) {
+                  return jsonResponse({ success: true, code: 200, message: 'Success', data: data.data });
+                }
+              } catch (_) {}
+            }
+            return jsonResponse({ success: true, code: 200, message: 'Success (Local Fallback)', data: getGhnDistricts(provinceId) });
+          }
+
+          if (type === 'wards' || type === 'ward') {
+            const dId = Number(districtId);
+            if (token && dId) {
+              try {
+                const ghnRes = await fetch(`${baseUrl}/master-data/ward?district_id=${dId}`, {
+                  method: 'GET',
+                  headers: { 'Content-Type': 'application/json', 'Token': token }
+                });
+                const data = await ghnRes.json().catch(() => ({}));
+                if (data.code === 200 && Array.isArray(data.data) && data.data.length > 0) {
+                  return jsonResponse({ success: true, code: 200, message: 'Success', data: data.data });
+                }
+              } catch (_) {}
+            }
+            return jsonResponse({ success: true, code: 200, message: 'Success (Local Fallback)', data: getGhnWards(districtId) });
+          }
+
+          return jsonResponse({
+            success: false,
+            code: 400,
+            message: 'Thiếu hoặc sai tham số `type`. Giá trị hợp lệ: `provinces`, `districts`, `wards`.'
+          }, 400);
+        } catch (err) {
+          return jsonResponse({ success: false, code: 500, message: err.message }, 500);
+        }
+      }
+
       // /api/shipping/ghn/master-data/provinces
       if (pathname === '/api/shipping/ghn/master-data/provinces') {
         try {
@@ -1155,7 +1251,7 @@ Viết bài y khoa chuẩn SEO On-Page. Trả về JSON: {"title": "...", "summa
           // Chuẩn bị payload gửi GHN
           const ghnPayload = {
             payment_type_id: 1, // 1: Bên gửi / Shop trả cước vận chuyển (Người nhận không phải trả cước)
-            note: 'Kiện hàng Dược phẩm/TPCN MedXpressCare niêm phong tem GSP. Cho xem hàng không cho thử. Giao thất bại thu 35.000đ.',
+            note: 'Kiện hàng Dược phẩm/TPCN MedXpressCare đóng gói nguyên niêm phong. Cho xem hàng không cho thử. Giao thất bại thu 35.000đ.',
             required_note: 'CHOXEMHANGKHONGTHU',
             return_phone: returnPhone,
             return_address: returnAddress,
