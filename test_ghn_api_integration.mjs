@@ -182,6 +182,19 @@ const validRes = validateGhnPayload({ to_district_id: 1442, to_ward_code: "20314
 assert.strictEqual(validRes.success, true);
 console.log('  ✅ PASSED: Bước 3 chặn triệt để lỗi to_ward_code trống và phản hồi thông báo hoàn thiện địa chỉ giao hàng.');
 
+// 9. Kiểm thử loại bỏ hoàn toàn môi trường Sandbox & dev-online-gateway (100% Live Production)
+console.log('\n--- 9. Kiểm thử loại bỏ hoàn toàn cấu hình Sandbox & dev-online-gateway ---');
+assert.ok(!workerContent.includes('dev-online-gateway'), 'worker.js đã loại bỏ hoàn toàn dev-online-gateway');
+assert.ok(!adminContent.includes('dev-online-gateway'), 'AdminPanel đã loại bỏ hoàn toàn dev-online-gateway');
+assert.ok(!adminContent.includes('Môi trường thử nghiệm Sandbox'), 'AdminPanel không còn ô chọn sandbox');
+
+import { DEFAULT_SHIPPING_CARRIERS } from './src/data/shippingCarriers.js';
+const ghnCarrierDef = DEFAULT_SHIPPING_CARRIERS.find(c => c.id === 'ghn');
+assert.strictEqual(ghnCarrierDef.apiKey, '', 'GHN mặc định không chứa API Key ảo ENV_GHN_PARTNER_KEY');
+assert.strictEqual(ghnCarrierDef.shopId, '', 'GHN mặc định không chứa Shop ID ảo');
+assert.strictEqual(ghnCarrierDef.isConnected, false, 'GHN mặc định chưa kết nối cho đến khi người dùng nhập Token thật');
+console.log('  ✅ PASSED: Hệ thống đã xóa sạch toàn bộ sandbox/mẫu thử nghiệm, sẵn sàng 100% cho vận hành thật.');
+
 console.log('\n================================================================');
-console.log('   🎉 TẤT CẢ 8 NHÓM TEST CASES GHN API REAL INTEGRATION ĐỀU PASSED! ');
+console.log('   🎉 TẤT CẢ 9 NHÓM TEST CASES GHN API REAL INTEGRATION ĐỀU PASSED! ');
 console.log('================================================================\n');

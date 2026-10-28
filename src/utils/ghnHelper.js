@@ -17,12 +17,12 @@ export { GHN_PROVINCES, GHN_DISTRICTS, GHN_WARDS, getGhnDistricts, getGhnWards, 
 /**
  * Lấy danh sách Tỉnh/Thành phố chuẩn từ GHN Master Data API
  */
-export async function fetchGhnProvinces(apiKey = '', isDev = false) {
+export async function fetchGhnProvinces(apiKey = '') {
   try {
     const res = await fetch('/api/shipping/ghn/master-data/provinces', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ apiKey, isDev })
+      body: JSON.stringify({ apiKey })
     });
     const result = await res.json();
     return result.data || GHN_PROVINCES;
@@ -34,12 +34,12 @@ export async function fetchGhnProvinces(apiKey = '', isDev = false) {
 /**
  * Lấy danh sách Quận/Huyện của GHN theo ProvinceID
  */
-export async function fetchGhnDistricts(provinceId, apiKey = '', isDev = false) {
+export async function fetchGhnDistricts(provinceId, apiKey = '') {
   try {
     const res = await fetch('/api/shipping/ghn/master-data/districts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ provinceId, apiKey, isDev })
+      body: JSON.stringify({ provinceId, apiKey })
     });
     const result = await res.json();
     return result.data || getGhnDistricts(provinceId);
@@ -51,12 +51,12 @@ export async function fetchGhnDistricts(provinceId, apiKey = '', isDev = false) 
 /**
  * Lấy danh sách Phường/Xã chuẩn của GHN theo to_district_id kèm WardCode
  */
-export async function fetchGhnWards(districtId, apiKey = '', isDev = false) {
+export async function fetchGhnWards(districtId, apiKey = '') {
   try {
     const res = await fetch('/api/shipping/ghn/master-data/wards', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ districtId, apiKey, isDev })
+      body: JSON.stringify({ districtId, apiKey })
     });
     const result = await res.json();
     return result.data || getGhnWards(districtId);
@@ -68,7 +68,7 @@ export async function fetchGhnWards(districtId, apiKey = '', isDev = false) {
 /**
  * Kiểm tra kết nối API với GHN (gọi qua Cloudflare Worker proxy để tránh CORS)
  */
-export async function testGhnConnection(apiKey, shopId, isDev = false) {
+export async function testGhnConnection(apiKey, shopId) {
   if (!apiKey || !apiKey.trim()) {
     return {
       success: false,
@@ -82,8 +82,7 @@ export async function testGhnConnection(apiKey, shopId, isDev = false) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         apiKey: apiKey.trim(),
-        shopId: shopId ? String(shopId).trim() : '',
-        isDev: Boolean(isDev)
+        shopId: shopId ? String(shopId).trim() : ''
       })
     });
     return await res.json();
@@ -121,7 +120,6 @@ export async function createGhnOrder(order, ghnCarrier, storeConfig = {}) {
       order,
       apiKey: ghnCarrier.apiKey,
       shopId: ghnCarrier.shopId,
-      isDev: Boolean(ghnCarrier.isDev),
       storeConfig
     })
   });
@@ -146,8 +144,7 @@ export async function fetchGhnTrackingDetail(orderCode, ghnCarrier) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       orderCode,
-      apiKey: ghnCarrier.apiKey,
-      isDev: Boolean(ghnCarrier.isDev)
+      apiKey: ghnCarrier.apiKey
     })
   });
 
@@ -172,8 +169,7 @@ export async function getGhnPrintUrl(orderCodes, ghnCarrier) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       orderCodes: codes,
-      apiKey: ghnCarrier.apiKey,
-      isDev: Boolean(ghnCarrier.isDev)
+      apiKey: ghnCarrier.apiKey
     })
   });
 
@@ -195,8 +191,7 @@ export async function cancelGhnOrder(orderCodes, ghnCarrier) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       orderCodes: codes,
-      apiKey: ghnCarrier.apiKey,
-      isDev: Boolean(ghnCarrier.isDev)
+      apiKey: ghnCarrier.apiKey
     })
   });
 

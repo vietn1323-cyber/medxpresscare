@@ -15,8 +15,8 @@ export const DEFAULT_SHIPPING_CARRIERS = [
     estimatedDays: '1 - 2 giờ',
     enabled: true,
     isConnected: true,
-    apiKey: 'MEDXPRESS-FLEET-HQ99',
-    shopId: 'KHO-TONG-HN-01',
+    apiKey: '',
+    shopId: '',
     note: 'Hỏa tốc nội thành Hà Nội - Phí theo cước thực tế trao đổi'
   },
   {
@@ -28,9 +28,9 @@ export const DEFAULT_SHIPPING_CARRIERS = [
     baseFee: 35000,
     estimatedDays: '1 - 2 ngày',
     enabled: true,
-    isConnected: true,
-    apiKey: 'ENV_GHTK_API_TOKEN',
-    shopId: 'SHOP_MEDXPRESS_888',
+    isConnected: false,
+    apiKey: '',
+    shopId: '',
     note: 'Kết nối qua Open API GHTK v2'
   },
   {
@@ -42,10 +42,10 @@ export const DEFAULT_SHIPPING_CARRIERS = [
     baseFee: 35000,
     estimatedDays: '1 - 2 ngày',
     enabled: true,
-    isConnected: true,
-    apiKey: 'ENV_GHN_PARTNER_KEY',
-    shopId: '1849204',
-    note: 'Kết nối qua GHN Express API v2'
+    isConnected: false,
+    apiKey: '',
+    shopId: '',
+    note: 'Kết nối qua cổng online-gateway.ghn.vn chính thức'
   },
   {
     id: 'viettel',
@@ -94,7 +94,7 @@ export const DEFAULT_SHIPPING_CARRIERS = [
 /**
  * Kiểm tra kết nối API với Đơn vị vận chuyển (Xác thực thực tế với máy chủ GHN)
  */
-export const testCarrierConnection = async (carrierId, apiKey, shopId, isDev = false) => {
+export const testCarrierConnection = async (carrierId, apiKey, shopId) => {
   if (!apiKey || !apiKey.trim()) {
     return {
       success: false,
@@ -110,8 +110,7 @@ export const testCarrierConnection = async (carrierId, apiKey, shopId, isDev = f
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           apiKey: apiKey.trim(),
-          shopId: shopId ? String(shopId).trim() : '',
-          isDev: Boolean(isDev)
+          shopId: shopId ? String(shopId).trim() : ''
         })
       });
 

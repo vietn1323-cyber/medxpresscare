@@ -80,11 +80,17 @@ export const OrderTrackingPage = ({
     if (initialCode) {
       setSearchInput(initialCode);
       executeSearch(initialCode);
-    } else {
-      // Mặc định nạp đơn hàng demo đang giao để khách xem trực quan ngay
-      executeSearch('MXC-892410');
+    } else if (orders && orders.length > 0) {
+      // Nếu có đơn hàng thực tế của khách hàng, hiển thị đơn mới nhất
+      const latest = orders[0];
+      if (latest && (latest.id || latest.trackingNumber)) {
+        setSearchInput(latest.id || latest.trackingNumber);
+        setSelectedOrder(latest);
+        setMatchedOrders([latest]);
+        setHasSearched(true);
+      }
     }
-  }, [initialCode]);
+  }, [initialCode, orders]);
 
   const handleFormSubmit = (e) => {
     e.preventDefault();

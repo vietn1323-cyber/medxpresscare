@@ -893,14 +893,12 @@ Viết bài y khoa chuẩn SEO On-Page. Trả về JSON: {"title": "...", "summa
       // /api/shipping/ghn/test-connection
       if (pathname === '/api/shipping/ghn/test-connection') {
         try {
-          const { apiKey, shopId, isDev } = await request.json();
+          const { apiKey, shopId } = await request.json();
           if (!apiKey || !apiKey.trim()) {
             return jsonResponse({ success: false, message: 'Vui lòng cung cấp Token API của GHN.' }, 400);
           }
 
-          const baseUrl = isDev 
-            ? 'https://dev-online-gateway.ghn.vn/shiip/public-api' 
-            : 'https://online-gateway.ghn.vn/shiip/public-api';
+          const baseUrl = 'https://online-gateway.ghn.vn/shiip/public-api';
 
           // Gọi sang GHN để lấy danh sách Shop thuộc Token
           const ghnRes = await fetch(`${baseUrl}/v2/shop/all`, {
@@ -963,10 +961,8 @@ Viết bài y khoa chuẩn SEO On-Page. Trả về JSON: {"title": "...", "summa
       // /api/shipping/ghn/master-data/provinces
       if (pathname === '/api/shipping/ghn/master-data/provinces') {
         try {
-          const { apiKey, isDev } = await request.json().catch(() => ({}));
-          const baseUrl = isDev 
-            ? 'https://dev-online-gateway.ghn.vn/shiip/public-api' 
-            : 'https://online-gateway.ghn.vn/shiip/public-api';
+          const { apiKey } = await request.json().catch(() => ({}));
+          const baseUrl = 'https://online-gateway.ghn.vn/shiip/public-api';
 
           if (apiKey) {
             const ghnRes = await fetch(`${baseUrl}/master-data/province`, {
@@ -986,10 +982,8 @@ Viết bài y khoa chuẩn SEO On-Page. Trả về JSON: {"title": "...", "summa
       // /api/shipping/ghn/master-data/districts
       if (pathname === '/api/shipping/ghn/master-data/districts') {
         try {
-          const { provinceId, apiKey, isDev } = await request.json().catch(() => ({}));
-          const baseUrl = isDev 
-            ? 'https://dev-online-gateway.ghn.vn/shiip/public-api' 
-            : 'https://online-gateway.ghn.vn/shiip/public-api';
+          const { provinceId, apiKey } = await request.json().catch(() => ({}));
+          const baseUrl = 'https://online-gateway.ghn.vn/shiip/public-api';
 
           if (apiKey && provinceId) {
             const ghnRes = await fetch(`${baseUrl}/master-data/district`, {
@@ -1013,10 +1007,8 @@ Viết bài y khoa chuẩn SEO On-Page. Trả về JSON: {"title": "...", "summa
       // /api/shipping/ghn/master-data/wards
       if (pathname === '/api/shipping/ghn/master-data/wards') {
         try {
-          const { districtId, apiKey, isDev } = await request.json().catch(() => ({}));
-          const baseUrl = isDev 
-            ? 'https://dev-online-gateway.ghn.vn/shiip/public-api' 
-            : 'https://online-gateway.ghn.vn/shiip/public-api';
+          const { districtId, apiKey } = await request.json().catch(() => ({}));
+          const baseUrl = 'https://online-gateway.ghn.vn/shiip/public-api';
 
           if (apiKey && districtId) {
             const ghnRes = await fetch(`${baseUrl}/master-data/ward?district_id=${districtId}`, {
@@ -1039,13 +1031,11 @@ Viết bài y khoa chuẩn SEO On-Page. Trả về JSON: {"title": "...", "summa
       // /api/shipping/ghn/create-order
       if (pathname === '/api/shipping/ghn/create-order') {
         try {
-          const { order, apiKey, shopId, isDev, storeConfig } = await request.json();
+          const { order, apiKey, shopId, storeConfig } = await request.json();
           if (!order) return errorResponse('Missing order data', 400);
           if (!apiKey || !apiKey.trim()) return errorResponse('Chưa cấu hình Token GHN (apiKey)', 400);
 
-          const baseUrl = isDev 
-            ? 'https://dev-online-gateway.ghn.vn/shiip/public-api' 
-            : 'https://online-gateway.ghn.vn/shiip/public-api';
+          const baseUrl = 'https://online-gateway.ghn.vn/shiip/public-api';
 
           const returnPhone = storeConfig?.hotline?.replace(/[^0-9]/g, '') || '0968686868';
           const returnAddress = storeConfig?.warehouseAddress || storeConfig?.headquartersAddress || 'Tầng 6, Số 168 Cầu Giấy, Quan Hoa, Q. Cầu Giấy, Hà Nội';
@@ -1233,13 +1223,11 @@ Viết bài y khoa chuẩn SEO On-Page. Trả về JSON: {"title": "...", "summa
       // /api/shipping/ghn/tracking-detail
       if (pathname === '/api/shipping/ghn/tracking-detail') {
         try {
-          const { orderCode, apiKey, isDev } = await request.json();
+          const { orderCode, apiKey } = await request.json();
           if (!orderCode) return errorResponse('Missing orderCode', 400);
           if (!apiKey) return errorResponse('Missing apiKey', 400);
 
-          const baseUrl = isDev 
-            ? 'https://dev-online-gateway.ghn.vn/shiip/public-api' 
-            : 'https://online-gateway.ghn.vn/shiip/public-api';
+          const baseUrl = 'https://online-gateway.ghn.vn/shiip/public-api';
 
           const ghnRes = await fetch(`${baseUrl}/v2/shipping-order/detail`, {
             method: 'POST',
@@ -1270,14 +1258,12 @@ Viết bài y khoa chuẩn SEO On-Page. Trả về JSON: {"title": "...", "summa
       // /api/shipping/ghn/print-order
       if (pathname === '/api/shipping/ghn/print-order') {
         try {
-          const { orderCodes, apiKey, isDev } = await request.json();
+          const { orderCodes, apiKey } = await request.json();
           const codes = Array.isArray(orderCodes) ? orderCodes : [orderCodes];
           if (codes.length === 0) return errorResponse('Missing orderCodes', 400);
           if (!apiKey) return errorResponse('Missing apiKey', 400);
 
-          const baseUrl = isDev 
-            ? 'https://dev-online-gateway.ghn.vn/shiip/public-api' 
-            : 'https://online-gateway.ghn.vn/shiip/public-api';
+          const baseUrl = 'https://online-gateway.ghn.vn/shiip/public-api';
 
           const ghnRes = await fetch(`${baseUrl}/v2/a5/gen-token`, {
             method: 'POST',
@@ -1296,9 +1282,7 @@ Viết bài y khoa chuẩn SEO On-Page. Trả về JSON: {"title": "...", "summa
             }, 400);
           }
 
-          const printUrl = isDev
-            ? `https://dev-online-gateway.ghn.vn/a5/public-api/printA5?token=${ghnData.data.token}`
-            : `https://online-gateway.ghn.vn/a5/public-api/printA5?token=${ghnData.data.token}`;
+          const printUrl = `https://online-gateway.ghn.vn/a5/public-api/printA5?token=${ghnData.data.token}`;
 
           return jsonResponse({
             success: true,
@@ -1313,14 +1297,12 @@ Viết bài y khoa chuẩn SEO On-Page. Trả về JSON: {"title": "...", "summa
       // /api/shipping/ghn/cancel-order
       if (pathname === '/api/shipping/ghn/cancel-order') {
         try {
-          const { orderCodes, apiKey, isDev } = await request.json();
+          const { orderCodes, apiKey } = await request.json();
           const codes = Array.isArray(orderCodes) ? orderCodes : [orderCodes];
           if (codes.length === 0) return errorResponse('Missing orderCodes', 400);
           if (!apiKey) return errorResponse('Missing apiKey', 400);
 
-          const baseUrl = isDev 
-            ? 'https://dev-online-gateway.ghn.vn/shiip/public-api' 
-            : 'https://online-gateway.ghn.vn/shiip/public-api';
+          const baseUrl = 'https://online-gateway.ghn.vn/shiip/public-api';
 
           const ghnRes = await fetch(`${baseUrl}/v2/switch-status/cancel`, {
             method: 'POST',

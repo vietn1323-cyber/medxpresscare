@@ -58,12 +58,6 @@ export const CustomerAuthModal = ({
     onClose();
   };
 
-  const handleQuickLogin = (demoUser) => {
-    const { password: _pwd, ...safeUser } = demoUser;
-    onLoginSuccess(safeUser);
-    onClose();
-  };
-
   const handleRegisterSubmit = (e) => {
     e.preventDefault();
     setErrorMsg('');
@@ -241,34 +235,6 @@ export const CustomerAuthModal = ({
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </form>
-
-              {/* Demo Accounts 1-Click for Instant Testing */}
-              <div className="pt-3 border-t border-slate-100">
-                <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                  Tài Khoản Mẫu Trải Nghiệm Nhanh (1-Click):
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {customers.slice(0, 2).map((demo) => (
-                    <button
-                      key={demo.id}
-                      type="button"
-                      onClick={() => handleQuickLogin(demo)}
-                      className="text-left p-2.5 rounded-xl border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50/50 transition-all group"
-                    >
-                      <div className="font-bold text-xs text-slate-900 group-hover:text-emerald-700 truncate">
-                        {demo.fullName}
-                      </div>
-                      <div className="text-[10px] text-slate-500 font-mono mt-0.5">
-                        {demo.phone}
-                      </div>
-                      <div className="inline-block mt-1 text-[10px] font-extrabold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.2 rounded-md">
-                        🌟 Đang có {demo.points} điểm ({demo.points * 1000}₫)
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
             </div>
           )}
 

@@ -7009,11 +7009,11 @@ export const AdminPanel = ({
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           <div>
                             <label className="block text-[10px] font-bold text-slate-600 mb-0.5">
-                              {carrier.id === 'ghn' ? 'Token API GHN (Quản lý tài khoản)' : 'API Key / Token đối tác:'}
+                              {carrier.id === 'ghn' ? 'Token API GHN Chính Thức (khachhang.ghn.vn):' : 'API Key / Token đối tác:'}
                             </label>
                             <input
                               type="password"
-                              placeholder={carrier.id === 'ghn' ? 'VD: a1b2c3d4-e5f6-7890...' : 'API Key / Token...'}
+                              placeholder={carrier.id === 'ghn' ? 'Dán Token API từ khachhang.ghn.vn...' : 'API Key / Token...'}
                               value={carrier.apiKey || ''}
                               onChange={(e) => handleUpdateCarrierField(carrier.id, 'apiKey', e.target.value)}
                               className="w-full px-2.5 py-1.5 bg-white border rounded-lg font-mono text-[11px]"
@@ -7021,31 +7021,17 @@ export const AdminPanel = ({
                           </div>
                           <div>
                             <label className="block text-[10px] font-bold text-slate-600 mb-0.5">
-                              {carrier.id === 'ghn' ? 'Shop ID GHN (Mã cửa hàng)' : 'Shop ID / Client ID:'}
+                              {carrier.id === 'ghn' ? 'Shop ID GHN (Mã cửa hàng thực tế):' : 'Shop ID / Client ID:'}
                             </label>
                             <input
                               type="text"
-                              placeholder={carrier.id === 'ghn' ? 'VD: 1849204' : 'Shop ID...'}
+                              placeholder={carrier.id === 'ghn' ? 'Nhập Shop ID thực tế...' : 'Shop ID...'}
                               value={carrier.shopId || ''}
                               onChange={(e) => handleUpdateCarrierField(carrier.id, 'shopId', e.target.value)}
                               className="w-full px-2.5 py-1.5 bg-white border rounded-lg font-mono text-[11px]"
                             />
                           </div>
                         </div>
-
-                        {carrier.id === 'ghn' && (
-                          <div className="flex items-center gap-2 pt-0.5">
-                            <label className="flex items-center gap-1.5 text-[11px] text-slate-600 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={Boolean(carrier.isDev)}
-                                onChange={(e) => handleUpdateCarrierField(carrier.id, 'isDev', e.target.checked)}
-                                className="rounded text-blue-600"
-                              />
-                              <span>Môi trường thử nghiệm Sandbox (dev-online-gateway.ghn.vn)</span>
-                            </label>
-                          </div>
-                        )}
 
                         {/* Test connection button */}
                         <div className="flex items-center justify-between pt-1">
@@ -7327,7 +7313,7 @@ export const AdminPanel = ({
                           description: 'TEST-VIETQR',
                           template: 'compact2'
                         })}
-                        alt="Mã QR Thử Nghiệm"
+                        alt="Mã VietQR Thanh Toán Thực Tế"
                         className="w-36 h-auto rounded-xl border border-slate-100 shadow-xs shrink-0"
                       />
                       <div className="text-[11px] text-slate-600 space-y-1.5 flex-1 text-left">
@@ -7335,7 +7321,7 @@ export const AdminPanel = ({
                           📱 Quét thử nghiệm mã VietQR trực tiếp:
                         </div>
                         <p className="leading-relaxed">
-                          Bạn có thể dùng điện thoại mở App <strong>{getBankInfo(tempConfig.bankBin || tempConfig.bankName).shortName}</strong> hoặc bất kỳ ngân hàng nào quét thử mã QR này. Màn hình chuyển khoản sẽ tự động điền đúng tên: <strong className="text-slate-900 font-bold">{tempConfig.bankAccountName || '(Chưa nhập tên)'}</strong>.
+                          Khách hàng có thể dùng App <strong>{getBankInfo(tempConfig.bankBin || tempConfig.bankName).shortName}</strong> hoặc bất kỳ ngân hàng nào quét mã QR này. Màn hình chuyển khoản sẽ tự động điền đúng tên: <strong className="text-slate-900 font-bold">{tempConfig.bankAccountName || '(Chưa nhập tên)'}</strong>.
                         </p>
                         <div className="text-[10px] text-emerald-800 font-semibold bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg inline-flex items-center gap-1">
                           <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
