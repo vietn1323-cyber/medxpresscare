@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { 
-  CATEGORIES, COUNTRIES, DOSAGE_FORMS, TARGET_AUDIENCES, BRANDS_LIST 
+  CATEGORIES, COUNTRIES, DOSAGE_FORMS, TARGET_AUDIENCES, BRANDS_LIST, cleanCountryName 
 } from '../data/products';
 import { 
   Check, Filter, ArrowUpDown, Sparkles, SlidersHorizontal,
@@ -65,10 +65,44 @@ export const OriginFilterTabs = ({
   priceRange,
   setPriceRange,
   totalResults,
-  onResetFilters
+  onResetFilters,
+  availableCountries = [],
+  productsList = []
 }) => {
   // Dimension tab mode: 'category' (Công dụng) | 'dosage' (Dạng bào chế) | 'audience' (Đối tượng) | 'brand' (Thương hiệu)
   const [activeDimension, setActiveDimension] = useState('category');
+
+  // Lấy danh sách quốc gia động: gom từ productsList và availableCountries (loại bỏ cờ, mã ký tự US, VN, DE...)
+  const dynamicCountries = React.useMemo(() => {
+    const countrySet = new Set();
+    
+    if (Array.isArray(productsList) && productsList.length > 0) {
+      productsList.forEach(p => {
+        const cName = cleanCountryName(p.countryName);
+        if (cName) countrySet.add(cName);
+      });
+    }
+
+    if (Array.isArray(availableCountries) && availableCountries.length > 0) {
+      availableCountries.forEach(c => {
+        const cName = cleanCountryName(c);
+        if (cName) countrySet.add(cName);
+      });
+    }
+
+    if (countrySet.size === 0) {
+      COUNTRIES.forEach(c => {
+        if (c.id !== 'all') countrySet.add(cleanCountryName(c.name));
+      });
+    }
+
+    const list = Array.from(countrySet).filter(Boolean);
+    return list.sort((a, b) => {
+      if (a === 'Việt Nam') return -1;
+      if (b === 'Việt Nam') return 1;
+      return a.localeCompare(b, 'vi');
+    });
+  }, [productsList, availableCountries]);
 
   // Count active filters
   let activeFilterCount = 0;
@@ -120,19 +154,19 @@ export const OriginFilterTabs = ({
                 : 'text-rose-700 hover:bg-rose-50'
             }`}
           >
-            <span>🇻🇳 Hàng Nội Địa</span>
+            <span>Hàng Nội Địa</span>
             <span className="text-[10px] hidden sm:inline px-1 py-0.2 rounded bg-white/20">GMP</span>
           </button>
 
           <button
-            onClick={() => { setOriginFilter('imported'); if (selectedCountry === 'VN') setSelectedCountry('all'); }}
+            onClick={() => { setOriginFilter('imported'); if (selectedCountry === 'VN' || selectedCountry === 'Việt Nam') setSelectedCountry('all'); }}
             className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
               originFilter === 'imported'
                 ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
                 : 'text-blue-700 hover:bg-blue-50'
             }`}
           >
-            <span>🌍 Hàng Nhập Ngoại</span>
+            <span>Hàng Nhập Ngoại</span>
             <span className="text-[10px] hidden sm:inline px-1 py-0.2 rounded bg-white/20">Chính Ngạch</span>
           </button>
         </div>
@@ -312,29 +346,47 @@ export const OriginFilterTabs = ({
 
       {/* 4. Quốc Gia & Nguồn Gốc Xuất Xứ Pills */}
       <div className="pt-2 pb-3 border-t border-slate-100">
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider shrink-0 mr-1">
             Quốc gia:
           </span>
 
-          {COUNTRIES.map((c) => {
-            if (originFilter === 'domestic' && c.id !== 'all' && c.id !== 'VN') return null;
-            if (originFilter === 'imported' && c.id === 'VN') return null;
+          {/* Tất cả xuất xứ */}
+          <button
+            onClick={() => setSelectedCountry('all')}
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold shrink-0 border transition-all ${
+              selectedCountry === 'all'
+                ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 hover:border-slate-300'
+            }`}
+          >
+            <span>Tất cả xuất xứ</span>
+          </button>
 
-            const isSelected = selectedCountry === c.id;
+          {/* Danh sách quốc gia động không cờ emoji, không mã chữ VN, US... */}
+          {dynamicCountries.map((cName) => {
+            if (originFilter === 'domestic' && cName !== 'Việt Nam') return null;
+            if (originFilter === 'imported' && cName === 'Việt Nam') return null;
+
+            const isSelected = selectedCountry === cName || 
+              (cName === 'Việt Nam' && selectedCountry === 'VN') ||
+              (cName === 'Mỹ' && selectedCountry === 'US') ||
+              (cName === 'Úc' && selectedCountry === 'AU') ||
+              (cName === 'Nhật Bản' && selectedCountry === 'JP') ||
+              (cName === 'Hàn Quốc' && selectedCountry === 'KR') ||
+              (cName === 'Đức' && selectedCountry === 'DE');
 
             return (
               <button
-                key={c.id}
-                onClick={() => setSelectedCountry(c.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold shrink-0 border transition-all ${
+                key={cName}
+                onClick={() => setSelectedCountry(isSelected ? 'all' : cName)}
+                className={`flex items-center px-3 py-1.5 rounded-full text-xs font-semibold shrink-0 border transition-all ${
                   isSelected
-                    ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm font-bold'
                     : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 hover:border-slate-300'
                 }`}
               >
-                <span>{c.flag}</span>
-                <span>{c.name}</span>
+                <span>{cName}</span>
               </button>
             );
           })}

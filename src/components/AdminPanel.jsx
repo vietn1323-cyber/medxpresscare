@@ -12,7 +12,7 @@ import {
   Layers, Percent, Sliders, FolderPlus, Square, Filter,
   ChevronRight, ChevronUp, ChevronDown
 } from 'lucide-react';
-import { CATEGORIES, DOSAGE_FORMS, TARGET_AUDIENCES } from '../data/products';
+import { CATEGORIES, DOSAGE_FORMS, TARGET_AUDIENCES, cleanCountryName } from '../data/products';
 import { downloadCSV, downloadJSON } from '../utils/csvHelper';
 import { testTelegramConnection } from '../utils/telegramHelper';
 import { DEFAULT_SHIPPING_CARRIERS, testCarrierConnection } from '../data/shippingCarriers';
@@ -71,7 +71,9 @@ export const AdminPanel = ({
   onConfirmReturnedOrder,
   policies = POLICIES,
   onUpdatePolicies,
-  onNavigateToPolicy
+  onNavigateToPolicy,
+  availableCountries = ['Việt Nam', 'Mỹ', 'Úc', 'Nhật Bản', 'Hàn Quốc', 'Đức', 'Pháp', 'Anh'],
+  onAddCountry
 }) => {
   const [activeTab, setActiveTab] = useState('products'); // products | orders | vouchers | reviews | customers | reorder | articles | registrations | stats | shipping | settings | policies
   const [localPolicies, setLocalPolicies] = useState(() => {
@@ -707,6 +709,32 @@ export const AdminPanel = ({
   const [editDragOver, setEditDragOver] = useState(false);
   const editFileInputRef = useRef(null);
 
+  // States quản lý chọn / thêm mới quốc gia xuất xứ động
+  const [isAddingCustomCountryNew, setIsAddingCustomCountryNew] = useState(false);
+  const [customCountryInputNew, setCustomCountryInputNew] = useState('');
+  const [isAddingCustomCountryEdit, setIsAddingCustomCountryEdit] = useState(false);
+  const [customCountryInputEdit, setCustomCountryInputEdit] = useState('');
+
+  // Danh sách hợp nhất tất cả quốc gia từ hệ thống, cấu hình và danh mục sản phẩm thực tế
+  const allAvailableCountries = useMemo(() => {
+    const set = new Set();
+    ['Việt Nam', 'Mỹ', 'Úc', 'Nhật Bản', 'Hàn Quốc', 'Đức', 'Pháp', 'Anh'].forEach(c => set.add(c));
+    (availableCountries || []).forEach(c => {
+      const cleaned = cleanCountryName(c);
+      if (cleaned) set.add(cleaned);
+    });
+    (products || []).forEach(p => {
+      const cleaned = cleanCountryName(p.countryName);
+      if (cleaned) set.add(cleaned);
+    });
+    const list = Array.from(set).filter(Boolean);
+    return list.sort((a, b) => {
+      if (a === 'Việt Nam') return -1;
+      if (b === 'Việt Nam') return 1;
+      return a.localeCompare(b, 'vi');
+    });
+  }, [availableCountries, products]);
+
   const [newProduct, setNewProduct] = useState({
     name: '',
     brand: '',
@@ -717,7 +745,7 @@ export const AdminPanel = ({
     originType: 'domestic',
     countryCode: 'VN',
     countryName: 'Việt Nam',
-    flag: '🇻🇳',
+    flag: '',
     price: 350000,
     originalPrice: 420000,
     discountPercent: 15,
@@ -1457,8 +1485,15 @@ export const AdminPanel = ({
       ? editingProduct.categories
       : [editingProduct.category || 'bone_joint'];
 
+    const cleanedCountry = cleanCountryName(editingProduct.countryName);
+    if (onAddCountry && cleanedCountry && cleanedCountry !== 'Việt Nam') {
+      onAddCountry(cleanedCountry);
+    }
+
     const updated = {
       ...editingProduct,
+      countryName: cleanedCountry,
+      flag: '',
       categories: prodCategories,
       category: prodCategories[0] || 'bone_joint',
       price: Number(editingProduct.price),
@@ -1475,6 +1510,8 @@ export const AdminPanel = ({
 
     onUpdateProduct(updated);
     setEditingProduct(null);
+    setIsAddingCustomCountryEdit(false);
+    setCustomCountryInputEdit('');
   };
 
   if (!isOpen) return null;
@@ -1532,8 +1569,15 @@ export const AdminPanel = ({
       ? newProduct.categories
       : [newProduct.category || 'bone_joint'];
 
+    const cleanedCountry = cleanCountryName(newProduct.countryName);
+    if (onAddCountry && cleanedCountry && cleanedCountry !== 'Việt Nam') {
+      onAddCountry(cleanedCountry);
+    }
+
     onAddProduct({
       ...newProduct,
+      countryName: cleanedCountry,
+      flag: '',
       categories: prodCategories,
       category: prodCategories[0] || 'bone_joint',
       id,
@@ -1561,7 +1605,7 @@ export const AdminPanel = ({
       originType: 'domestic',
       countryCode: 'VN',
       countryName: 'Việt Nam',
-      flag: '🇻🇳',
+      flag: '',
       price: 350000,
       originalPrice: 420000,
       discountPercent: 15,
@@ -1575,6 +1619,8 @@ export const AdminPanel = ({
       contraindications: 'Không dùng cho người mẫn cảm với bất kỳ thành phần nào của sản phẩm.',
       isFlashSale: false
     });
+    setIsAddingCustomCountryNew(false);
+    setCustomCountryInputNew('');
     setUploadedFileName('');
     if (fileInputRef.current) fileInputRef.current.value = '';
     setShowAddProduct(false);
@@ -3003,26 +3049,81 @@ export const AdminPanel = ({
                           setNewProduct({
                             ...newProduct,
                             originType: e.target.value,
-                            countryCode: isDom ? 'VN' : 'US',
-                            countryName: isDom ? 'Việt Nam' : 'Mỹ',
-                            flag: isDom ? '🇻🇳' : '🇺🇸'
+                            countryCode: isDom ? 'VN' : (newProduct.countryCode === 'VN' ? 'US' : newProduct.countryCode),
+                            countryName: isDom ? 'Việt Nam' : (newProduct.countryName === 'Việt Nam' ? 'Mỹ' : newProduct.countryName),
+                            flag: ''
                           });
+                          if (isDom) {
+                            setIsAddingCustomCountryNew(false);
+                            setCustomCountryInputNew('');
+                          }
                         }}
                         className="w-full px-3 py-2 bg-slate-50 border rounded-xl font-bold"
                       >
-                        <option value="domestic">🇻🇳 Hàng Nội Địa Uy Tín</option>
-                        <option value="imported">🌍 Hàng Nhập Ngoại</option>
+                        <option value="domestic">Hàng Nội Địa (Việt Nam)</option>
+                        <option value="imported">Hàng Nhập Khẩu</option>
                       </select>
                     </div>
 
                     <div>
-                      <label className="block text-slate-700 font-semibold mb-1">Quốc gia</label>
-                      <input
-                        type="text"
-                        value={newProduct.countryName}
-                        onChange={(e) => setNewProduct({ ...newProduct, countryName: e.target.value })}
-                        className="w-full px-3 py-2 bg-slate-50 border rounded-xl"
-                      />
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-slate-700 font-semibold">Quốc gia xuất xứ</label>
+                        {newProduct.originType === 'imported' && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsAddingCustomCountryNew(!isAddingCustomCountryNew);
+                              if (isAddingCustomCountryNew) {
+                                setNewProduct({ ...newProduct, countryName: 'Mỹ', flag: '' });
+                              }
+                            }}
+                            className="text-[10px] text-emerald-600 hover:text-emerald-800 font-bold hover:underline"
+                          >
+                            {isAddingCustomCountryNew ? '← Chọn có sẵn' : '+ Thêm mới'}
+                          </button>
+                        )}
+                      </div>
+
+                      {newProduct.originType === 'domestic' ? (
+                        <input
+                          type="text"
+                          value="Việt Nam"
+                          disabled
+                          className="w-full px-3 py-2 bg-slate-100 border rounded-xl text-slate-600 font-bold cursor-not-allowed"
+                        />
+                      ) : isAddingCustomCountryNew ? (
+                        <input
+                          type="text"
+                          placeholder="Nhập tên quốc gia mới (VD: Thụy Sĩ, Canada...)"
+                          value={customCountryInputNew}
+                          onChange={(e) => {
+                            setCustomCountryInputNew(e.target.value);
+                            setNewProduct({ ...newProduct, countryName: e.target.value, flag: '' });
+                          }}
+                          className="w-full px-3 py-2 bg-white border border-emerald-500 rounded-xl font-bold text-slate-800"
+                          required
+                        />
+                      ) : (
+                        <select
+                          value={cleanCountryName(newProduct.countryName)}
+                          onChange={(e) => {
+                            if (e.target.value === '__add_new__') {
+                              setIsAddingCustomCountryNew(true);
+                              setCustomCountryInputNew('');
+                            } else {
+                              setNewProduct({ ...newProduct, countryName: e.target.value, flag: '' });
+                            }
+                          }}
+                          className="w-full px-3 py-2 bg-slate-50 border rounded-xl font-bold"
+                        >
+                          {allAvailableCountries
+                            .filter(c => c !== 'Việt Nam')
+                            .map(c => (
+                              <option key={c} value={c}>{c}</option>
+                            ))}
+                          <option value="__add_new__">+ Thêm quốc gia mới...</option>
+                        </select>
+                      )}
                     </div>
 
                     <div>
@@ -3602,7 +3703,7 @@ export const AdminPanel = ({
                             <span className={`inline-flex items-center gap-1 font-semibold px-2 py-0.5 rounded text-[11px] ${
                               p.originType === 'domestic' ? 'bg-rose-50 text-rose-700' : 'bg-blue-50 text-blue-700'
                             }`}>
-                              {p.flag} {p.originType === 'domestic' ? 'Nội Địa' : p.countryName}
+                              {p.originType === 'domestic' ? 'Nội Địa (Việt Nam)' : `Nhập Khẩu ${cleanCountryName(p.countryName)}`}
                             </span>
                           </td>
                           <td className="p-3 font-mono text-[11px] text-slate-500">
@@ -6746,24 +6847,79 @@ export const AdminPanel = ({
                           originType: e.target.value,
                           countryCode: isDom ? 'VN' : (editingProduct.countryCode === 'VN' ? 'US' : editingProduct.countryCode),
                           countryName: isDom ? 'Việt Nam' : (editingProduct.countryName === 'Việt Nam' ? 'Mỹ' : editingProduct.countryName),
-                          flag: isDom ? '🇻🇳' : '🌍'
+                          flag: ''
                         });
+                        if (isDom) {
+                          setIsAddingCustomCountryEdit(false);
+                          setCustomCountryInputEdit('');
+                        }
                       }}
                       className="w-full px-3 py-2 bg-slate-50 border rounded-xl font-bold"
                     >
-                      <option value="domestic">🇻🇳 Hàng Nội Địa Uy Tín</option>
-                      <option value="imported">🌍 Hàng Nhập Ngoại</option>
+                      <option value="domestic">Hàng Nội Địa (Việt Nam)</option>
+                      <option value="imported">Hàng Nhập Khẩu</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-slate-700 font-bold mb-1">Quốc gia xuất xứ</label>
-                    <input
-                      type="text"
-                      value={editingProduct.countryName}
-                      onChange={(e) => setEditingProduct({ ...editingProduct, countryName: e.target.value })}
-                      className="w-full px-3 py-2 bg-slate-50 border rounded-xl"
-                    />
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-slate-700 font-bold">Quốc gia xuất xứ</label>
+                      {editingProduct.originType === 'imported' && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsAddingCustomCountryEdit(!isAddingCustomCountryEdit);
+                            if (isAddingCustomCountryEdit) {
+                              setEditingProduct({ ...editingProduct, countryName: 'Mỹ', flag: '' });
+                            }
+                          }}
+                          className="text-[10px] text-emerald-600 hover:text-emerald-800 font-bold hover:underline"
+                        >
+                          {isAddingCustomCountryEdit ? '← Chọn có sẵn' : '+ Thêm mới'}
+                        </button>
+                      )}
+                    </div>
+
+                    {editingProduct.originType === 'domestic' ? (
+                      <input
+                        type="text"
+                        value="Việt Nam"
+                        disabled
+                        className="w-full px-3 py-2 bg-slate-100 border rounded-xl text-slate-600 font-bold cursor-not-allowed"
+                      />
+                    ) : isAddingCustomCountryEdit ? (
+                      <input
+                        type="text"
+                        placeholder="Nhập tên quốc gia mới (VD: Thụy Sĩ, Canada...)"
+                        value={customCountryInputEdit}
+                        onChange={(e) => {
+                          setCustomCountryInputEdit(e.target.value);
+                          setEditingProduct({ ...editingProduct, countryName: e.target.value, flag: '' });
+                        }}
+                        className="w-full px-3 py-2 bg-white border border-emerald-500 rounded-xl font-bold text-slate-800"
+                        required
+                      />
+                    ) : (
+                      <select
+                        value={cleanCountryName(editingProduct.countryName)}
+                        onChange={(e) => {
+                          if (e.target.value === '__add_new__') {
+                            setIsAddingCustomCountryEdit(true);
+                            setCustomCountryInputEdit('');
+                          } else {
+                            setEditingProduct({ ...editingProduct, countryName: e.target.value, flag: '' });
+                          }
+                        }}
+                        className="w-full px-3 py-2 bg-slate-50 border rounded-xl font-bold"
+                      >
+                        {allAvailableCountries
+                          .filter(c => c !== 'Việt Nam')
+                          .map(c => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                        <option value="__add_new__">+ Thêm quốc gia mới...</option>
+                      </select>
+                    )}
                   </div>
 
                   <div>

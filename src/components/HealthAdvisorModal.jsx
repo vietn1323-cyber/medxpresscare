@@ -7,7 +7,7 @@ import {
   Briefcase, UserCheck, Droplets, Info, ChevronRight, PhoneCall,
   Clock, Award, HelpCircle
 } from 'lucide-react';
-import { PRODUCTS } from '../data/products';
+import { PRODUCTS, cleanCountryName } from '../data/products';
 import { consultWithAiPharmacist } from '../utils/aiHelper';
 
 // 1. DANH MỤC 5 ĐỐI TƯỢNG KHÁCH HÀNG CHUYÊN BIỆT
@@ -936,10 +936,10 @@ Quý khách đang gặp tình trạng khó chịu nào hoặc cần Dược sĩ 
                       <div>
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-blue-600 text-white flex items-center gap-1 shadow-xs">
-                            {importedProduct.flag || '🌍'} Nhập Ngoại Chính Ngạch
+                            Nhập Ngoại Chính Ngạch
                           </span>
                           <span className="text-[11px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded">
-                            {importedProduct.countryName || 'USA / Úc / Nhật'}
+                            {cleanCountryName(importedProduct.countryName)}
                           </span>
                         </div>
                         
@@ -1171,7 +1171,7 @@ Quý khách đang gặp tình trạng khó chịu nào hoặc cần Dược sĩ 
                                 <div>
                                   <div className="flex items-center justify-between text-[10px] font-bold mb-1">
                                     <span className={p.originType === 'domestic' ? 'text-rose-700' : 'text-blue-700'}>
-                                      {p.originType === 'domestic' ? '🇻🇳 Chuẩn GMP-WHO' : `${p.flag || '🌍'} Nhập chính ngạch`}
+                                      {p.originType === 'domestic' ? 'Nội Địa Chuẩn GMP-WHO' : `Nhập Khẩu ${cleanCountryName(p.countryName || 'Chính Ngạch')}`}
                                     </span>
                                     <span className="text-slate-400">{p.brand}</span>
                                   </div>

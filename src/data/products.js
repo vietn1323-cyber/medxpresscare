@@ -1,3 +1,33 @@
+// Helper hàm chuẩn hóa và làm sạch tên quốc gia (loại bỏ mã quốc gia, mã cờ Windows và hậu tố đóng mở ngoặc)
+export const cleanCountryName = (val) => {
+  if (!val) return 'Việt Nam';
+  let str = String(val).trim();
+  // Loại bỏ emoji cờ (regional indicator symbols gây lỗi hiển thị ký tự mã VN, US, DE trên Windows)
+  str = str.replace(/[\u{1F1E6}-\u{1F1FF}]/gu, '');
+  // Loại bỏ các emoji biểu tượng chung
+  str = str.replace(/[\u{1F300}-\u{1F5FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
+  // Loại bỏ các hậu tố đóng mở ngoặc chứa mã (2-4 ký tự: US, VN, UK, CA, JP, AU, DE, FRA...) hoặc tên nước
+  str = str.replace(/\s*\([A-Za-z]{2,4}\)/gi, '');
+  str = str.replace(/\s*\((USA|Japan|Korea|Germany|Australia|Nội địa|France|Canada|Anh|Mỹ|Úc|Nhật|Hàn|Đức)\)/gi, '');
+  // Loại bỏ tiền tố mã nước rời: VD 'VN - ', 'US - ', 'VN ', 'US '
+  str = str.replace(/^(US|VN|AU|JP|KR|DE|UK|FR)\s*[-:]?\s*/i, '');
+  str = str.replace(/\s*[-:]?\s*\b(US|VN|AU|JP|KR|DE|UK|FR)\b$/i, '');
+  str = str.trim();
+
+  // Chuẩn hóa về tên tiếng Việt chính xác duy nhất
+  const lower = str.toLowerCase();
+  if (lower === 'usa' || lower === 'us' || lower === 'mỹ' || lower === 'united states') return 'Mỹ';
+  if (lower === 'vn' || lower === 'vietnam' || lower === 'việt nam' || lower === 'nội địa') return 'Việt Nam';
+  if (lower === 'au' || lower === 'australia' || lower === 'úc') return 'Úc';
+  if (lower === 'jp' || lower === 'japan' || lower === 'nhật' || lower === 'nhật bản') return 'Nhật Bản';
+  if (lower === 'kr' || lower === 'korea' || lower === 'hàn' || lower === 'hàn quốc') return 'Hàn Quốc';
+  if (lower === 'de' || lower === 'germany' || lower === 'đức') return 'Đức';
+  if (lower === 'uk' || lower === 'anh' || lower === 'united kingdom') return 'Anh';
+  if (lower === 'fr' || lower === 'pháp' || lower === 'france') return 'Pháp';
+
+  return str || 'Việt Nam';
+};
+
 // Dữ liệu sản phẩm Thực phẩm chức năng MedXpressCare.com
 // Phân tách minh bạch: Hàng Nội Địa (Chuẩn GMP-WHO / OCOP) và Hàng Nhập Ngoại (USA, Úc, Nhật, Hàn, Đức)
 
@@ -29,13 +59,13 @@ export const CATEGORIES = [
 
 // 2. Phân loại theo Nguồn Gốc / Quốc Gia (Countries & Origin)
 export const COUNTRIES = [
-  { id: 'all', name: 'Tất cả xuất xứ', flag: '🌍' },
-  { id: 'VN', name: 'Việt Nam', flag: '🇻🇳', type: 'domestic' },
-  { id: 'US', name: 'Mỹ', flag: '🇺🇸', type: 'imported' },
-  { id: 'AU', name: 'Úc', flag: '🇦🇺', type: 'imported' },
-  { id: 'JP', name: 'Nhật Bản', flag: '🇯🇵', type: 'imported' },
-  { id: 'KR', name: 'Hàn Quốc', flag: '🇰🇷', type: 'imported' },
-  { id: 'DE', name: 'Đức', flag: '🇩🇪', type: 'imported' },
+  { id: 'all', name: 'Tất cả xuất xứ', flag: '' },
+  { id: 'VN', name: 'Việt Nam', flag: '', type: 'domestic' },
+  { id: 'US', name: 'Mỹ', flag: '', type: 'imported' },
+  { id: 'AU', name: 'Úc', flag: '', type: 'imported' },
+  { id: 'JP', name: 'Nhật Bản', flag: '', type: 'imported' },
+  { id: 'KR', name: 'Hàn Quốc', flag: '', type: 'imported' },
+  { id: 'DE', name: 'Đức', flag: '', type: 'imported' },
 ];
 
 // 3. Phân loại theo Dạng Bào Chế (Dosage Forms)
@@ -91,7 +121,7 @@ export const PRODUCTS = [
     originType: 'domestic',
     countryCode: 'VN',
     countryName: 'Việt Nam',
-    flag: '🇻🇳',
+    flag: '',
     brand: 'Thái Minh',
     manufacturer: 'Công ty Cổ phần Công nghệ Dược phẩm Lotus (Đạt chuẩn GMP-WHO)',
     regNumber: '10238/2019/ĐKSP',
@@ -133,7 +163,7 @@ export const PRODUCTS = [
     originType: 'domestic',
     countryCode: 'VN',
     countryName: 'Việt Nam',
-    flag: '🇻🇳',
+    flag: '',
     brand: 'Traphaco',
     manufacturer: 'Công ty TNHH MTV TraphacoSapa - Sa Pa, Lào Cai',
     regNumber: '5684/2021/ĐKSP',
@@ -174,7 +204,7 @@ export const PRODUCTS = [
     originType: 'domestic',
     countryCode: 'VN',
     countryName: 'Việt Nam',
-    flag: '🇻🇳',
+    flag: '',
     brand: 'OIC New',
     manufacturer: 'Công ty CP Công nghệ Mới Nhật Hải (Nhà máy đạt chuẩn GMP Bộ Y Tế)',
     regNumber: '4239/2020/ĐKSP',
@@ -213,7 +243,7 @@ export const PRODUCTS = [
     originType: 'domestic',
     countryCode: 'VN',
     countryName: 'Việt Nam',
-    flag: '🇻🇳',
+    flag: '',
     brand: 'Traphaco',
     manufacturer: 'Công ty Cổ phần Traphaco (Khu công nghiệp Tân Quang, Hưng Yên)',
     regNumber: 'VD-24316-16',
@@ -252,7 +282,7 @@ export const PRODUCTS = [
     originType: 'domestic',
     countryCode: 'VN',
     countryName: 'Việt Nam',
-    flag: '🇻🇳',
+    flag: '',
     brand: 'Sâm Ngọc Linh K5',
     manufacturer: 'Công ty CP Sâm Ngọc Linh Kon Tum (Đỉnh núi Ngọc Linh 2.500m)',
     regNumber: '8912/2021/ĐKSP',
@@ -292,7 +322,7 @@ export const PRODUCTS = [
     originType: 'domestic',
     countryCode: 'VN',
     countryName: 'Việt Nam',
-    flag: '🇻🇳',
+    flag: '',
     brand: 'Nam Dược',
     manufacturer: 'Công ty Cổ phần Nam Dược (Nhà máy chuẩn IMS tiêu chuẩn quốc tế)',
     regNumber: '1120/2022/ĐKSP',
@@ -334,7 +364,7 @@ export const PRODUCTS = [
     originType: 'domestic',
     countryCode: 'VN',
     countryName: 'Việt Nam',
-    flag: '🇻🇳',
+    flag: '',
     brand: 'Nam Dược',
     manufacturer: 'Công ty Cổ phần Nam Dược (Vùng trồng chuẩn GACP-WHO Hải Hậu)',
     regNumber: '3248/2020/ĐKSP',
@@ -374,7 +404,7 @@ export const PRODUCTS = [
     originType: 'domestic',
     countryCode: 'VN',
     countryName: 'Việt Nam',
-    flag: '🇻🇳',
+    flag: '',
     brand: 'Dược Hậu Giang',
     manufacturer: 'Công ty Cổ phần Dược Hậu Giang (DHG Pharma)',
     regNumber: '7921/2021/ĐKSP',
@@ -417,7 +447,7 @@ export const PRODUCTS = [
     originType: 'imported',
     countryCode: 'US',
     countryName: 'Mỹ',
-    flag: '🇺🇸',
+    flag: '',
     brand: 'Kirkland Signature',
     manufacturer: 'Costco Wholesale Corporation, Washington, USA',
     regNumber: '3721/2021/ĐKSP (Tem phụ nhập khẩu chính ngạch)',
@@ -456,7 +486,7 @@ export const PRODUCTS = [
     originType: 'imported',
     countryCode: 'AU',
     countryName: 'Úc',
-    flag: '🇦🇺',
+    flag: '',
     brand: 'Blackmores',
     manufacturer: 'Blackmores Ltd, 20 Jubilee Ave, Warriewood NSW 2102, Australia',
     regNumber: '4192/2021/ĐKSP (Có tem chống giả Bộ Công An)',
@@ -496,7 +526,7 @@ export const PRODUCTS = [
     originType: 'imported',
     countryCode: 'AU',
     countryName: 'Úc',
-    flag: '🇦🇺',
+    flag: '',
     brand: 'Blackmores',
     manufacturer: 'Blackmores Ltd, Australia (Chuẩn TGA nghiêm ngặt)',
     regNumber: '6125/2021/ĐKSP',
@@ -535,7 +565,7 @@ export const PRODUCTS = [
     originType: 'imported',
     countryCode: 'JP',
     countryName: 'Nhật Bản',
-    flag: '🇯🇵',
+    flag: '',
     brand: 'DHC Japan',
     manufacturer: 'DHC Corporation, Minato-ku, Tokyo, Japan',
     regNumber: '7842/2020/ĐKSP (Nhập khẩu nguyên hộp DHC Vietnam)',
@@ -575,7 +605,7 @@ export const PRODUCTS = [
     originType: 'imported',
     countryCode: 'JP',
     countryName: 'Nhật Bản',
-    flag: '🇯🇵',
+    flag: '',
     brand: 'DHC Japan',
     manufacturer: 'DHC Corporation, Tokyo, Japan',
     regNumber: '9214/2021/ĐKSP',
@@ -615,7 +645,7 @@ export const PRODUCTS = [
     originType: 'imported',
     countryCode: 'JP',
     countryName: 'Nhật Bản',
-    flag: '🇯🇵',
+    flag: '',
     brand: 'Orihiro',
     manufacturer: 'Orihiro Plantdew Co., Ltd, Gunma, Japan',
     regNumber: '8415/2020/ĐKSP',
@@ -655,7 +685,7 @@ export const PRODUCTS = [
     originType: 'imported',
     countryCode: 'KR',
     countryName: 'Hàn Quốc',
-    flag: '🇰🇷',
+    flag: '',
     brand: 'KGC Cheong Kwan Jang',
     manufacturer: 'Korea Ginseng Corp, Daejeon, Korea',
     regNumber: '2981/2021/ĐKSP (Tem 7 màu chính phủ Hàn Quốc)',
@@ -695,7 +725,7 @@ export const PRODUCTS = [
     originType: 'imported',
     countryCode: 'DE',
     countryName: 'Đức',
-    flag: '🇩🇪',
+    flag: '',
     brand: 'Doppelherz',
     manufacturer: 'Queisser Pharma GmbH & Co. KG, Flensburg, Germany',
     regNumber: '9510/2020/ĐKSP (Đầy đủ tem phụ & VAT)',
@@ -736,7 +766,7 @@ export const PRODUCTS = [
     originType: 'imported',
     countryCode: 'DE',
     countryName: 'Đức',
-    flag: '🇩🇪',
+    flag: '',
     brand: 'Doppelherz',
     manufacturer: 'Queisser Pharma GmbH & Co. KG, Germany',
     regNumber: '4821/2021/ĐKSP',
@@ -776,7 +806,7 @@ export const PRODUCTS = [
     originType: 'imported',
     countryCode: 'US',
     countryName: 'Mỹ',
-    flag: '🇺🇸',
+    flag: '',
     brand: 'NOW Foods',
     manufacturer: 'NOW Health Group, Inc., Bloomingdale, Illinois, USA',
     regNumber: '6824/2021/ĐKSP (Chứng nhận Non-GMO & GMP Mỹ)',
@@ -816,7 +846,7 @@ export const PRODUCTS = [
     originType: 'imported',
     countryCode: 'US',
     countryName: 'Mỹ',
-    flag: '🇺🇸',
+    flag: '',
     brand: 'Kirkland Signature',
     manufacturer: 'Church & Dwight Co., Inc., USA',
     regNumber: '7192/2021/ĐKSP',
@@ -856,7 +886,7 @@ export const PRODUCTS = [
     originType: 'imported',
     countryCode: 'AU',
     countryName: 'Úc',
-    flag: '🇦🇺',
+    flag: '',
     brand: 'Bio Island',
     manufacturer: 'JBX Pty Ltd, Sydney, New South Wales, Australia',
     regNumber: '5319/2021/ĐKSP (Hàng chính hãng tem đại sứ quán)',
@@ -896,7 +926,7 @@ export const PRODUCTS = [
     originType: 'imported',
     countryCode: 'JP',
     countryName: 'Nhật Bản',
-    flag: '🇯🇵',
+    flag: '',
     brand: 'DHC Japan',
     manufacturer: 'DIC Corporation, Chuo-ku, Tokyo, Japan',
     regNumber: '11093/2019/ĐKSP (Tem chống giả điện tử)',

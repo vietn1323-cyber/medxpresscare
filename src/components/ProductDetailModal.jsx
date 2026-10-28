@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { ProductReviewsSection } from './ProductReviewsSection';
 import { INITIAL_REVIEWS } from '../data/reviews';
-import { CATEGORIES } from '../data/products';
+import { CATEGORIES, cleanCountryName } from '../data/products';
 
 export const ProductDetailModal = ({ 
   product, 
@@ -80,7 +80,7 @@ export const ProductDetailModal = ({
             <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
               isDomestic ? 'bg-rose-100 text-rose-700' : 'bg-blue-100 text-blue-700'
             }`}>
-              {product.flag} {isDomestic ? 'Hàng Nội Địa Uy Tín' : `Nhập Khẩu Chính Ngạch ${product.countryName}`}
+              {isDomestic ? 'Hàng Nội Địa Uy Tín' : `Nhập Khẩu Chính Ngạch ${cleanCountryName(product.countryName)}`}
             </span>
             <span className="text-xs text-slate-500 font-mono hidden sm:inline">
               Mã: {product.id.toUpperCase()}

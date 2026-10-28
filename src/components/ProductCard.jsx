@@ -3,7 +3,7 @@ import {
   Star, ShoppingBag, Eye, Heart, ShieldCheck, 
   CheckCircle2, Sparkles, Zap, Flame 
 } from 'lucide-react';
-import { CATEGORIES } from '../data/products';
+import { CATEGORIES, cleanCountryName } from '../data/products';
 
 export const ProductCard = ({ 
   product, 
@@ -27,8 +27,7 @@ export const ProductCard = ({
               : 'bg-blue-600/90 text-white'
           }`}
         >
-          <span>{product.flag}</span>
-          <span>{isDomestic ? 'Nội Địa Chuẩn GMP' : `Nhập Khẩu ${product.countryName}`}</span>
+          <span>{isDomestic ? 'Nội Địa Chuẩn GMP' : `Nhập Khẩu ${cleanCountryName(product.countryName)}`}</span>
         </div>
 
         {/* Wishlist Button */}

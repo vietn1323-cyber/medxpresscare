@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
-    "test": "node test_data_integrity.mjs && node test_edge_cases.mjs && node test_logistics_tracking.mjs && node test_ai_json_extraction.mjs && node test_full_system_regression.mjs && node test_bulk_and_category_management.mjs && node test_banner_management.mjs && node test_products_deletion_persistence.mjs && node test_ai_consultation_and_csv_export.mjs && node test_e2e_full_verification.mjs && node test_policy_pages.mjs && node test_policy_and_footer_admin.mjs",
+    "test": "node test_data_integrity.mjs && node test_edge_cases.mjs && node test_logistics_tracking.mjs && node test_ai_json_extraction.mjs && node test_full_system_regression.mjs && node test_bulk_and_category_management.mjs && node test_banner_management.mjs && node test_products_deletion_persistence.mjs && node test_ai_consultation_and_csv_export.mjs && node test_e2e_full_verification.mjs && node test_policy_pages.mjs && node test_policy_and_footer_admin.mjs && node test_country_management_and_clean_names.mjs",
     "test:policy": "node test_policy_pages.mjs && node test_policy_and_footer_admin.mjs",
     "test:consult": "node test_ai_consultation_and_csv_export.mjs",
     "test:persistence": "node test_products_deletion_persistence.mjs",

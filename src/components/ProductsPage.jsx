@@ -10,6 +10,7 @@ import { ProductCard } from './ProductCard';
 export const ProductsPage = ({
   products = [],
   allProducts = [],
+  availableCountries = [],
   originFilter = 'all',
   setOriginFilter,
   selectedCountry = 'all',
@@ -188,7 +189,7 @@ export const ProductsPage = ({
                   : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/60'
               }`}
             >
-              <span>🇻🇳 Hàng Nội Địa Uy Tín</span>
+              <span>Hàng Nội Địa Uy Tín</span>
               <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
                 originFilter === 'domestic' ? 'bg-rose-800 text-white' : 'bg-rose-200 text-rose-800'
               }`}>
@@ -211,7 +212,7 @@ export const ProductsPage = ({
                   : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/60'
               }`}
             >
-              <span>🌍 Hàng Nhập Ngoại Chính Ngạch</span>
+              <span>Hàng Nhập Khẩu Chính Ngạch</span>
               <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
                 originFilter === 'imported' ? 'bg-blue-800 text-white' : 'bg-blue-200 text-blue-800'
               }`}>
@@ -250,6 +251,8 @@ export const ProductsPage = ({
           setPriceRange={setPriceRange}
           totalResults={products.length}
           onResetFilters={handleResetFilters}
+          availableCountries={availableCountries}
+          productsList={allProducts}
         />
 
         {/* 5. Lưới Danh Sách Sản Phẩm (Product Grid) */}

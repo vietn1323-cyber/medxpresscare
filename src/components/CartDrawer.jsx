@@ -4,7 +4,7 @@ import {
   Truck, ShieldCheck, Tag, CheckCircle2, Award, Sparkles, Gift, ChevronRight 
 } from 'lucide-react';
 import { DEFAULT_VOUCHERS, calculateVoucherDiscount } from '../data/vouchers';
-import { PRODUCTS } from '../data/products';
+import { PRODUCTS, cleanCountryName } from '../data/products';
 
 const FREESHIP_THRESHOLD = 500000;
 const TIER_1_THRESHOLD = 300000;
@@ -195,7 +195,7 @@ export const CartDrawer = ({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1 text-[10px] font-bold mb-0.5">
                         <span className={isDomestic ? 'text-rose-600' : 'text-blue-600'}>
-                          {item.flag} {isDomestic ? 'Nội Địa Chuẩn GMP' : item.countryName}
+                          {isDomestic ? 'Nội Địa Chuẩn GMP' : cleanCountryName(item.countryName)}
                         </span>
                         <span className="text-slate-300">•</span>
                         <span className="text-slate-500 truncate">{item.brand}</span>

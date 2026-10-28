@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, Heart, ShoppingBag, Trash2, ArrowRight } from 'lucide-react';
+import { cleanCountryName } from '../data/products';
 
 export const WishlistModal = ({ 
   isOpen, 
@@ -59,7 +60,7 @@ export const WishlistModal = ({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 text-[10px] font-bold mb-0.5">
                       <span className={isDomestic ? 'text-rose-600' : 'text-blue-600'}>
-                        {item.flag} {isDomestic ? 'Nội Địa' : item.countryName}
+                        {isDomestic ? 'Nội Địa Chuẩn GMP' : cleanCountryName(item.countryName)}
                       </span>
                     </div>
 

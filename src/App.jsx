@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { PRODUCTS } from './data/products';
+import { PRODUCTS, cleanCountryName } from './data/products';
 import { INITIAL_CUSTOMERS } from './data/customers';
 import { VERIFIED_REGISTRATIONS } from './data/registrations';
 import { DEFAULT_SHIPPING_CARRIERS } from './data/shippingCarriers';
@@ -95,22 +95,85 @@ export default function App() {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
           return parsed.map(p => {
-            if (!Array.isArray(p.categories) || p.categories.length === 0) {
-              return {
-                ...p,
-                categories: p.category ? [p.category] : ['bo-nao-than-kinh'],
-                category: p.category || 'bo-nao-than-kinh'
-              };
-            }
-            return p;
+            const country = cleanCountryName(p.countryName);
+            const categories = Array.isArray(p.categories) && p.categories.length > 0 
+              ? p.categories 
+              : (p.category ? [p.category] : ['bo-nao-than-kinh']);
+            return {
+              ...p,
+              countryName: country,
+              flag: '',
+              categories,
+              category: categories[0] || 'bo-nao-than-kinh'
+            };
           });
         }
       }
-      return PRODUCTS;
+      return PRODUCTS.map(p => ({
+        ...p,
+        countryName: cleanCountryName(p.countryName),
+        flag: ''
+      }));
     } catch {
       return PRODUCTS;
     }
   });
+
+  // Available Countries state (Quản lý các quốc gia xuất xứ động cho Admin và Frontend)
+  const DEFAULT_AVAILABLE_COUNTRIES = ['Việt Nam', 'Mỹ', 'Úc', 'Nhật Bản', 'Hàn Quốc', 'Đức', 'Pháp', 'Anh'];
+
+  const [availableCountries, setAvailableCountries] = useState(() => {
+    try {
+      const saved = localStorage.getItem('medxpress_available_countries');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return Array.from(new Set(parsed.map(cleanCountryName).filter(Boolean)));
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+    return DEFAULT_AVAILABLE_COUNTRIES;
+  });
+
+  const handleAddCountry = (newCountry) => {
+    const cleaned = cleanCountryName(newCountry);
+    if (!cleaned) return;
+    setAvailableCountries(prev => {
+      if (prev.includes(cleaned)) return prev;
+      const next = [...prev, cleaned];
+      localStorage.setItem('medxpress_available_countries', JSON.stringify(next));
+      return next;
+    });
+  };
+
+  // Tự động dọn sạch cache trình duyệt (loại bỏ mọi ký tự mã cờ Windows và hậu tố cũ như (USA))
+  useEffect(() => {
+    const saved = localStorage.getItem('medxpress_custom_products');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          let hasDiff = false;
+          const cleaned = parsed.map(p => {
+            const cleanC = cleanCountryName(p.countryName);
+            if (p.flag || p.countryName !== cleanC) {
+              hasDiff = true;
+              return { ...p, countryName: cleanC, flag: '' };
+            }
+            return p;
+          });
+          if (hasDiff) {
+            localStorage.setItem('medxpress_custom_products', JSON.stringify(cleaned));
+            setProductsList(cleaned);
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+  }, []);
 
   // Admin Orders state (Đơn hàng khách đặt thực tế)
   const [orders, setOrders] = useState(() => {
@@ -1306,32 +1369,32 @@ export default function App() {
         return {
           originType: 'domestic',
           countryCode: 'VN',
-          countryName: r.countryName || r.countryname || r.quoc_gia || 'Việt Nam',
-          flag: '🇻🇳'
+          countryName: 'Việt Nam',
+          flag: ''
         };
       }
 
       if (countryStr.includes('mỹ') || countryStr.includes('usa') || countryStr.includes('us')) {
-        return { originType: 'imported', countryCode: 'US', countryName: 'Mỹ', flag: '🇺🇸' };
+        return { originType: 'imported', countryCode: 'US', countryName: 'Mỹ', flag: '' };
       }
       if (countryStr.includes('úc') || countryStr.includes('australia') || countryStr.includes('au')) {
-        return { originType: 'imported', countryCode: 'AU', countryName: 'Úc', flag: '🇦🇺' };
+        return { originType: 'imported', countryCode: 'AU', countryName: 'Úc', flag: '' };
       }
       if (countryStr.includes('nhật') || countryStr.includes('japan') || countryStr.includes('jp')) {
-        return { originType: 'imported', countryCode: 'JP', countryName: 'Nhật Bản', flag: '🇯🇵' };
+        return { originType: 'imported', countryCode: 'JP', countryName: 'Nhật Bản', flag: '' };
       }
       if (countryStr.includes('hàn') || countryStr.includes('korea') || countryStr.includes('kr')) {
-        return { originType: 'imported', countryCode: 'KR', countryName: 'Hàn Quốc', flag: '🇰🇷' };
+        return { originType: 'imported', countryCode: 'KR', countryName: 'Hàn Quốc', flag: '' };
       }
       if (countryStr.includes('đức') || countryStr.includes('germany') || countryStr.includes('de')) {
-        return { originType: 'imported', countryCode: 'DE', countryName: 'Đức', flag: '🇩🇪' };
+        return { originType: 'imported', countryCode: 'DE', countryName: 'Đức', flag: '' };
       }
 
       return {
         originType: 'imported',
-        countryCode: 'US',
-        countryName: r.countryName || r.countryname || r.quoc_gia || 'Nhập Khẩu Chính Hãng',
-        flag: '🌍'
+        countryCode: 'OTHER',
+        countryName: cleanCountryName(r.countryName || r.countryname || r.quoc_gia || 'Nhập Khẩu'),
+        flag: ''
       };
     };
 
@@ -1567,7 +1630,20 @@ export default function App() {
       if (originFilter === 'imported' && p.originType !== 'imported') return false;
 
       // 3. Country Filter
-      if (selectedCountry !== 'all' && p.countryCode !== selectedCountry) return false;
+      if (selectedCountry !== 'all') {
+        const cleanPCountry = cleanCountryName(p.countryName || '');
+        const targetClean = cleanCountryName(selectedCountry);
+        
+        const isTargetVN = targetClean === 'Việt Nam' || selectedCountry === 'VN';
+        if (isTargetVN) {
+          if (p.originType !== 'domestic' && cleanPCountry !== 'Việt Nam' && p.countryCode !== 'VN') return false;
+        } else {
+          const matchCode = p.countryCode && p.countryCode.toLowerCase() === selectedCountry.toLowerCase();
+          const matchName = cleanPCountry.toLowerCase() === targetClean.toLowerCase() ||
+                            cleanPCountry.toLowerCase() === selectedCountry.toLowerCase();
+          if (!matchCode && !matchName) return false;
+        }
+      }
 
       // 4. Category Filter (Kiểm tra sản phẩm có thuộc nhóm sức khỏe được chọn hay không)
       if (selectedCategory !== 'all') {
@@ -1670,6 +1746,7 @@ export default function App() {
         <ProductsPage
           products={filteredProducts}
           allProducts={productsList}
+          availableCountries={availableCountries}
           originFilter={originFilter}
           setOriginFilter={setOriginFilter}
           selectedCountry={selectedCountry}
@@ -1775,7 +1852,7 @@ export default function App() {
                       <span className={`absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full ${
                         isDomestic ? 'bg-rose-100 text-rose-800' : 'bg-blue-100 text-blue-800'
                       }`}>
-                        {p.flag} {isDomestic ? 'Nội Địa' : p.countryName}
+                        {isDomestic ? 'Nội Địa Chuẩn GMP' : `Nhập Khẩu ${cleanCountryName(p.countryName)}`}
                       </span>
                     </div>
 
@@ -1817,6 +1894,8 @@ export default function App() {
           setOriginFilter={setOriginFilter}
           selectedCountry={selectedCountry}
           setSelectedCountry={setSelectedCountry}
+          availableCountries={availableCountries}
+          productsList={productsList}
           selectedCategory={selectedCategory}
           setSelectedCategory={setSelectedCategory}
           selectedDosage={selectedDosage}
@@ -2051,6 +2130,8 @@ export default function App() {
           policies={policiesList}
           onUpdatePolicies={handleUpdatePolicies}
           onNavigateToPolicy={handleNavigateToPolicy}
+          availableCountries={availableCountries}
+          onAddCountry={handleAddCountry}
           onOpenOrderTracking={(order) => {
             handleNavigateToTracking(order?.id || '');
           }}
