@@ -513,9 +513,10 @@ export const ProductDetailModal = ({
 
                 <button
                   onClick={handleBuyNowWithCombo}
-                  className="flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 transition-all"
+                  className="flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 transition-all cursor-pointer"
                 >
-                  <span>Mua Ngay Hỏa Tốc</span>
+                  <CreditCard className="w-4 h-4" />
+                  <span>Mua Ngay</span>
                 </button>
 
                 <button

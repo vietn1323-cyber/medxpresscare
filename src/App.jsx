@@ -35,6 +35,7 @@ import { apiClient } from './services/apiClient';
 import { usePWAInstall } from './hooks/usePWAInstall';
 import { PWAInstallModal } from './components/PWAInstallModal';
 import { PWAInstallBanner } from './components/PWAInstallBanner';
+import { StickyCart } from './components/StickyCart';
 import { MyMedicineCabinetModal } from './components/MyMedicineCabinetModal';
 import { generateAiMedicationSchedule, calculateRefillSchedule } from './utils/medicationHelper';
 import { 
@@ -2338,8 +2339,17 @@ export default function App() {
         policies={policiesList}
       />
 
+      {/* Sticky Cart Bar (Thanh giỏ hàng nổi cố định giúp khách thanh toán nhanh 1-chạm) */}
+      <StickyCart
+        cartItems={cart}
+        onOpenCart={() => setIsCartOpen(true)}
+        onProceedCheckout={() => setIsCheckoutOpen(true)}
+        storeConfig={storeConfig}
+        hidden={isCartOpen || isCheckoutOpen || currentView === 'admin'}
+      />
+
       {/* Floating Call to Action Buttons (Dành riêng cho khách hàng: Dược sĩ tư vấn & Hotline) */}
-      <div className="fixed bottom-5 right-5 z-40 flex flex-col gap-2.5">
+      <div className={`fixed right-4 sm:right-5 z-40 flex flex-col gap-2.5 transition-all duration-300 ${cart.length > 0 && !isCartOpen && !isCheckoutOpen && currentView !== 'admin' ? 'bottom-28 sm:bottom-5' : 'bottom-5'}`}>
         <button
           onClick={() => setIsAdvisorOpen(true)}
           className="group flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white p-3 sm:px-4 sm:py-3 rounded-full shadow-xl shadow-emerald-700/40 transition-all hover:scale-105 active:scale-95"
