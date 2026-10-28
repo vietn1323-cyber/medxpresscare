@@ -3,6 +3,68 @@
  * Xử lý kết nối API, tạo vận đơn thật, lấy mã vận đơn, in phiếu A5 và tra cứu hành trình bưu kiện
  */
 
+import { 
+  GHN_PROVINCES, 
+  GHN_DISTRICTS, 
+  GHN_WARDS, 
+  getGhnDistricts, 
+  getGhnWards, 
+  resolveGhnCodes 
+} from '../data/ghnLocationData.js';
+
+export { GHN_PROVINCES, GHN_DISTRICTS, GHN_WARDS, getGhnDistricts, getGhnWards, resolveGhnCodes };
+
+/**
+ * Lấy danh sách Tỉnh/Thành phố chuẩn từ GHN Master Data API
+ */
+export async function fetchGhnProvinces(apiKey = '', isDev = false) {
+  try {
+    const res = await fetch('/api/shipping/ghn/master-data/provinces', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ apiKey, isDev })
+    });
+    const result = await res.json();
+    return result.data || GHN_PROVINCES;
+  } catch (err) {
+    return GHN_PROVINCES;
+  }
+}
+
+/**
+ * Lấy danh sách Quận/Huyện của GHN theo ProvinceID
+ */
+export async function fetchGhnDistricts(provinceId, apiKey = '', isDev = false) {
+  try {
+    const res = await fetch('/api/shipping/ghn/master-data/districts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ provinceId, apiKey, isDev })
+    });
+    const result = await res.json();
+    return result.data || getGhnDistricts(provinceId);
+  } catch (err) {
+    return getGhnDistricts(provinceId);
+  }
+}
+
+/**
+ * Lấy danh sách Phường/Xã chuẩn của GHN theo to_district_id kèm WardCode
+ */
+export async function fetchGhnWards(districtId, apiKey = '', isDev = false) {
+  try {
+    const res = await fetch('/api/shipping/ghn/master-data/wards', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ districtId, apiKey, isDev })
+    });
+    const result = await res.json();
+    return result.data || getGhnWards(districtId);
+  } catch (err) {
+    return getGhnWards(districtId);
+  }
+}
+
 /**
  * Kiểm tra kết nối API với GHN (gọi qua Cloudflare Worker proxy để tránh CORS)
  */
@@ -40,6 +102,17 @@ export async function createGhnOrder(order, ghnCarrier, storeConfig = {}) {
   if (!ghnCarrier || !ghnCarrier.apiKey) {
     throw new Error('Chưa cấu hình Token API cho Giao Hàng Nhanh (GHN)');
   }
+
+  // Bước 1: Log/print Payload Request trước khi đẩy đi
+  console.log('[GHN Frontend Dispatch Request]', {
+    order_id: order.id,
+    to_name: order.customer?.fullName || order.customer?.name,
+    to_phone: order.customer?.phone,
+    to_address: order.customer?.address,
+    to_district_id: order.customer?.to_district_id || order.customer?.districtId,
+    to_ward_code: order.customer?.to_ward_code || order.customer?.wardCode,
+    service_type_id: 2
+  });
 
   const res = await fetch('/api/shipping/ghn/create-order', {
     method: 'POST',

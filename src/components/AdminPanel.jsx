@@ -28,7 +28,8 @@ import {
   createGhnOrder, 
   fetchGhnTrackingDetail, 
   getGhnPrintUrl, 
-  mapGhnStatusToLocal 
+  mapGhnStatusToLocal,
+  resolveGhnCodes
 } from '../utils/ghnHelper';
 import { VIETQR_BANKS, getBankInfo, getVietQRImageUrl } from '../utils/vietqrHelper';
 
@@ -1017,9 +1018,27 @@ export const AdminPanel = ({
       return;
     }
 
+    // Đảm bảo đơn hàng có đầy đủ to_district_id và to_ward_code chuẩn GHN
+    const orderToPush = { ...order };
+    const customer = { ...(orderToPush.customer || {}) };
+    if (!customer.to_district_id || !customer.to_ward_code) {
+      const resolved = resolveGhnCodes(
+        customer.province || customer.city,
+        customer.district,
+        customer.ward || customer.commune
+      );
+      if (resolved) {
+        customer.to_district_id = resolved.districtId;
+        customer.to_ward_code = resolved.wardCode;
+        if (!customer.district) customer.district = resolved.districtName;
+        if (!customer.ward) customer.ward = resolved.wardName;
+        orderToPush.customer = customer;
+      }
+    }
+
     setPushingGhnOrderId(order.id);
     try {
-      const res = await createGhnOrder(order, ghnCarrier, storeConfig);
+      const res = await createGhnOrder(orderToPush, ghnCarrier, storeConfig);
       if (res && res.orderCode) {
         if (onUpdateOrderStatus) {
           onUpdateOrderStatus(order.id, 'confirmed', {

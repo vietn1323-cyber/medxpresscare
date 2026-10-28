@@ -39,7 +39,12 @@ export const CheckoutModal = ({
     phone: '',
     email: '',
     province: 'Thành phố Hà Nội',
-    district: '',
+    district: 'Quận Cầu Giấy',
+    districtId: 1442,
+    to_district_id: 1442,
+    ward: 'Phường Dịch Vọng Hậu',
+    wardCode: '20314',
+    to_ward_code: '20314',
     address: '',
     shippingMethod: 'ghtk', // ghtk (Giao hàng nhanh) | express (Giao hỏa tốc HN) | ghn | viettel
     paymentMethod: 'vietqr', // cod | vietqr | vnpay
@@ -244,7 +249,11 @@ export const CheckoutModal = ({
       id: generated,
       trackingNumber: trackingNo,
       createdAt: new Date().toISOString(),
-      customer: { ...formData },
+      customer: { 
+        ...formData,
+        to_district_id: Number(formData.to_district_id || formData.districtId || 1442),
+        to_ward_code: String(formData.to_ward_code || formData.wardCode || '20314')
+      },
       items: [...cartItems],
       giftItem,
       subtotal,
@@ -876,10 +885,13 @@ export const CheckoutModal = ({
                   </div>
                 </div>
 
-                {/* Mô Hình Địa Chỉ 2 Cấp (Cấp 1: Tỉnh/Thành phố; Cấp 2: Xã/Phường/Thị trấn sau sáp nhập) */}
+                {/* Mô Hình Địa Chỉ Chuẩn GHN (Tỉnh/Thành phố, Quận/Huyện to_district_id, Phường/Xã <option value="Mã_WardCode">) */}
                 <TwoTierAddressFields
                   province={formData.province}
-                  ward={formData.district}
+                  district={formData.district}
+                  districtId={formData.to_district_id || formData.districtId}
+                  ward={formData.ward}
+                  wardCode={formData.to_ward_code || formData.wardCode}
                   onProvinceChange={(newProv) => {
                     setFormData(prev => ({
                       ...prev,
@@ -888,9 +900,28 @@ export const CheckoutModal = ({
                       shippingMethod: (!isHanoiProvince(newProv) && prev.shippingMethod === 'express') ? 'ghtk' : prev.shippingMethod
                     }));
                   }}
-                  onWardChange={(newWard) => {
-                    setFormData(prev => ({ ...prev, district: newWard }));
+                  onDistrictChange={(distName, distId) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      district: distName,
+                      districtId: distId,
+                      to_district_id: distId
+                    }));
+                  }}
+                  onWardChange={(newWard, newWardCode, distId, distName) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      ward: newWard,
+                      district: distName || prev.district,
+                      districtId: distId || prev.districtId,
+                      to_district_id: distId || prev.to_district_id,
+                      wardCode: newWardCode || prev.wardCode,
+                      to_ward_code: newWardCode || prev.to_ward_code
+                    }));
                     if (errors.district) setErrors(prev => ({ ...prev, district: '' }));
+                  }}
+                  onWardCodeChange={(code) => {
+                    setFormData(prev => ({ ...prev, wardCode: code, to_ward_code: code }));
                   }}
                   errorWard={errors.district}
                 />

@@ -4,6 +4,14 @@
  */
 
 import webpush from 'web-push';
+import { 
+  GHN_PROVINCES, 
+  GHN_DISTRICTS, 
+  GHN_WARDS, 
+  getGhnDistricts, 
+  getGhnWards, 
+  resolveGhnCodes 
+} from './src/data/ghnLocationData.js';
 
 const VAPID_PUBLIC_KEY = 'BGiqquRV_799dDEJLH1DYpT-k957puxsiEPvORHnVoh2MZc2wRFxwEWtAJ45_CyQDUUWGrZO2em9KqHJNrybPgA';
 const VAPID_PRIVATE_KEY = 'ZmS4M078UwQACEzUmzsGgKQPaSHfcFR2ylEBQjxxaRY';
@@ -952,6 +960,82 @@ Viết bài y khoa chuẩn SEO On-Page. Trả về JSON: {"title": "...", "summa
         }
       }
 
+      // /api/shipping/ghn/master-data/provinces
+      if (pathname === '/api/shipping/ghn/master-data/provinces') {
+        try {
+          const { apiKey, isDev } = await request.json().catch(() => ({}));
+          const baseUrl = isDev 
+            ? 'https://dev-online-gateway.ghn.vn/shiip/public-api' 
+            : 'https://online-gateway.ghn.vn/shiip/public-api';
+
+          if (apiKey) {
+            const ghnRes = await fetch(`${baseUrl}/master-data/province`, {
+              headers: { 'Content-Type': 'application/json', 'Token': apiKey.trim() }
+            });
+            const data = await ghnRes.json().catch(() => ({}));
+            if (data.code === 200 && Array.isArray(data.data)) {
+              return jsonResponse({ success: true, data: data.data });
+            }
+          }
+          return jsonResponse({ success: true, data: GHN_PROVINCES });
+        } catch (err) {
+          return jsonResponse({ success: true, data: GHN_PROVINCES });
+        }
+      }
+
+      // /api/shipping/ghn/master-data/districts
+      if (pathname === '/api/shipping/ghn/master-data/districts') {
+        try {
+          const { provinceId, apiKey, isDev } = await request.json().catch(() => ({}));
+          const baseUrl = isDev 
+            ? 'https://dev-online-gateway.ghn.vn/shiip/public-api' 
+            : 'https://online-gateway.ghn.vn/shiip/public-api';
+
+          if (apiKey && provinceId) {
+            const ghnRes = await fetch(`${baseUrl}/master-data/district`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Token': apiKey.trim() },
+              body: JSON.stringify({ province_id: Number(provinceId) })
+            });
+            const data = await ghnRes.json().catch(() => ({}));
+            if (data.code === 200 && Array.isArray(data.data)) {
+              return jsonResponse({ success: true, data: data.data });
+            }
+          }
+          const districts = getGhnDistricts(provinceId);
+          return jsonResponse({ success: true, data: districts });
+        } catch (err) {
+          const districts = getGhnDistricts(provinceId);
+          return jsonResponse({ success: true, data: districts });
+        }
+      }
+
+      // /api/shipping/ghn/master-data/wards
+      if (pathname === '/api/shipping/ghn/master-data/wards') {
+        try {
+          const { districtId, apiKey, isDev } = await request.json().catch(() => ({}));
+          const baseUrl = isDev 
+            ? 'https://dev-online-gateway.ghn.vn/shiip/public-api' 
+            : 'https://online-gateway.ghn.vn/shiip/public-api';
+
+          if (apiKey && districtId) {
+            const ghnRes = await fetch(`${baseUrl}/master-data/ward?district_id=${districtId}`, {
+              method: 'GET',
+              headers: { 'Content-Type': 'application/json', 'Token': apiKey.trim() }
+            });
+            const data = await ghnRes.json().catch(() => ({}));
+            if (data.code === 200 && Array.isArray(data.data)) {
+              return jsonResponse({ success: true, data: data.data });
+            }
+          }
+          const wards = getGhnWards(districtId);
+          return jsonResponse({ success: true, data: wards });
+        } catch (err) {
+          const wards = getGhnWards(districtId);
+          return jsonResponse({ success: true, data: wards });
+        }
+      }
+
       // /api/shipping/ghn/create-order
       if (pathname === '/api/shipping/ghn/create-order') {
         try {
@@ -989,60 +1073,72 @@ Viết bài y khoa chuẩn SEO On-Page. Trả về JSON: {"title": "...", "summa
           const toWard = customer.ward || customer.commune || 'Quan Hoa';
           const toProvince = customer.province || customer.city || 'Hà Nội';
 
-          // Tự động giải quyết district_id và ward_code của GHN qua master-data
-          let to_district_id = null;
-          let to_ward_code = null;
+          // Tự động giải quyết district_id và ward_code của GHN
+          let to_district_id = customer.to_district_id || customer.districtId || null;
+          let to_ward_code = customer.to_ward_code || customer.wardCode || null;
 
-          try {
-            const provRes = await fetch(`${baseUrl}/master-data/province`, {
-              headers: { 'Content-Type': 'application/json', 'Token': apiKey.trim() }
-            });
-            const provData = await provRes.json().catch(() => ({}));
-            if (provData.code === 200 && Array.isArray(provData.data)) {
-              const cleanProv = toProvince.toLowerCase().replace(/tỉnh|thành phố|tp\.?|tp/g, '').trim();
-              const matchedProv = provData.data.find(p => {
-                const pName = (p.ProvinceName || '').toLowerCase().replace(/tỉnh|thành phố|tp\.?|tp/g, '').trim();
-                return pName.includes(cleanProv) || cleanProv.includes(pName);
+          // Nếu chưa có mã (từ đơn hàng cũ hoặc form thuần text), giải quyết chuẩn xác qua resolveGhnCodes
+          if (!to_district_id || !to_ward_code) {
+            const resolved = resolveGhnCodes(toProvince, toDistrict, toWard);
+            if (resolved) {
+              if (!to_district_id) to_district_id = resolved.districtId;
+              if (!to_ward_code) to_ward_code = resolved.wardCode;
+            }
+          }
+
+          // Fallback tra cứu qua GHN API trực tiếp nếu vẫn thiếu
+          if (!to_district_id || !to_ward_code) {
+            try {
+              const provRes = await fetch(`${baseUrl}/master-data/province`, {
+                headers: { 'Content-Type': 'application/json', 'Token': apiKey.trim() }
               });
-
-              if (matchedProv) {
-                const distRes = await fetch(`${baseUrl}/master-data/district`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json', 'Token': apiKey.trim() },
-                  body: JSON.stringify({ province_id: matchedProv.ProvinceID })
+              const provData = await provRes.json().catch(() => ({}));
+              if (provData.code === 200 && Array.isArray(provData.data)) {
+                const cleanProv = toProvince.toLowerCase().replace(/tỉnh|thành phố|tp\.?|tp/g, '').trim();
+                const matchedProv = provData.data.find(p => {
+                  const pName = (p.ProvinceName || '').toLowerCase().replace(/tỉnh|thành phố|tp\.?|tp/g, '').trim();
+                  return pName.includes(cleanProv) || cleanProv.includes(pName);
                 });
-                const distData = await distRes.json().catch(() => ({}));
-                if (distData.code === 200 && Array.isArray(distData.data)) {
-                  const cleanDist = toDistrict.toLowerCase().replace(/quận|huyện|thị xã|thành phố/g, '').trim();
-                  const matchedDist = distData.data.find(d => {
-                    const dName = (d.DistrictName || '').toLowerCase().replace(/quận|huyện|thị xã|thành phố/g, '').trim();
-                    return dName.includes(cleanDist) || cleanDist.includes(dName);
+
+                if (matchedProv) {
+                  const distRes = await fetch(`${baseUrl}/master-data/district`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Token': apiKey.trim() },
+                    body: JSON.stringify({ province_id: matchedProv.ProvinceID })
                   });
-
-                  if (matchedDist) {
-                    to_district_id = matchedDist.DistrictID;
-
-                    const wardRes = await fetch(`${baseUrl}/master-data/ward?district_id=${matchedDist.DistrictID}`, {
-                      method: 'GET',
-                      headers: { 'Content-Type': 'application/json', 'Token': apiKey.trim() }
+                  const distData = await distRes.json().catch(() => ({}));
+                  if (distData.code === 200 && Array.isArray(distData.data)) {
+                    const cleanDist = toDistrict.toLowerCase().replace(/quận|huyện|thị xã|thành phố/g, '').trim();
+                    const matchedDist = distData.data.find(d => {
+                      const dName = (d.DistrictName || '').toLowerCase().replace(/quận|huyện|thị xã|thành phố/g, '').trim();
+                      return dName.includes(cleanDist) || cleanDist.includes(dName);
                     });
-                    const wardData = await wardRes.json().catch(() => ({}));
-                    if (wardData.code === 200 && Array.isArray(wardData.data)) {
-                      const cleanWard = toWard.toLowerCase().replace(/phường|xã|thị trấn/g, '').trim();
-                      const matchedWard = wardData.data.find(w => {
-                        const wName = (w.WardName || '').toLowerCase().replace(/phường|xã|thị trấn/g, '').trim();
-                        return wName.includes(cleanWard) || cleanWard.includes(wName);
+
+                    if (matchedDist) {
+                      to_district_id = matchedDist.DistrictID;
+
+                      const wardRes = await fetch(`${baseUrl}/master-data/ward?district_id=${matchedDist.DistrictID}`, {
+                        method: 'GET',
+                        headers: { 'Content-Type': 'application/json', 'Token': apiKey.trim() }
                       });
-                      if (matchedWard) {
-                        to_ward_code = String(matchedWard.WardCode);
+                      const wardData = await wardRes.json().catch(() => ({}));
+                      if (wardData.code === 200 && Array.isArray(wardData.data)) {
+                        const cleanWard = toWard.toLowerCase().replace(/phường|xã|thị trấn/g, '').trim();
+                        const matchedWard = wardData.data.find(w => {
+                          const wName = (w.WardName || '').toLowerCase().replace(/phường|xã|thị trấn/g, '').trim();
+                          return wName.includes(cleanWard) || cleanWard.includes(wName);
+                        });
+                        if (matchedWard) {
+                          to_ward_code = String(matchedWard.WardCode);
+                        }
                       }
                     }
                   }
                 }
               }
+            } catch (e) {
+              console.warn('[GHN Location Resolver API Fallback]', e.message);
             }
-          } catch (e) {
-            console.warn('[GHN Location Resolver]', e.message);
           }
 
           // Chuẩn bị payload gửi GHN
@@ -1058,6 +1154,8 @@ Viết bài y khoa chuẩn SEO On-Page. Trả về JSON: {"title": "...", "summa
             to_address: `${toAddress}, ${toWard}, ${toDistrict}, ${toProvince}`,
             to_ward_name: toWard,
             to_district_name: toDistrict,
+            to_district_id: Number(to_district_id),
+            to_ward_code: String(to_ward_code),
             cod_amount: codAmount,
             cod_failed_amount: 35000, // Phí thu hộ nếu giao không thành công (GTB của GHN)
             content: `Đơn hàng MedXpressCare #${order.id} (${items.length} hộp TPCN)`,
@@ -1069,8 +1167,26 @@ Viết bài y khoa chuẩn SEO On-Page. Trả về JSON: {"title": "...", "summa
             items: items
           };
 
-          if (to_district_id) ghnPayload.to_district_id = to_district_id;
-          if (to_ward_code) ghnPayload.to_ward_code = to_ward_code;
+          if (to_district_id) ghnPayload.to_district_id = Number(to_district_id);
+          if (to_ward_code) ghnPayload.to_ward_code = String(to_ward_code);
+
+          // BƯỚC 3: RÀNG BUỘC BIỂU MẪU (VALIDATION)
+          // Kiểm tra điều kiện trước khi thực hiện cURL/fetch đẩy sang GHN. Nếu to_ward_code trống, trả về thông báo lỗi yêu cầu người dùng hoàn thiện địa chỉ giao hàng.
+          if (!ghnPayload.to_ward_code || !String(ghnPayload.to_ward_code).trim() || !ghnPayload.to_district_id) {
+            console.error('[GHN Error] to_ward_code hoặc to_district_id bị thiếu:', {
+              to_district_id: ghnPayload.to_district_id,
+              to_ward_code: ghnPayload.to_ward_code,
+              customer
+            });
+            return jsonResponse({
+              success: false,
+              message: 'Lỗi địa chỉ giao hàng: Không thể xác định mã Phường/Xã (to_ward_code) hoặc Quận/Huyện (to_district_id) hợp lệ với GHN. Vui lòng kiểm tra và hoàn thiện lại Phường/Xã giao hàng của đơn.'
+            }, 400);
+          }
+
+          // BƯỚC 1: RÀ SOÁT KIỂM TRA DỮ LIỆU GỬI ĐI (PAYLOAD REQUEST)
+          // Log/print chuỗi JSON mà website của bạn sinh ra ngay trước khi gửi sang endpoint /shipping-order/create của GHN
+          console.log('[GHN Payload Request]', JSON.stringify(ghnPayload, null, 2));
 
           const ghnHeaders = {
             'Content-Type': 'application/json',
