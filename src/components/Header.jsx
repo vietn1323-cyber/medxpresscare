@@ -21,6 +21,7 @@ export const Header = ({
   onOpenVerifier,
   onOpenOrderTracking,
   onNavigateToTracking,
+  onNavigateToPolicy,
   customer,
   onOpenAuthModal,
   onOpenProfileModal,
@@ -42,14 +43,20 @@ export const Header = ({
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
               100% Chính Hãng - Bồi hoàn 300% nếu phát hiện giả
             </span>
-            <span className="hidden md:flex items-center gap-1 text-emerald-100">
+            <button 
+              onClick={() => onNavigateToPolicy ? onNavigateToPolicy('chinh-sach-giao-hang') : window.location.hash = '#rules'}
+              className="hidden md:flex items-center gap-1 text-emerald-100 hover:text-white transition-colors cursor-pointer"
+            >
               <Truck className="w-3.5 h-3.5" />
-              Giao hỏa tốc nội thành Hà Nội • Giao hàng nhanh toàn quốc
-            </span>
-            <span className="hidden lg:flex items-center gap-1 text-emerald-100">
+              <span>Giao hỏa tốc Hà Nội • Giao nhanh toàn quốc</span>
+            </button>
+            <button 
+              onClick={() => onNavigateToPolicy ? onNavigateToPolicy('chinh-sach-doi-tra') : window.location.hash = '#return'}
+              className="hidden lg:flex items-center gap-1 text-emerald-100 hover:text-white transition-colors cursor-pointer"
+            >
               <RefreshCw className="w-3.5 h-3.5" />
-              Đổi trả miễn phí 30 ngày
-            </span>
+              <span>Đổi trả 30 ngày • Bồi hoàn 300%</span>
+            </button>
           </div>
           <div className="flex items-center gap-3 sm:gap-4 ml-auto">
             {/* Customer Account & Points Top Bar Badge */}

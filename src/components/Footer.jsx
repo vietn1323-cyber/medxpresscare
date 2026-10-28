@@ -4,7 +4,7 @@ import {
   Truck, RefreshCw, FileText, Heart, Stethoscope 
 } from 'lucide-react';
 
-export const Footer = ({ onOpenVerifier, onOpenAdvisor, onOpenAdmin, onNavigateToTracking, hotline = '1800 6868' }) => {
+export const Footer = ({ onOpenVerifier, onOpenAdvisor, onOpenAdmin, onNavigateToTracking, onNavigateToPolicy, hotline = '1800 6868' }) => {
   return (
     <footer className="bg-slate-900 text-slate-300 mt-20 pt-14 pb-8 border-t border-slate-800">
       <div className="max-w-7xl mx-auto px-4">
@@ -109,19 +109,52 @@ export const Footer = ({ onOpenVerifier, onOpenAdvisor, onOpenAdmin, onNavigateT
                 </button>
               </li>
               <li>
-                <a href="#rules" className="hover:text-emerald-400 transition-colors">
-                  Chính sách giao hỏa tốc HN & Giao hàng nhanh
-                </a>
+                <button 
+                  onClick={() => onNavigateToPolicy ? onNavigateToPolicy('chinh-sach-giao-hang') : window.location.hash = '#rules'}
+                  className="hover:text-emerald-400 transition-colors flex items-center gap-1.5 text-left cursor-pointer"
+                >
+                  <span>📦</span> Chính sách giao hỏa tốc HN & Giao nhanh GSP
+                </button>
               </li>
               <li>
-                <a href="#return" className="hover:text-emerald-400 transition-colors">
-                  Chính sách đổi trả 30 ngày & Bồi hoàn 300%
-                </a>
+                <button 
+                  onClick={() => onNavigateToPolicy ? onNavigateToPolicy('chinh-sach-doi-tra') : window.location.hash = '#return'}
+                  className="hover:text-emerald-400 transition-colors flex items-center gap-1.5 text-left cursor-pointer"
+                >
+                  <span>🔄</span> Chính sách đổi trả 30 ngày & Bồi hoàn 300%
+                </button>
               </li>
               <li>
-                <a href="#privacy" className="hover:text-emerald-400 transition-colors">
-                  Bảo mật hồ sơ thông tin sức khỏe khách hàng
-                </a>
+                <button 
+                  onClick={() => onNavigateToPolicy ? onNavigateToPolicy('chinh-sach-kiem-hang') : window.location.hash = '#kiem-hang'}
+                  className="hover:text-emerald-400 transition-colors flex items-center gap-1.5 text-left cursor-pointer"
+                >
+                  <span>🛡️</span> Chính sách đồng kiểm 100% khi nhận hàng
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => onNavigateToPolicy ? onNavigateToPolicy('chinh-sach-bao-mat') : window.location.hash = '#privacy'}
+                  className="hover:text-emerald-400 transition-colors flex items-center gap-1.5 text-left cursor-pointer"
+                >
+                  <span>🔒</span> Bảo mật hồ sơ thông tin sức khỏe (NĐ 13/2023)
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => onNavigateToPolicy ? onNavigateToPolicy('chinh-sach-thanh-toan') : window.location.hash = '#thanh-toan'}
+                  className="hover:text-emerald-400 transition-colors flex items-center gap-1.5 text-left cursor-pointer"
+                >
+                  <span>💳</span> Hướng dẫn thanh toán VietQR & COD
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => onNavigateToPolicy ? onNavigateToPolicy('dieu-khoan-su-dung') : window.location.hash = '#dieu-khoan'}
+                  className="hover:text-emerald-400 transition-colors flex items-center gap-1.5 text-left cursor-pointer"
+                >
+                  <span>📜</span> Điều khoản dịch vụ & Quy chế hoạt động
+                </button>
               </li>
             </ul>
           </div>

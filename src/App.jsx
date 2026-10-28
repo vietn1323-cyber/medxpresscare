@@ -28,6 +28,7 @@ import { CustomerAuthModal } from './components/CustomerAuthModal';
 import { CustomerProfileModal } from './components/CustomerProfileModal';
 import { OrderTrackingModal } from './components/OrderTrackingModal';
 import { OrderTrackingPage } from './components/OrderTrackingPage';
+import { PolicyPage } from './components/PolicyPage';
 import { cleanPrice } from './utils/csvHelper';
 import { apiClient } from './services/apiClient';
 import { 
@@ -224,9 +225,10 @@ export default function App() {
   // Dedicated Article Detail Page View (Hiển thị bài viết trên trang riêng thay vì modal nổi)
   const [viewingArticle, setViewingArticle] = useState(null);
 
-  // View mode hiện tại: 'home' (Trang chủ) | 'products' (Trang danh mục sản phẩm) | 'tracking' (Trang tra cứu vận đơn)
+  // View mode hiện tại: 'home' (Trang chủ) | 'products' (Trang danh mục sản phẩm) | 'tracking' (Trang tra cứu vận đơn) | 'policy' (Trang chính sách & pháp chế)
   const [currentView, setCurrentView] = useState('home');
   const [trackingPageInitialCode, setTrackingPageInitialCode] = useState('');
+  const [policyPageInitialSlug, setPolicyPageInitialSlug] = useState('chinh-sach-giao-hang');
 
   // Điều hướng chuyển sang Trang Sản Phẩm chuyên biệt với bộ lọc nguồn gốc
   const handleNavigateToProducts = (origin = 'all') => {
@@ -259,15 +261,25 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Điều hướng chuyển sang Trang Chính Sách & Pháp Chế
+  const handleNavigateToPolicy = (slug = 'chinh-sach-giao-hang') => {
+    setViewingArticle(null);
+    setCurrentView('policy');
+    setPolicyPageInitialSlug(slug || 'chinh-sach-giao-hang');
+    window.location.hash = `#chinh-sach?tab=${encodeURIComponent(slug || 'chinh-sach-giao-hang')}`;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleGoHome = () => {
     setViewingArticle(null);
     setCurrentView('home');
     setTrackingPageInitialCode('');
+    setPolicyPageInitialSlug('chinh-sach-giao-hang');
     window.location.hash = '';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Đồng bộ bài viết, trang sản phẩm và trang tra cứu vận đơn với URL hash
+  // Đồng bộ bài viết, trang sản phẩm, trang tra cứu vận đơn và các trang chính sách với URL hash
   useEffect(() => {
     const handleHashSync = () => {
       const hash = window.location.hash || '';
@@ -307,12 +319,55 @@ export default function App() {
           setTrackingPageInitialCode(decodeURIComponent(codeMatch[1]));
         }
         return;
+      } else if (hash.startsWith('#chinh-sach')) {
+        setViewingArticle(null);
+        setCurrentView('policy');
+        const tabMatch = hash.match(/tab=([^&]+)/);
+        if (tabMatch && tabMatch[1]) {
+          setPolicyPageInitialSlug(decodeURIComponent(tabMatch[1]));
+        } else {
+          const slugPart = hash.replace('#chinh-sach/', '').replace('#chinh-sach', '').split('?')[0];
+          if (slugPart) {
+            setPolicyPageInitialSlug(slugPart);
+          }
+        }
+        return;
+      } else if (['#rules', '#shipping', '#giao-hang'].includes(hash)) {
+        setViewingArticle(null);
+        setCurrentView('policy');
+        setPolicyPageInitialSlug('chinh-sach-giao-hang');
+        return;
+      } else if (['#return', '#doi-tra', '#hoan-tien'].includes(hash)) {
+        setViewingArticle(null);
+        setCurrentView('policy');
+        setPolicyPageInitialSlug('chinh-sach-doi-tra');
+        return;
+      } else if (['#privacy', '#bao-mat'].includes(hash)) {
+        setViewingArticle(null);
+        setCurrentView('policy');
+        setPolicyPageInitialSlug('chinh-sach-bao-mat');
+        return;
+      } else if (['#kiem-hang', '#dong-kiem'].includes(hash)) {
+        setViewingArticle(null);
+        setCurrentView('policy');
+        setPolicyPageInitialSlug('chinh-sach-kiem-hang');
+        return;
+      } else if (['#thanh-toan', '#payment'].includes(hash)) {
+        setViewingArticle(null);
+        setCurrentView('policy');
+        setPolicyPageInitialSlug('chinh-sach-thanh-toan');
+        return;
+      } else if (['#dieu-khoan', '#terms', '#quy-che'].includes(hash)) {
+        setViewingArticle(null);
+        setCurrentView('policy');
+        setPolicyPageInitialSlug('dieu-khoan-su-dung');
+        return;
       }
 
       if (viewingArticle) {
         setViewingArticle(null);
       }
-      if (!hash.startsWith('#san-pham') && !hash.startsWith('#tra-cuu') && (currentView === 'products' || currentView === 'tracking') && (hash === '' || hash === '#')) {
+      if (!hash.startsWith('#san-pham') && !hash.startsWith('#tra-cuu') && !hash.startsWith('#chinh-sach') && (currentView === 'products' || currentView === 'tracking' || currentView === 'policy') && (hash === '' || hash === '#')) {
         setCurrentView('home');
       }
     };
@@ -1569,10 +1624,11 @@ export default function App() {
         onGoHome={handleGoHome}
         currentView={currentView}
         onNavigateToProducts={handleNavigateToProducts}
+        onNavigateToPolicy={handleNavigateToPolicy}
         hotline={storeConfig.hotline}
       />
 
-      {/* Hiển thị Trang Chi Tiết Bài Viết (Full-Page View), Trang Tra Cứu Vận Đơn, Trang Sản Phẩm Chuyên Biệt, hoặc Trang Chủ */}
+      {/* Hiển thị Trang Chi Tiết Bài Viết (Full-Page View), Trang Chính Sách, Trang Tra Cứu Vận Đơn, Trang Sản Phẩm Chuyên Biệt, hoặc Trang Chủ */}
       {viewingArticle ? (
         <ArticleDetailPage
           article={viewingArticle}
@@ -1582,6 +1638,13 @@ export default function App() {
           onSelectArticle={handleOpenArticle}
           onSelectProduct={(p) => setActiveProductDetail(p)}
           onAddToCart={handleAddToCart}
+          hotline={storeConfig.hotline}
+        />
+      ) : currentView === 'policy' ? (
+        <PolicyPage
+          initialSlug={policyPageInitialSlug}
+          onGoHome={handleGoHome}
+          onOpenAdvisor={() => setIsAdvisorOpen(true)}
           hotline={storeConfig.hotline}
         />
       ) : currentView === 'tracking' ? (
@@ -1879,6 +1942,7 @@ export default function App() {
         onOpenAdvisor={() => setIsAdvisorOpen(true)}
         onOpenAdmin={handleOpenAdminPortal}
         onNavigateToTracking={handleNavigateToTracking}
+        onNavigateToPolicy={handleNavigateToPolicy}
         hotline={storeConfig.hotline}
       />
 
