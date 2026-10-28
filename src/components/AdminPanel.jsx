@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   X, Package, ShoppingBag, Settings, DollarSign, 
   Users, CheckCircle2, Clock, Phone, AlertCircle, 
