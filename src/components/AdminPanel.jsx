@@ -30,6 +30,7 @@ import {
   getGhnPrintUrl, 
   mapGhnStatusToLocal 
 } from '../utils/ghnHelper';
+import { VIETQR_BANKS, getBankInfo, getVietQRImageUrl } from '../utils/vietqrHelper';
 
 export const AdminPanel = ({ 
   isOpen, 
@@ -7222,44 +7223,111 @@ export const AdminPanel = ({
                   </div>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                  <div className="font-bold text-slate-800 flex items-center gap-1.5">
-                    <QrCode className="w-4 h-4 text-emerald-600" />
-                    Cấu Hình Mã Chuyển Khoản Ngân Hàng Tự Động (VietQR)
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3.5">
+                  <div className="flex items-center justify-between">
+                    <div className="font-bold text-slate-800 flex items-center gap-1.5">
+                      <QrCode className="w-4 h-4 text-emerald-600" />
+                      <span>Cấu Hình Mã Chuyển Khoản Ngân Hàng Tự Động (VietQR)</span>
+                    </div>
+                    <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
+                      Chuẩn NAPAS 247
+                    </span>
                   </div>
                   
+                  {/* Lựa chọn ngân hàng hỗ trợ VietQR */}
+                  <div>
+                    <label className="block text-slate-600 font-medium mb-1 text-xs">Chọn ngân hàng (Chuẩn NAPAS 247)</label>
+                    <select
+                      value={getBankInfo(tempConfig.bankBin || tempConfig.bankName).bin}
+                      onChange={(e) => {
+                        const sel = VIETQR_BANKS.find(b => b.bin === e.target.value);
+                        if (sel) {
+                          setTempConfig({
+                            ...tempConfig,
+                            bankBin: sel.bin,
+                            bankName: sel.shortName
+                          });
+                        }
+                      }}
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl font-bold text-slate-800 text-xs"
+                    >
+                      {VIETQR_BANKS.map(b => (
+                        <option key={b.bin} value={b.bin}>
+                          {b.shortName} - {b.name} (BIN: {b.bin})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-slate-600 font-medium mb-1">Tên ngân hàng</label>
+                      <label className="block text-slate-600 font-medium mb-1 text-xs">Tên ngân hàng (Hiển thị)</label>
                       <input
                         type="text"
                         value={tempConfig.bankName}
-                        onChange={(e) => setTempConfig({ ...tempConfig, bankName: e.target.value })}
-                        className="w-full px-3 py-2 bg-white border rounded-xl font-bold"
+                        onChange={(e) => {
+                          const info = getBankInfo(e.target.value);
+                          setTempConfig({ ...tempConfig, bankName: e.target.value, bankBin: info.bin });
+                        }}
+                        className="w-full px-3 py-2 bg-white border rounded-xl font-bold text-xs"
+                        placeholder="Ví dụ: Techcombank"
                       />
                     </div>
                     <div>
-                      <label className="block text-slate-600 font-medium mb-1">Số tài khoản nhận tiền</label>
+                      <label className="block text-slate-600 font-medium mb-1 text-xs">Số tài khoản nhận tiền</label>
                       <input
                         type="text"
                         value={tempConfig.bankAccountNumber}
                         onChange={(e) => setTempConfig({ ...tempConfig, bankAccountNumber: e.target.value })}
-                        className="w-full px-3 py-2 bg-white border rounded-xl font-mono font-bold text-emerald-700"
+                        className="w-full px-3 py-2 bg-white border rounded-xl font-mono font-bold text-emerald-700 text-xs"
+                        placeholder="Ví dụ: 2989515555"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-slate-600 font-medium mb-1">Tên chủ tài khoản (In hoa không dấu)</label>
+                    <label className="block text-slate-600 font-medium mb-1 text-xs">Tên chủ tài khoản (In hoa không dấu)</label>
                     <input
                       type="text"
                       value={tempConfig.bankAccountName}
                       onChange={(e) => setTempConfig({ ...tempConfig, bankAccountName: e.target.value })}
-                      className="w-full px-3 py-2 bg-white border rounded-xl font-bold text-slate-900"
+                      className="w-full px-3 py-2 bg-white border rounded-xl font-bold text-slate-900 text-xs uppercase"
+                      placeholder="Ví dụ: NGUYEN DINH VIET"
                     />
                   </div>
+
+                  {/* Xem trước trực tiếp mã QR VietQR thật */}
+                  {tempConfig.bankAccountNumber && (
+                    <div className="p-3 bg-white rounded-2xl border border-slate-200 flex flex-col sm:flex-row items-center gap-4">
+                      <img 
+                        src={getVietQRImageUrl({
+                          bankNameOrBin: tempConfig.bankBin || tempConfig.bankName,
+                          accountNo: tempConfig.bankAccountNumber,
+                          accountName: tempConfig.bankAccountName || 'MEDXPRESS',
+                          amount: 50000,
+                          description: 'TEST-VIETQR',
+                          template: 'compact2'
+                        })}
+                        alt="Mã QR Thử Nghiệm"
+                        className="w-36 h-auto rounded-xl border border-slate-100 shadow-xs shrink-0"
+                      />
+                      <div className="text-[11px] text-slate-600 space-y-1.5 flex-1 text-left">
+                        <div className="font-bold text-slate-900 text-xs">
+                          📱 Quét thử nghiệm mã VietQR trực tiếp:
+                        </div>
+                        <p className="leading-relaxed">
+                          Bạn có thể dùng điện thoại mở App <strong>{getBankInfo(tempConfig.bankBin || tempConfig.bankName).shortName}</strong> hoặc bất kỳ ngân hàng nào quét thử mã QR này. Màn hình chuyển khoản sẽ tự động điền đúng tên: <strong className="text-slate-900 font-bold">{tempConfig.bankAccountName || '(Chưa nhập tên)'}</strong>.
+                        </p>
+                        <div className="text-[10px] text-emerald-800 font-semibold bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg inline-flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
+                          <span>Chuẩn NAPAS 247 EMVCo - Tương thích 100% tất cả ngân hàng tại Việt Nam.</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <p className="text-[11px] text-slate-500">
-                    Khi khách đặt hàng chọn thanh toán chuyển khoản, hệ thống sẽ tự động vẽ mã QR của số tài khoản này kèm số tiền và mã đơn hàng chính xác!
+                    Khi khách đặt hàng chọn thanh toán chuyển khoản, hệ thống sẽ tự động vẽ mã VietQR của tài khoản này kèm số tiền và mã đơn hàng chính xác 100%!
                   </p>
                 </div>
 

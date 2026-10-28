@@ -56,9 +56,10 @@ const INITIAL_ORDERS = [];
 
 const DEFAULT_CONFIG = {
   hotline: '1800 6868',
-  bankName: 'MB Bank (Quân Đội)',
-  bankAccountNumber: '0968686868',
-  bankAccountName: 'MEDXPRESS CARE VIET NAM',
+  bankName: 'Techcombank',
+  bankBin: '970407',
+  bankAccountNumber: '2989515555',
+  bankAccountName: 'NGUYEN DINH VIET',
   telegramBotToken: '',
   telegramChatId: '',
   shippingCarriers: DEFAULT_SHIPPING_CARRIERS,

@@ -563,7 +563,9 @@ export const OrderTrackingModal = ({
             <div className="font-bold text-slate-900 pb-1 border-b border-slate-200/80 flex items-center justify-between">
               <span>Người nhận hàng:</span>
               <span className="font-mono text-emerald-800 font-extrabold">
-                Tổng thu: {displayOrder.grandTotal?.toLocaleString('vi-VN')}₫ ({displayOrder.paymentMethod === 'vietqr' ? 'Đã thanh toán VietQR' : 'Thu tiền COD'})
+                {displayOrder.paymentMethod === 'vietqr'
+                  ? `Tổng giá trị: ${displayOrder.grandTotal?.toLocaleString('vi-VN')}₫ (Đã thanh toán VietQR • Bưu tá thu 0₫)`
+                  : `Tổng thu COD: ${displayOrder.grandTotal?.toLocaleString('vi-VN')}₫`}
               </span>
             </div>
             <div>

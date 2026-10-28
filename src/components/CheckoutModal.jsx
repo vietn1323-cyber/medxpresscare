@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { 
   X, CheckCircle2, ShieldCheck, Truck, CreditCard, 
   Banknote, QrCode, PhoneCall, ArrowRight, Sparkles, AlertCircle,
-  Award, User, Tag, RefreshCw, Radio, Gift, ChevronRight
+  Award, User, Tag, RefreshCw, Radio, Gift, ChevronRight,
+  Copy, Check, ExternalLink, Download
 } from 'lucide-react';
 import { calculateEarnedPoints, calculatePointsDiscount, calculateMaxPointsToUse } from '../data/customers';
 import { sendTelegramOrderNotification } from '../utils/telegramHelper';
 import { DEFAULT_SHIPPING_CARRIERS } from '../data/shippingCarriers';
 import { DEFAULT_VOUCHERS, calculateVoucherDiscount } from '../data/vouchers';
 import { TwoTierAddressFields } from './TwoTierAddressFields';
+import { getBankInfo, getVietQRImageUrl, getVietQRFallbackUrl } from '../utils/vietqrHelper';
 
 export const CheckoutModal = ({ 
   isOpen, 
@@ -50,7 +52,31 @@ export const CheckoutModal = ({
 
   const [isSuccess, setIsSuccess] = useState(false);
   const [orderCode, setOrderCode] = useState('');
+  const [completedOrder, setCompletedOrder] = useState(null);
+  const [copiedField, setCopiedField] = useState('');
+  const [useQrFallback, setUseQrFallback] = useState(false);
   const [errors, setErrors] = useState({});
+
+  const handleCopyText = (text, fieldName) => {
+    if (!text) return;
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(String(text));
+    }
+    setCopiedField(fieldName);
+    setTimeout(() => {
+      setCopiedField(prev => prev === fieldName ? '' : prev);
+    }, 2000);
+  };
+
+  const handleModalClose = () => {
+    setIsSuccess(false);
+    setCompletedOrder(null);
+    setPaymentConfirmed(false);
+    setOrderCode('');
+    setUseQrFallback(false);
+    setCopiedField('');
+    onClose();
+  };
 
   // State xác nhận thanh toán VietQR Webhook tự động
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
@@ -211,6 +237,7 @@ export const CheckoutModal = ({
       onUpdateCustomerPoints(customer.id, actualPointsToUse, earnedPoints, generated);
     }
 
+    setCompletedOrder(newOrderObj);
     setIsSuccess(true);
     onClearCart();
   };
@@ -236,7 +263,7 @@ export const CheckoutModal = ({
             </div>
           </div>
           <button 
-            onClick={onClose}
+            onClick={handleModalClose}
             className="p-1.5 rounded-full hover:bg-white/10 text-slate-300 transition-colors"
           >
             <X className="w-5 h-5" />
@@ -296,72 +323,173 @@ export const CheckoutModal = ({
               </div>
 
               {/* VietQR dynamic transfer box if VietQR selected */}
-              {formData.paymentMethod === 'vietqr' && (
-                <div className="p-4 rounded-3xl bg-slate-50 border border-slate-200 max-w-md mx-auto text-left text-xs space-y-3.5 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <div className="font-bold text-slate-800 flex items-center gap-2">
-                      <QrCode className="w-4 h-4 text-emerald-600" />
-                      <span>Quét Mã VietQR Chuyển Khoản:</span>
+              {formData.paymentMethod === 'vietqr' && (() => {
+                const displayGrandTotal = completedOrder ? completedOrder.grandTotal : grandTotal;
+                const displayOrderCode = completedOrder ? completedOrder.id : orderCode;
+                const bank = getBankInfo(storeConfig?.bankBin || storeConfig?.bankName);
+                const officialVietQrUrl = getVietQRImageUrl({
+                  bankNameOrBin: bank.bin,
+                  accountNo: storeConfig.bankAccountNumber,
+                  accountName: storeConfig.bankAccountName,
+                  amount: displayGrandTotal,
+                  description: displayOrderCode,
+                  template: 'compact2'
+                });
+                const fallbackQrUrl = getVietQRFallbackUrl({
+                  bankNameOrBin: bank.bin,
+                  accountNo: storeConfig.bankAccountNumber,
+                  amount: displayGrandTotal,
+                  description: displayOrderCode
+                });
+
+                return (
+                  <div className="p-4 rounded-3xl bg-slate-50 border border-slate-200 max-w-md mx-auto text-left text-xs space-y-3.5 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div className="font-bold text-slate-800 flex items-center gap-2">
+                        <QrCode className="w-4 h-4 text-emerald-600" />
+                        <span>Quét Mã VietQR Chuyển Khoản:</span>
+                      </div>
+                      {paymentConfirmed ? (
+                        <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          Đã Nhận Tiền
+                        </span>
+                      ) : (
+                        <span className="text-[10px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full flex items-center gap-1 animate-pulse">
+                          <RefreshCw className="w-3 h-3 animate-spin text-blue-600" />
+                          Chờ Webhook
+                        </span>
+                      )}
                     </div>
+
                     {paymentConfirmed ? (
-                      <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                        Đã Nhận Tiền
-                      </span>
+                      <div className="p-4 rounded-2xl bg-emerald-500 text-white space-y-2 text-center animate-in zoom-in-95 shadow-md">
+                        <div className="w-12 h-12 rounded-full bg-white text-emerald-600 flex items-center justify-center mx-auto shadow-inner">
+                          <CheckCircle2 className="w-8 h-8" />
+                        </div>
+                        <h4 className="font-black text-sm uppercase tracking-wide">
+                          Ngân Hàng Đã Xác Nhận Thanh Toán!
+                        </h4>
+                        <p className="text-xs text-emerald-100 leading-relaxed">
+                          Hệ thống đã nhận đủ <strong>{displayGrandTotal.toLocaleString('vi-VN')}₫</strong>. Dược sĩ đang tiến hành đóng gói hỏa tốc cho quý khách.
+                        </p>
+                      </div>
                     ) : (
-                      <span className="text-[10px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full flex items-center gap-1 animate-pulse">
-                        <RefreshCw className="w-3 h-3 animate-spin text-blue-600" />
-                        Chờ Webhook
-                      </span>
+                      <>
+                        <div className="flex flex-col items-center gap-3 bg-white p-3.5 rounded-2xl border border-slate-200">
+                          <div className="relative group flex justify-center w-full">
+                            <img 
+                              src={useQrFallback ? fallbackQrUrl : officialVietQrUrl} 
+                              onError={() => setUseQrFallback(true)}
+                              alt={`VietQR ${bank.shortName} ${storeConfig.bankAccountNumber}`}
+                              className="w-56 max-w-full h-auto rounded-2xl border border-slate-200 shadow-xs object-contain"
+                            />
+                          </div>
+
+                          {/* Nút thao tác nhanh */}
+                          <div className="flex flex-wrap items-center justify-center gap-2 w-full pt-1">
+                            <a
+                              href={useQrFallback ? fallbackQrUrl : officialVietQrUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              download={`VietQR_${displayOrderCode}.png`}
+                              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] flex items-center gap-1.5 transition-colors"
+                            >
+                              <Download className="w-3.5 h-3.5 text-slate-600" />
+                              <span>Tải Mã QR Về Máy</span>
+                            </a>
+                            <a
+                              href={officialVietQrUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-[11px] flex items-center gap-1.5 transition-colors"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5 text-emerald-700" />
+                              <span>Mở Toàn Màn Hình</span>
+                            </a>
+                          </div>
+
+                          {/* Chi tiết tài khoản với nút Copy 1-chạm */}
+                          <div className="w-full space-y-1.5 pt-2 border-t border-slate-100 text-[11px] text-slate-700">
+                            <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50">
+                              <span className="text-slate-500">Ngân hàng:</span>
+                              <strong className="text-slate-900 font-bold">{bank.shortName} ({bank.name})</strong>
+                            </div>
+
+                            <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50">
+                              <span className="text-slate-500">Số tài khoản:</span>
+                              <div className="flex items-center gap-1.5">
+                                <strong className="font-mono text-emerald-700 font-extrabold text-xs">{storeConfig.bankAccountNumber}</strong>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopyText(storeConfig.bankAccountNumber, 'accountNumber')}
+                                  className="p-1 rounded-md hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+                                  title="Sao chép số tài khoản"
+                                >
+                                  {copiedField === 'accountNumber' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50">
+                              <span className="text-slate-500">Chủ tài khoản:</span>
+                              <strong className="text-slate-900 font-bold">{storeConfig.bankAccountName}</strong>
+                            </div>
+
+                            <div className="flex items-center justify-between p-2 rounded-xl bg-rose-50 border border-rose-100">
+                              <span className="text-rose-700 font-bold">Số tiền chuyển:</span>
+                              <div className="flex items-center gap-1.5">
+                                <strong className="font-mono text-rose-600 font-black text-sm">{displayGrandTotal.toLocaleString('vi-VN')}₫</strong>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopyText(displayGrandTotal, 'amount')}
+                                  className="p-1 rounded-md hover:bg-rose-100 text-rose-600 transition-colors cursor-pointer"
+                                  title="Sao chép số tiền"
+                                >
+                                  {copiedField === 'amount' ? <Check className="w-3.5 h-3.5 text-rose-600" /> : <Copy className="w-3.5 h-3.5" />}
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between p-2 rounded-xl bg-blue-50 border border-blue-100">
+                              <span className="text-blue-800 font-bold">Nội dung CK:</span>
+                              <div className="flex items-center gap-1.5">
+                                <strong className="font-mono text-blue-700 font-extrabold text-xs bg-white px-1.5 py-0.5 rounded border border-blue-200">{displayOrderCode}</strong>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopyText(displayOrderCode, 'orderCode')}
+                                  className="p-1 rounded-md hover:bg-blue-100 text-blue-700 transition-colors cursor-pointer"
+                                  title="Sao chép nội dung chuyển khoản"
+                                >
+                                  {copiedField === 'orderCode' ? <Check className="w-3.5 h-3.5 text-blue-600" /> : <Copy className="w-3.5 h-3.5" />}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          <p className="text-[10px] text-slate-500 text-center leading-relaxed">
+                            💡 <em>Khi quét bằng bất kỳ App ngân hàng nào ({bank.shortName}, VCB, MB, BIDV, VPBank, ACB...), số tiền và nội dung chuyển khoản sẽ được tự động điền sẵn chính xác 100%.</em>
+                          </p>
+                        </div>
+
+                        {/* Trạng thái lắng nghe Webhook an toàn chuẩn bảo mật */}
+                        <div className="p-3 rounded-xl bg-blue-50/80 border border-blue-200 text-blue-900 flex items-center justify-between gap-2 text-[11px]">
+                          <div className="flex items-center gap-2">
+                            <span className="relative flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
+                            </span>
+                            <span className="font-semibold">Hệ thống đang tự động kiểm tra giao dịch chuyển khoản VietQR...</span>
+                          </div>
+                          <span className="text-[10px] text-blue-700 bg-white px-2 py-0.5 rounded-md border border-blue-200 shrink-0 font-medium shadow-2xs">
+                            Tự động xác nhận 24/7
+                          </span>
+                        </div>
+                      </>
                     )}
                   </div>
-
-                  {paymentConfirmed ? (
-                    <div className="p-4 rounded-2xl bg-emerald-500 text-white space-y-2 text-center animate-in zoom-in-95 shadow-md">
-                      <div className="w-12 h-12 rounded-full bg-white text-emerald-600 flex items-center justify-center mx-auto shadow-inner">
-                        <CheckCircle2 className="w-8 h-8" />
-                      </div>
-                      <h4 className="font-black text-sm uppercase tracking-wide">
-                        Ngân Hàng Đã Xác Nhận Thanh Toán!
-                      </h4>
-                      <p className="text-xs text-emerald-100 leading-relaxed">
-                        Hệ thống đã nhận đủ <strong>{grandTotal.toLocaleString('vi-VN')}₫</strong>. Dược sĩ đang tiến hành đóng gói hỏa tốc cho quý khách.
-                      </p>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="flex flex-col sm:flex-row items-center gap-4 bg-white p-3.5 rounded-2xl border border-slate-200">
-                        <img 
-                          src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=2|99|${storeConfig.bankAccountNumber}|${encodeURIComponent(storeConfig.bankAccountName)}|0|0|${grandTotal}|${orderCode}`} 
-                          alt="VietQR MedXpressCare"
-                          className="w-32 h-32 rounded-xl border border-slate-100 shadow-sm shrink-0"
-                        />
-                        <div className="space-y-1 text-[11px] text-slate-600 flex-1">
-                          <div>Ngân hàng: <strong>{storeConfig.bankName}</strong></div>
-                          <div>Số tài khoản: <strong className="font-mono text-emerald-700">{storeConfig.bankAccountNumber}</strong></div>
-                          <div>Chủ tài khoản: <strong>{storeConfig.bankAccountName}</strong></div>
-                          <div>Số tiền: <strong className="text-rose-600 font-bold">{grandTotal.toLocaleString('vi-VN')}₫</strong></div>
-                          <div>Nội dung CK: <strong className="font-mono text-blue-700 bg-blue-50 px-1 rounded">{orderCode}</strong></div>
-                        </div>
-                      </div>
-
-                      {/* Trạng thái lắng nghe Webhook an toàn chuẩn bảo mật */}
-                      <div className="p-3 rounded-xl bg-blue-50/80 border border-blue-200 text-blue-900 flex items-center justify-between gap-2 text-[11px]">
-                        <div className="flex items-center gap-2">
-                          <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
-                          </span>
-                          <span className="font-semibold">Hệ thống đang tự động kiểm tra giao dịch chuyển khoản VietQR...</span>
-                        </div>
-                        <span className="text-[10px] text-blue-700 bg-white px-2 py-0.5 rounded-md border border-blue-200 shrink-0 font-medium shadow-2xs">
-                          Tự động xác nhận 24/7
-                        </span>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
+                );
+              })()}
 
               {/* Thông Báo Biến Động Điểm Thưởng Khách Hàng */}
               {lastOrderPointsInfo && (
@@ -419,8 +547,9 @@ export const CheckoutModal = ({
                   <button
                     type="button"
                     onClick={() => {
-                      onClose();
-                      onNavigateToTracking(orderCode);
+                      const finalId = completedOrder?.id || orderCode;
+                      handleModalClose();
+                      onNavigateToTracking(finalId);
                     }}
                     className="px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-700/20 flex items-center gap-2 transition-all cursor-pointer"
                   >
@@ -430,7 +559,7 @@ export const CheckoutModal = ({
                 )}
                 <button
                   type="button"
-                  onClick={onClose}
+                  onClick={handleModalClose}
                   className="px-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm transition-all cursor-pointer"
                 >
                   Hoàn Tất & Tiếp Tục Mua Sắm

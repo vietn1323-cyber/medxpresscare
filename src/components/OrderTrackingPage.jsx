@@ -553,11 +553,20 @@ export const OrderTrackingPage = ({
                     <span className="text-emerald-700 font-bold">Miễn phí toàn quốc</span>
                   </div>
                   <div className="flex justify-between items-center text-sm font-black text-slate-900 pt-2 border-t border-slate-100">
-                    <span>Tổng thu bưu tá:</span>
-                    <span className="text-base font-mono text-rose-600 font-extrabold">
+                    <span>{selectedOrder.paymentMethod === 'vietqr' ? 'Tổng giá trị đơn hàng:' : 'Tổng thu bưu tá (COD):'}</span>
+                    <span className="text-base font-mono text-emerald-800 font-extrabold">
                       {(selectedOrder.grandTotal || 0).toLocaleString('vi-VN')}₫
                     </span>
                   </div>
+                  {selectedOrder.paymentMethod === 'vietqr' && (
+                    <div className="flex justify-between items-center p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-900">
+                      <div className="flex items-center gap-1.5">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span>Tiền thu hộ COD (Bưu tá thu):</span>
+                      </div>
+                      <span className="font-mono text-emerald-700 font-extrabold">0₫ (Đã Thanh Toán VietQR)</span>
+                    </div>
+                  )}
                 </div>
               </div>
 

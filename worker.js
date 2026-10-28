@@ -1047,7 +1047,7 @@ Viết bài y khoa chuẩn SEO On-Page. Trả về JSON: {"title": "...", "summa
 
           // Chuẩn bị payload gửi GHN
           const ghnPayload = {
-            payment_type_id: 2, // 2: Bên mua trả cước COD, 1: Bên gửi trả
+            payment_type_id: order.paymentMethod === 'vietqr' ? 1 : 2, // 1: Bên gửi trả (Prepaid/VietQR COD 0đ), 2: Bên mua trả cước COD
             note: 'Kiện hàng Dược phẩm/TPCN MedXpressCare niêm phong tem GSP. Cho xem hàng không cho thử.',
             required_note: 'CHOXEMHANGKHONGTHU',
             return_phone: returnPhone,
