@@ -28,22 +28,31 @@ assert(mainJsx.includes('e.touches.length > 1'), 'main.jsx phải chặn multi-t
 assert(mainJsx.includes('lastTouchEnd'), 'main.jsx phải chặn double-tap zoom');
 console.log('  ✅ PASSED: Event listeners chặn triệt để pinch-to-zoom & double-tap zoom trên cả iOS Safari & Android.');
 
-// 2. Kiểm tra Tối Ưu Thanh Menu & Loại Bỏ Đoạn Kéo Dài
+// 2. Kiểm tra Tối Ưu Thanh Menu & Loại Bỏ Đoạn Kéo Dài Theo Yêu Cầu Người Dùng
 console.log('\n--- 2. Kiểm tra Tối Ưu Thanh Menu & Loại Bỏ Đoạn Kéo Dài ---');
 const headerJsx = fs.readFileSync(path.join(BASE_DIR, 'src', 'components', 'Header.jsx'), 'utf8');
 
-// Kiểm tra mobile segmented control (3 tab vừa khít màn hình, không bị overflow)
-assert(headerJsx.includes('grid grid-cols-3') || headerJsx.includes('grid-cols-3'), 'Header.jsx trên mobile phải dùng grid 3 cột vừa khít màn hình');
+// A. Kiểm tra Dòng 1 (Top Bar):
+// - Đã xóa Tra Giấy Phép ở dòng 1
+const topBarSection = headerJsx.substring(headerJsx.indexOf('{/* 1. Top Banner'), headerJsx.indexOf('{/* 2. Main Navigation'));
+assert(!topBarSection.includes('Tra Giấy phép'), 'Top bar (dòng 1) phải xóa nút Tra Giấy phép');
+assert(!topBarSection.includes('Tổng đài:'), 'Top bar (dòng 1) phải xóa số điện thoại / hotline');
+assert(topBarSection.includes('customer ?') && topBarSection.includes('🌟'), 'Top bar (dòng 1) có tài khoản khách hàng ở góc ngoài cùng bên phải');
+
+// B. Kiểm tra Dòng 3 (Thanh Menu):
+const subNavSection = headerJsx.substring(headerJsx.indexOf('{/* 3. Phân Loại Nhanh'), headerJsx.indexOf('{/* 4. Slide-in Mobile'));
+assert(!subNavSection.includes('Tra Vận Đơn'), 'Thanh menu (dòng 3) phải xóa nút Tra Vận Đơn');
+assert(!subNavSection.includes('✨ Dược sĩ ĐH Dược tư vấn 24/7'), 'Thanh menu (dòng 3) phải xóa dòng cam kết dài');
+assert(subNavSection.includes('Cẩm Nang Y Khoa') || subNavSection.includes('Cẩm Nang'), 'Thanh menu (dòng 3) phải chứa Cẩm Nang Y Khoa');
+
+// C. Kiểm tra mobile và menu drawer
 assert(headerJsx.includes('isMobileMenuOpen'), 'Header.jsx phải có state isMobileMenuOpen');
 assert(headerJsx.includes('Menu'), 'Header.jsx phải có nút Hamburger Menu');
 
-// Kiểm tra top bar gọn gàng trên mobile
-assert(headerJsx.includes('sm:hidden') && headerJsx.includes('hidden sm:inline'), 'Top bar phải có phiên bản rút gọn cho mobile');
-
-// Kiểm tra app.jsx container chống tràn
+// D. Kiểm tra app.jsx container chống tràn
 const appJsx = fs.readFileSync(path.join(BASE_DIR, 'src', 'App.jsx'), 'utf8');
 assert(appJsx.includes('overflow-x-hidden'), 'App.jsx root container phải có overflow-x-hidden');
-console.log('  ✅ PASSED: Thanh menu đã được tối ưu hoàn hảo trên cả Web và Mobile, không còn đoạn kéo dài.');
+console.log('  ✅ PASSED: Thanh menu đã được tối ưu hoàn hảo theo đúng sơ đồ mũi tên và khoanh tròn của người dùng.');
 
 console.log('\n================================================================');
 console.log('   🎉 TẤT CẢ TEST CASES TỐI ƯU MENU & ANTI-ZOOM ĐẠT 100% THÀNH CÔNG! ');

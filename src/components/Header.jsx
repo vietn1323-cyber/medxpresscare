@@ -99,32 +99,13 @@ export const Header = ({
             </button>
           </div>
 
-          {/* Bên phải: Phím tắt & Hotline */}
+          {/* Bên phải: Cài App | Tra cứu Vận đơn | [Tài khoản khách hàng / Đăng Nhập di chuyển sang vị trí SĐT cũ] */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0 text-[11px]">
-            {/* Khách hàng & Điểm thưởng */}
-            {customer ? (
-              <button 
-                onClick={onOpenProfileModal}
-                className="flex items-center gap-1 font-bold text-[11px] bg-amber-400 hover:bg-amber-300 text-slate-950 px-2 py-0.5 rounded-full shadow-2xs transition-colors cursor-pointer"
-              >
-                <span>🌟 {customer.points || 0}đ</span>
-                <span className="hidden sm:inline">| {customer.fullName}</span>
-              </button>
-            ) : (
-              <button 
-                onClick={onOpenAuthModal}
-                className="hover:text-emerald-200 transition-colors hidden sm:flex items-center gap-1 font-semibold cursor-pointer"
-              >
-                <User className="w-3.5 h-3.5 text-amber-300" />
-                <span>Đăng Nhập</span>
-              </button>
-            )}
-
             {/* Nút Cài App PWA */}
             {onOpenPWAInstall && (
               <button 
                 onClick={onOpenPWAInstall}
-                className="bg-emerald-600/90 hover:bg-emerald-500 text-white transition-all flex items-center gap-1 font-bold text-[10px] sm:text-[11px] px-2 py-0.5 rounded-full shadow-2xs cursor-pointer shrink-0"
+                className="bg-emerald-600/90 hover:bg-emerald-500 text-white transition-all flex items-center gap-1 font-bold text-[10px] sm:text-[11px] px-2.5 py-0.5 rounded-full shadow-2xs cursor-pointer shrink-0"
                 title="Thêm ứng dụng MedXpressCare vào điện thoại"
               >
                 <Smartphone className="w-3 h-3 text-amber-300" />
@@ -132,45 +113,37 @@ export const Header = ({
               </button>
             )}
 
-            {/* Tra cứu vận đơn link */}
+            {/* Tra cứu vận đơn link (giữ ở dòng 1) */}
             <button 
               onClick={() => {
                 if (onNavigateToTracking) onNavigateToTracking();
                 else if (onOpenOrderTracking) onOpenOrderTracking();
               }}
-              className="hover:text-emerald-200 transition-colors hidden sm:flex items-center gap-1 font-medium underline underline-offset-2 cursor-pointer"
+              className="hover:text-emerald-200 transition-colors flex items-center gap-1 font-medium underline underline-offset-2 cursor-pointer"
             >
               <Truck className="w-3.5 h-3.5 text-emerald-300" />
-              <span className="hidden md:inline">Tra cứu Vận đơn</span>
-              <span className="md:hidden">Tra cứu</span>
+              <span className="hidden sm:inline">Tra cứu Vận đơn</span>
+              <span className="sm:hidden">Tra đơn</span>
             </button>
 
-            {/* Tra cứu giấy phép */}
-            <button 
-              onClick={onOpenVerifier}
-              className="hover:text-emerald-200 transition-colors hidden lg:flex items-center gap-1 font-medium underline underline-offset-2 cursor-pointer"
-            >
-              <FileCheck2 className="w-3.5 h-3.5 text-emerald-300" />
-              <span>Tra Giấy phép</span>
-            </button>
-
-            {/* Cẩm nang */}
-            <a 
-              href="#health-blog"
-              className="hover:text-emerald-200 transition-colors hidden xl:flex items-center gap-1 font-medium underline underline-offset-2"
-            >
-              <BookOpen className="w-3.5 h-3.5 text-amber-300" />
-              <span>Cẩm Nang Y Khoa</span>
-            </a>
-
-            {/* Hotline */}
-            <a 
-              href={`tel:${(hotline || '1800 6868').replace(/\s+/g, '')}`} 
-              className="flex items-center gap-1 font-bold text-amber-300 hover:text-white transition-colors shrink-0"
-            >
-              <PhoneCall className="w-3 h-3 animate-pulse" />
-              <span>{hotline || '1800 6868'}</span>
-            </a>
+            {/* Khách hàng & Điểm thưởng - Đã di chuyển sang vị trí ngoài cùng bên phải (thay thế vị trí SĐT cũ) */}
+            {customer ? (
+              <button 
+                onClick={onOpenProfileModal}
+                className="flex items-center gap-1 font-bold text-[11px] bg-amber-400 hover:bg-amber-300 text-slate-950 px-2.5 py-0.5 rounded-full shadow-2xs transition-colors cursor-pointer shrink-0"
+              >
+                <span>🌟 {customer.points || 0}đ</span>
+                <span className="hidden sm:inline">| {customer.fullName}</span>
+              </button>
+            ) : (
+              <button 
+                onClick={onOpenAuthModal}
+                className="hover:text-emerald-200 transition-colors flex items-center gap-1 font-semibold cursor-pointer shrink-0 bg-emerald-600/70 hover:bg-emerald-600 px-2.5 py-0.5 rounded-full"
+              >
+                <User className="w-3.5 h-3.5 text-amber-300" />
+                <span>Đăng Nhập</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -465,14 +438,14 @@ export const Header = ({
         </div>
       </div>
 
-      {/* 3. Phân Loại Nhanh: Xuất Xứ (Nội Địa vs Nhập Ngoại) - Tối ưu hoàn toàn, loại bỏ đoạn kéo dài */}
+      {/* 3. Phân Loại Nhanh: Xuất Xứ (Nội Địa vs Nhập Ngoại) & Cẩm Nang Y Khoa */}
       <div className="bg-slate-50 border-t border-slate-200/80 px-3 sm:px-4 py-1.5">
         <div className="max-w-7xl mx-auto">
-          {/* GIAO DIỆN MOBILE: 3 Tab Phân Đoạn (Segmented Control) vừa khít 100% màn hình, không bị tràn hay kéo dài */}
-          <div className="md:hidden grid grid-cols-3 gap-1 bg-slate-200/80 p-0.5 rounded-xl text-center text-xs font-bold">
+          {/* GIAO DIỆN MOBILE: 4 Tab vừa khít 100% màn hình, không bị tràn hay kéo dài */}
+          <div className="md:hidden grid grid-cols-4 gap-1 bg-slate-200/80 p-0.5 rounded-xl text-center text-xs font-bold">
             <button
               onClick={() => onNavigateToProducts ? onNavigateToProducts('all') : setOriginFilter('all')}
-              className={`py-1.5 px-1 rounded-lg transition-all cursor-pointer truncate ${
+              className={`py-1.5 px-0.5 rounded-lg transition-all cursor-pointer truncate ${
                 currentView === 'products' && originFilter === 'all'
                   ? 'bg-emerald-600 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
@@ -483,7 +456,7 @@ export const Header = ({
 
             <button
               onClick={() => onNavigateToProducts ? onNavigateToProducts('domestic') : setOriginFilter('domestic')}
-              className={`py-1.5 px-1 rounded-lg transition-all cursor-pointer truncate ${
+              className={`py-1.5 px-0.5 rounded-lg transition-all cursor-pointer truncate ${
                 currentView === 'products' && originFilter === 'domestic'
                   ? 'bg-rose-600 text-white shadow-xs'
                   : 'text-rose-700 hover:text-rose-900'
@@ -494,7 +467,7 @@ export const Header = ({
 
             <button
               onClick={() => onNavigateToProducts ? onNavigateToProducts('imported') : setOriginFilter('imported')}
-              className={`py-1.5 px-1 rounded-lg transition-all cursor-pointer truncate ${
+              className={`py-1.5 px-0.5 rounded-lg transition-all cursor-pointer truncate ${
                 currentView === 'products' && originFilter === 'imported'
                   ? 'bg-blue-600 text-white shadow-xs'
                   : 'text-blue-700 hover:text-blue-900'
@@ -502,9 +475,17 @@ export const Header = ({
             >
               Nhập Ngoại
             </button>
+
+            <a
+              href="#health-blog"
+              className="py-1.5 px-0.5 rounded-lg text-emerald-800 hover:text-emerald-950 transition-all cursor-pointer truncate flex items-center justify-center gap-1"
+            >
+              <BookOpen className="w-3 h-3 text-amber-500 shrink-0" />
+              <span>Cẩm Nang</span>
+            </a>
           </div>
 
-          {/* GIAO DIỆN DESKTOP (MD & TRỞ LÊN): Gọn gàng, vừa vặn hoàn hảo trong khung 1000px, không bị scroll ngang */}
+          {/* GIAO DIỆN DESKTOP (MD & TRỞ LÊN): Gọn gàng, vừa vặn hoàn hảo, không bị scroll ngang */}
           <div className="hidden md:flex items-center justify-between gap-4">
             {/* Origin Filters */}
             <div className="flex items-center gap-1.5 bg-white p-1 rounded-lg border border-slate-200 shadow-2xs">
@@ -544,20 +525,15 @@ export const Header = ({
               </button>
             </div>
 
-            {/* Thông điệp cam kết & Nút Tra Vận Đơn trên Desktop */}
-            <div className="flex items-center gap-3 text-xs text-slate-500 font-medium">
-              <span className="hidden xl:inline">✨ Dược sĩ ĐH Dược tư vấn 24/7 • Bồi hoàn 300% nếu phát hiện giả</span>
-              <button
-                onClick={() => onNavigateToTracking ? onNavigateToTracking() : onOpenOrderTracking ? onOpenOrderTracking() : null}
-                className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
-                  currentView === 'tracking'
-                    ? 'bg-teal-700 text-white shadow-xs'
-                    : 'text-teal-800 bg-teal-100/80 hover:bg-teal-200'
-                }`}
+            {/* Cẩm Nang Y Khoa đã chuyển xuống thanh menu (đã xóa dòng cam kết và nút tra vận đơn ở dòng 3) */}
+            <div className="flex items-center gap-2">
+              <a
+                href="#health-blog"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold text-emerald-800 bg-emerald-100/90 hover:bg-emerald-200 transition-all cursor-pointer shadow-2xs border border-emerald-200"
               >
-                <Truck className="w-3.5 h-3.5" />
-                <span>Tra Vận Đơn</span>
-              </button>
+                <BookOpen className="w-3.5 h-3.5 text-amber-500" />
+                <span>Cẩm Nang Y Khoa</span>
+              </a>
             </div>
           </div>
         </div>
