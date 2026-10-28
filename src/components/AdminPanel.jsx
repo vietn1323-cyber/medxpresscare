@@ -24,6 +24,12 @@ import { INITIAL_REVIEWS } from '../data/reviews';
 import { BulkImportModal } from './BulkImportModal';
 import { RETURN_REASONS } from '../utils/logisticsHelper';
 import { POLICIES } from '../data/policies';
+import { 
+  createGhnOrder, 
+  fetchGhnTrackingDetail, 
+  getGhnPrintUrl, 
+  mapGhnStatusToLocal 
+} from '../utils/ghnHelper';
 
 export const AdminPanel = ({ 
   isOpen, 
@@ -992,6 +998,112 @@ export const AdminPanel = ({
         c.id === carrierId ? { ...c, [field]: value } : c
       )
     }));
+  };
+
+  // GHN Real API Order Dispatch, Status Sync & Printing
+  const [pushingGhnOrderId, setPushingGhnOrderId] = useState(null);
+  const [syncingGhnOrderId, setSyncingGhnOrderId] = useState(null);
+
+  const getGhnCarrierConfig = () => {
+    const carriers = tempConfig.shippingCarriers || storeConfig?.shippingCarriers || DEFAULT_SHIPPING_CARRIERS;
+    return carriers.find(c => c.id === 'ghn') || null;
+  };
+
+  const handlePushToGhn = async (order) => {
+    const ghnCarrier = getGhnCarrierConfig();
+    if (!ghnCarrier || !ghnCarrier.apiKey) {
+      alert('⚠️ Bạn chưa cấu hình Token API cho Giao Hàng Nhanh (GHN).\nVui lòng vào tab "Đối Tác Vận Chuyển", nhập API Token và Shop ID rồi lưu cấu hình trước khi đẩy đơn!');
+      return;
+    }
+
+    setPushingGhnOrderId(order.id);
+    try {
+      const res = await createGhnOrder(order, ghnCarrier, storeConfig);
+      if (res && res.orderCode) {
+        if (onUpdateOrderStatus) {
+          onUpdateOrderStatus(order.id, 'confirmed', {
+            trackingNumber: res.orderCode,
+            ghnOrderCode: res.orderCode,
+            isGhnSynced: true,
+            ghnTotalFee: res.totalFee,
+            ghnSortCode: res.sortCode,
+            ghnExpectedDelivery: res.expectedDeliveryTime,
+            autoTracking: false, // Dừng hoàn toàn timer tracking ảo
+            trackingTimeline: [
+              ...(order.trackingTimeline || []),
+              {
+                time: new Date().toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }),
+                status: 'confirmed',
+                stage: 'ghn_created',
+                title: 'Đã tạo vận đơn thành công trên GHN Express',
+                desc: `Mã vận đơn chính thức: ${res.orderCode}. Phân loại bưu cục: ${res.sortCode || 'Chuẩn'}. Cước phí: ${(res.totalFee || 0).toLocaleString('vi-VN')}₫. Đang chờ bưu tá GHN tới kho lấy hàng.`,
+                location: 'Tổng kho Dược MedXpressCare'
+              }
+            ]
+          });
+        }
+        alert(`🎉 THÀNH CÔNG! Đã đẩy đơn hàng #${order.id} sang GHN Express.\nMã vận đơn chính thức: ${res.orderCode}\nPhân loại bưu cục: ${res.sortCode || 'Tiêu chuẩn'}\nCước vận chuyển: ${(res.totalFee || 0).toLocaleString('vi-VN')}₫`);
+      }
+    } catch (err) {
+      alert(`❌ LỖI ĐẨY ĐƠN SANG GHN:\n${err.message || 'Không thể tạo đơn trên máy chủ GHN. Vui lòng kiểm tra lại Token hoặc Shop ID.'}`);
+    } finally {
+      setPushingGhnOrderId(null);
+    }
+  };
+
+  const handleSyncGhnStatus = async (order) => {
+    const ghnCarrier = getGhnCarrierConfig();
+    const orderCode = order.ghnOrderCode || order.trackingNumber;
+    if (!orderCode) {
+      alert('Đơn hàng chưa có mã vận đơn GHN!');
+      return;
+    }
+    setSyncingGhnOrderId(order.id);
+    try {
+      const detail = await fetchGhnTrackingDetail(orderCode, ghnCarrier);
+      if (detail && detail.status) {
+        const mapped = mapGhnStatusToLocal(detail.status);
+        if (onUpdateOrderStatus) {
+          onUpdateOrderStatus(order.id, mapped.status, {
+            carrierProgress: mapped.progress,
+            ghnStatusRaw: detail.status,
+            trackingTimeline: [
+              ...(order.trackingTimeline || []),
+              {
+                time: new Date().toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }),
+                status: mapped.status,
+                stage: `ghn_${detail.status}`,
+                title: `[GHN Trực Tiếp] ${mapped.label}`,
+                desc: `Trạng thái hiện tại trên hệ thống GHN: "${detail.status}". Bưu cục: ${detail.station_name || 'GHN Hub'}.`,
+                location: detail.station_name || 'Bưu cục GHN Express'
+              }
+            ]
+          });
+        }
+        alert(`Đã đồng bộ trạng thái thực tế từ GHN:\n- Mã vận đơn: ${orderCode}\n- Trạng thái: ${mapped.label} (${detail.status})`);
+      }
+    } catch (err) {
+      alert(`Không thể đồng bộ từ GHN: ${err.message}`);
+    } finally {
+      setSyncingGhnOrderId(null);
+    }
+  };
+
+  const handlePrintGhnA5 = async (order) => {
+    const ghnCarrier = getGhnCarrierConfig();
+    const orderCode = order.ghnOrderCode || order.trackingNumber;
+    if (!orderCode) {
+      alert('Đơn hàng chưa có mã vận đơn GHN!');
+      return;
+    }
+    try {
+      const printUrl = await getGhnPrintUrl(orderCode, ghnCarrier);
+      if (printUrl) {
+        window.open(printUrl, '_blank');
+      }
+    } catch (err) {
+      alert(`Không thể lấy phiếu in GHN: ${err.message}`);
+    }
   };
 
   // State & Handlers cho Quản Lý Bài Viết & Tối Ưu SEO
@@ -2724,18 +2836,64 @@ export const AdminPanel = ({
 
                               <span className="flex items-center gap-1 font-mono text-slate-700">
                                 <span>Vận đơn:</span>
-                                <strong className="text-emerald-800">{order.trackingNumber || `GHTK-${order.id.replace(/[^0-9]/g, '') || '883921'}VN`}</strong>
+                                <strong className={order.isGhnSynced ? "text-blue-800 font-black" : "text-emerald-800"}>
+                                  {order.trackingNumber || (order.shippingMethod === 'ghn' ? 'Chưa tạo' : `GHTK-${order.id.replace(/[^0-9]/g, '') || '883921'}VN`)}
+                                </strong>
                               </span>
 
-                              {order.autoTracking && order.status !== 'completed' && order.status !== 'cancelled' && (
-                                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                  <span>Auto-tracking bưu cục</span>
+                              {order.isGhnSynced ? (
+                                <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200 flex items-center gap-1">
+                                  <CheckCircle2 className="w-3 h-3 text-blue-600" />
+                                  <span>Đã Đẩy GHN Thật</span>
                                 </span>
-                              )}
+                              ) : order.shippingMethod === 'ghn' ? (
+                                <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 flex items-center gap-1">
+                                  <span>Chờ đẩy sang GHN</span>
+                                </span>
+                              ) : null}
                             </div>
 
                             <div className="flex flex-wrap items-center gap-1.5">
+                              {/* Nút Đẩy Đơn Sang GHN THẬT */}
+                              {order.shippingMethod === 'ghn' && !order.isGhnSynced && !['completed', 'cancelled', 'returned'].includes(order.status) && (
+                                <button
+                                  type="button"
+                                  disabled={pushingGhnOrderId === order.id}
+                                  onClick={() => handlePushToGhn(order)}
+                                  className="px-2.5 py-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg text-xs font-extrabold transition-all flex items-center gap-1 shadow-sm disabled:opacity-50 cursor-pointer"
+                                  title="Đẩy đơn hàng trực tiếp sang máy chủ GHN Express để lấy mã vận đơn thật"
+                                >
+                                  <Truck className={`w-3.5 h-3.5 ${pushingGhnOrderId === order.id ? 'animate-bounce' : ''}`} />
+                                  <span>{pushingGhnOrderId === order.id ? 'Đang đẩy GHN...' : '🚀 Đẩy Đơn Sang GHN'}</span>
+                                </button>
+                              )}
+
+                              {/* ĐỐI VỚI ĐƠN ĐÃ ĐẨY GHN: In Phiếu GHN A5 & Tra Cứu Trạng Thái Thật */}
+                              {order.isGhnSynced && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => handlePrintGhnA5(order)}
+                                    className="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-800 rounded-lg text-xs font-bold border border-blue-200 transition-colors flex items-center gap-1 shadow-2xs cursor-pointer"
+                                    title="Mở phiếu in bưu gửi A5 chính thức của GHN Express"
+                                  >
+                                    <Printer className="w-3.5 h-3.5 text-blue-600" />
+                                    <span>🖨️ In Phiếu GHN (A5)</span>
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    disabled={syncingGhnOrderId === order.id}
+                                    onClick={() => handleSyncGhnStatus(order)}
+                                    className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-lg text-xs font-bold border border-emerald-200 transition-colors flex items-center gap-1 shadow-2xs disabled:opacity-50 cursor-pointer"
+                                    title="Tra cứu và đồng bộ hành trình thực tế từ bưu tá GHN"
+                                  >
+                                    <RefreshCw className={`w-3 h-3 text-emerald-600 ${syncingGhnOrderId === order.id ? 'animate-spin' : ''}`} />
+                                    <span>{syncingGhnOrderId === order.id ? 'Đang tra cứu...' : '🔄 Tra Cứu GHN'}</span>
+                                  </button>
+                                </>
+                              )}
+
                               {/* Nút xem Live Tracking Modal */}
                               {onOpenOrderTracking && (
                                 <button
@@ -6830,18 +6988,24 @@ export const AdminPanel = ({
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           <div>
+                            <label className="block text-[10px] font-bold text-slate-600 mb-0.5">
+                              {carrier.id === 'ghn' ? 'Token API GHN (Quản lý tài khoản)' : 'API Key / Token đối tác:'}
+                            </label>
                             <input
                               type="password"
-                              placeholder="API Key / Token đối tác..."
+                              placeholder={carrier.id === 'ghn' ? 'VD: a1b2c3d4-e5f6-7890...' : 'API Key / Token...'}
                               value={carrier.apiKey || ''}
                               onChange={(e) => handleUpdateCarrierField(carrier.id, 'apiKey', e.target.value)}
                               className="w-full px-2.5 py-1.5 bg-white border rounded-lg font-mono text-[11px]"
                             />
                           </div>
                           <div>
+                            <label className="block text-[10px] font-bold text-slate-600 mb-0.5">
+                              {carrier.id === 'ghn' ? 'Shop ID GHN (Mã cửa hàng)' : 'Shop ID / Client ID:'}
+                            </label>
                             <input
                               type="text"
-                              placeholder="Shop ID / Client ID..."
+                              placeholder={carrier.id === 'ghn' ? 'VD: 1849204' : 'Shop ID...'}
                               value={carrier.shopId || ''}
                               onChange={(e) => handleUpdateCarrierField(carrier.id, 'shopId', e.target.value)}
                               className="w-full px-2.5 py-1.5 bg-white border rounded-lg font-mono text-[11px]"
@@ -6849,16 +7013,30 @@ export const AdminPanel = ({
                           </div>
                         </div>
 
+                        {carrier.id === 'ghn' && (
+                          <div className="flex items-center gap-2 pt-0.5">
+                            <label className="flex items-center gap-1.5 text-[11px] text-slate-600 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={Boolean(carrier.isDev)}
+                                onChange={(e) => handleUpdateCarrierField(carrier.id, 'isDev', e.target.checked)}
+                                className="rounded text-blue-600"
+                              />
+                              <span>Môi trường thử nghiệm Sandbox (dev-online-gateway.ghn.vn)</span>
+                            </label>
+                          </div>
+                        )}
+
                         {/* Test connection button */}
                         <div className="flex items-center justify-between pt-1">
                           <button
                             type="button"
                             disabled={isTesting}
                             onClick={() => handleTestCarrier(carrier)}
-                            className="px-3 py-1 bg-white hover:bg-slate-100 text-slate-700 font-bold rounded-lg border border-slate-300 text-[10px] transition-colors flex items-center gap-1.5 shadow-2xs disabled:opacity-50"
+                            className="px-3 py-1 bg-white hover:bg-slate-100 text-slate-700 font-bold rounded-lg border border-slate-300 text-[10px] transition-colors flex items-center gap-1.5 shadow-2xs disabled:opacity-50 cursor-pointer"
                           >
                             <RefreshCw className={`w-3 h-3 ${isTesting ? 'animate-spin text-blue-600' : ''}`} />
-                            <span>{isTesting ? 'Đang kiểm tra...' : 'Kiểm Tra Kết Nối API'}</span>
+                            <span>{isTesting ? 'Đang xác thực với máy chủ GHN...' : 'Kiểm Tra Kết Nối API Thật'}</span>
                           </button>
 
                           <span className="text-[10px] text-slate-400">
@@ -6867,11 +7045,35 @@ export const AdminPanel = ({
                         </div>
 
                         {testRes && (
-                          <div className={`p-2 rounded-lg text-[10px] font-semibold flex items-center gap-1.5 mt-1 ${
-                            testRes.success ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-rose-100 text-rose-900 border border-rose-300'
-                          }`}>
-                            {testRes.success ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> : <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />}
-                            <span>{testRes.message}</span>
+                          <div className="space-y-1.5 mt-1">
+                            <div className={`p-2.5 rounded-xl text-[10px] font-semibold flex items-start gap-1.5 ${
+                              testRes.success ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-rose-100 text-rose-900 border border-rose-300'
+                            }`}>
+                              {testRes.success ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" /> : <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0 mt-0.5" />}
+                              <div className="flex-1">
+                                <p>{testRes.message}</p>
+                              </div>
+                            </div>
+
+                            {/* Nếu kết nối GHN trả về danh sách Shop khả dụng */}
+                            {testRes.shops && testRes.shops.length > 0 && (
+                              <div className="p-2 bg-blue-50 border border-blue-200 rounded-xl text-[10px]">
+                                <span className="font-bold text-blue-900">Các Shop ID tìm thấy trên tài khoản GHN của bạn:</span>
+                                <div className="flex flex-wrap gap-1.5 mt-1">
+                                  {testRes.shops.map(s => (
+                                    <button
+                                      key={s._id}
+                                      type="button"
+                                      onClick={() => handleUpdateCarrierField(carrier.id, 'shopId', String(s._id))}
+                                      className="px-2 py-0.5 bg-white border border-blue-300 hover:bg-blue-100 rounded text-blue-800 font-mono text-[9px] font-bold cursor-pointer"
+                                      title={`Chọn Shop ID: ${s._id} (${s.name})`}
+                                    >
+                                      ✓ Chọn {s.name} (ID: {s._id})
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>

@@ -1410,52 +1410,10 @@ export default function App() {
     }
   };
 
-  // Background Auto-Tracking Engine: Tự động tracking & chuyển trạng thái với nhà cung cấp vận chuyển
+  // Background Auto-Tracking Engine: Đã tắt bỏ timer chuyển trạng thái ảo (15s/20s)
+  // Đơn hàng chỉ chuyển trạng thái khi Dược sĩ thao tác hoặc khi đồng bộ trực tiếp từ API bưu cục GHN
   useEffect(() => {
-    const trackingInterval = setInterval(() => {
-      const now = Date.now();
-      setOrders(prevOrders => {
-        let hasChanges = false;
-        const updated = prevOrders.map(order => {
-          // Bỏ qua nếu đơn không bật autoTracking, hoặc đã hoàn thành/hủy, hoặc đơn giao thất bại/đang hoàn/chờ kiểm nhận thủ công
-          if (!order.autoTracking || ['completed', 'cancelled', 'returning', 'returned_pending_check', 'returned'].includes(order.status)) {
-            return order;
-          }
-
-          // 1. Tự động chuyển từ 'confirmed' sang 'shipping' (sau ~15 giây từ lúc xác nhận/in đơn)
-          if (order.status === 'confirmed') {
-            const confirmedTime = order.confirmedAt 
-              ? new Date(order.confirmedAt).getTime() 
-              : (order.printedAt ? new Date(order.printedAt).getTime() : new Date(order.createdAt).getTime());
-            
-            if (now - confirmedTime >= 15000) {
-              hasChanges = true;
-              const advanced = stepOrderToShipping(order);
-              showToast(`🚚 [${advanced.shippingCarrierName || 'Bưu cục'}] Đơn ${order.id} bưu tá đã lấy hàng! Trạng thái tự động chuyển: Đang giao.`);
-              return advanced;
-            }
-          }
-
-          // 2. Tự động chuyển từ 'shipping' sang 'completed' (sau ~20 giây kể từ khi đang giao)
-          if (order.status === 'shipping') {
-            const shippedTime = order.shippedAt ? new Date(order.shippedAt).getTime() : (now - 25000);
-            
-            if (now - shippedTime >= 20000) {
-              hasChanges = true;
-              const advanced = stepOrderToCompleted(order);
-              showToast(`🏆 [${advanced.shippingCarrierName || 'Bưu cục'}] Đơn ${order.id} đã giao thành công! Trạng thái tự động chuyển: Hoàn tất.`);
-              return advanced;
-            }
-          }
-
-          return order;
-        });
-
-        return hasChanges ? updated : prevOrders;
-      });
-    }, 4000);
-
-    return () => clearInterval(trackingInterval);
+    // Không chạy auto-complete ảo để đảm bảo tính toàn vẹn dữ liệu đơn hàng thực tế
   }, []);
 
   const handleAddProduct = (newProd) => {

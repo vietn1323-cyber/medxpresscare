@@ -878,6 +878,353 @@ Viết bài y khoa chuẩn SEO On-Page. Trả về JSON: {"title": "...", "summa
         }
       }
 
+      // ==========================================
+      // GHN (GIAO HÀNG NHANH) OFFICIAL API PROXY
+      // ==========================================
+
+      // /api/shipping/ghn/test-connection
+      if (pathname === '/api/shipping/ghn/test-connection') {
+        try {
+          const { apiKey, shopId, isDev } = await request.json();
+          if (!apiKey || !apiKey.trim()) {
+            return jsonResponse({ success: false, message: 'Vui lòng cung cấp Token API của GHN.' }, 400);
+          }
+
+          const baseUrl = isDev 
+            ? 'https://dev-online-gateway.ghn.vn/shiip/public-api' 
+            : 'https://online-gateway.ghn.vn/shiip/public-api';
+
+          // Gọi sang GHN để lấy danh sách Shop thuộc Token
+          const ghnRes = await fetch(`${baseUrl}/v2/shop/all`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Token': apiKey.trim()
+            },
+            body: JSON.stringify({ offset: 0, limit: 50 })
+          });
+
+          const ghnData = await ghnRes.json().catch(() => ({}));
+
+          if (ghnData.code !== 200) {
+            // Thử endpoint dự phòng nếu shop/all từ chối
+            const provRes = await fetch(`${baseUrl}/master-data/province`, {
+              headers: { 'Content-Type': 'application/json', 'Token': apiKey.trim() }
+            });
+            const provData = await provRes.json().catch(() => ({}));
+            if (provData.code !== 200) {
+              return jsonResponse({
+                success: false,
+                message: `Lỗi kết nối GHN: ${ghnData.message || provData.message || 'Token không hợp lệ hoặc đã hết hạn.'}`
+              }, 400);
+            }
+          }
+
+          // Kiểm tra shopId nếu có nhập
+          let matchedShop = null;
+          const shopsList = ghnData.data?.shops || [];
+          if (Array.isArray(shopsList)) {
+            if (shopId) {
+              matchedShop = shopsList.find(s => String(s._id) === String(shopId).trim());
+            } else if (shopsList.length > 0) {
+              matchedShop = shopsList[0];
+            }
+          }
+
+          if (shopId && !matchedShop && shopsList.length > 0) {
+            const availableIds = shopsList.map(s => s._id).join(', ');
+            return jsonResponse({
+              success: false,
+              message: `Token hợp lệ nhưng không tìm thấy Shop ID "${shopId}". Danh sách Shop ID khả dụng trên tài khoản GHN của bạn là: [${availableIds}]`
+            }, 400);
+          }
+
+          return jsonResponse({
+            success: true,
+            message: matchedShop 
+              ? `Kết nối GHN thành công! Cửa hàng: "${matchedShop.name}" (ID: ${matchedShop._id}) - Kho hàng: ${matchedShop.address || 'Hà Nội'}`
+              : 'Xác thực Token GHN thành công! Máy chủ GHN sẵn sàng.',
+            shop: matchedShop,
+            shops: shopsList
+          });
+        } catch (err) {
+          return jsonResponse({ success: false, message: `Lỗi kết nối máy chủ GHN: ${err.message}` }, 500);
+        }
+      }
+
+      // /api/shipping/ghn/create-order
+      if (pathname === '/api/shipping/ghn/create-order') {
+        try {
+          const { order, apiKey, shopId, isDev, storeConfig } = await request.json();
+          if (!order) return errorResponse('Missing order data', 400);
+          if (!apiKey || !apiKey.trim()) return errorResponse('Chưa cấu hình Token GHN (apiKey)', 400);
+
+          const baseUrl = isDev 
+            ? 'https://dev-online-gateway.ghn.vn/shiip/public-api' 
+            : 'https://online-gateway.ghn.vn/shiip/public-api';
+
+          const returnPhone = storeConfig?.hotline?.replace(/[^0-9]/g, '') || '0968686868';
+          const returnAddress = storeConfig?.warehouseAddress || storeConfig?.headquartersAddress || 'Tầng 6, Số 168 Cầu Giấy, Quan Hoa, Q. Cầu Giấy, Hà Nội';
+
+          // Tiền thu hộ COD: nếu đã thanh toán chuyển khoản/QR thì COD = 0, nếu thanh toán khi nhận hàng thì bằng tổng tiền
+          const codAmount = order.paymentMethod === 'vietqr' ? 0 : Math.round(order.grandTotal || 0);
+
+          // Chuẩn bị danh sách sản phẩm
+          const items = (order.items || []).map((it, idx) => ({
+            name: it.name || `Sản phẩm #${idx + 1}`,
+            code: String(it.id || it.productId || `SP-${idx + 1}`),
+            quantity: Number(it.quantity) || 1,
+            price: Number(it.price) || 0,
+            weight: 200,
+            length: 10,
+            width: 10,
+            height: 10
+          }));
+
+          const customer = order.customer || {};
+          const toName = customer.fullName || customer.name || 'Khách hàng';
+          const toPhone = (customer.phone || '').replace(/[^0-9]/g, '') || '0900000000';
+          const toAddress = customer.address || 'Địa chỉ khách hàng';
+          const toDistrict = customer.district || 'Quận Cầu Giấy';
+          const toWard = customer.ward || customer.commune || 'Quan Hoa';
+          const toProvince = customer.province || customer.city || 'Hà Nội';
+
+          // Tự động giải quyết district_id và ward_code của GHN qua master-data
+          let to_district_id = null;
+          let to_ward_code = null;
+
+          try {
+            const provRes = await fetch(`${baseUrl}/master-data/province`, {
+              headers: { 'Content-Type': 'application/json', 'Token': apiKey.trim() }
+            });
+            const provData = await provRes.json().catch(() => ({}));
+            if (provData.code === 200 && Array.isArray(provData.data)) {
+              const cleanProv = toProvince.toLowerCase().replace(/tỉnh|thành phố|tp\.?|tp/g, '').trim();
+              const matchedProv = provData.data.find(p => {
+                const pName = (p.ProvinceName || '').toLowerCase().replace(/tỉnh|thành phố|tp\.?|tp/g, '').trim();
+                return pName.includes(cleanProv) || cleanProv.includes(pName);
+              });
+
+              if (matchedProv) {
+                const distRes = await fetch(`${baseUrl}/master-data/district`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', 'Token': apiKey.trim() },
+                  body: JSON.stringify({ province_id: matchedProv.ProvinceID })
+                });
+                const distData = await distRes.json().catch(() => ({}));
+                if (distData.code === 200 && Array.isArray(distData.data)) {
+                  const cleanDist = toDistrict.toLowerCase().replace(/quận|huyện|thị xã|thành phố/g, '').trim();
+                  const matchedDist = distData.data.find(d => {
+                    const dName = (d.DistrictName || '').toLowerCase().replace(/quận|huyện|thị xã|thành phố/g, '').trim();
+                    return dName.includes(cleanDist) || cleanDist.includes(dName);
+                  });
+
+                  if (matchedDist) {
+                    to_district_id = matchedDist.DistrictID;
+
+                    const wardRes = await fetch(`${baseUrl}/master-data/ward?district_id=${matchedDist.DistrictID}`, {
+                      method: 'GET',
+                      headers: { 'Content-Type': 'application/json', 'Token': apiKey.trim() }
+                    });
+                    const wardData = await wardRes.json().catch(() => ({}));
+                    if (wardData.code === 200 && Array.isArray(wardData.data)) {
+                      const cleanWard = toWard.toLowerCase().replace(/phường|xã|thị trấn/g, '').trim();
+                      const matchedWard = wardData.data.find(w => {
+                        const wName = (w.WardName || '').toLowerCase().replace(/phường|xã|thị trấn/g, '').trim();
+                        return wName.includes(cleanWard) || cleanWard.includes(wName);
+                      });
+                      if (matchedWard) {
+                        to_ward_code = String(matchedWard.WardCode);
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          } catch (e) {
+            console.warn('[GHN Location Resolver]', e.message);
+          }
+
+          // Chuẩn bị payload gửi GHN
+          const ghnPayload = {
+            payment_type_id: 2, // 2: Bên mua trả cước COD, 1: Bên gửi trả
+            note: 'Kiện hàng Dược phẩm/TPCN MedXpressCare niêm phong tem GSP. Cho xem hàng không cho thử.',
+            required_note: 'CHOXEMHANGKHONGTHU',
+            return_phone: returnPhone,
+            return_address: returnAddress,
+            client_order_code: String(order.id),
+            to_name: toName,
+            to_phone: toPhone,
+            to_address: `${toAddress}, ${toWard}, ${toDistrict}, ${toProvince}`,
+            to_ward_name: toWard,
+            to_district_name: toDistrict,
+            cod_amount: codAmount,
+            content: `Đơn hàng MedXpressCare #${order.id} (${items.length} hộp TPCN)`,
+            weight: Math.max(250, items.reduce((sum, it) => sum + (it.weight * it.quantity), 0)),
+            length: 20,
+            width: 15,
+            height: 10,
+            service_type_id: 2, // Dịch vụ chuẩn E-commerce
+            items: items
+          };
+
+          if (to_district_id) ghnPayload.to_district_id = to_district_id;
+          if (to_ward_code) ghnPayload.to_ward_code = to_ward_code;
+
+          const ghnHeaders = {
+            'Content-Type': 'application/json',
+            'Token': apiKey.trim()
+          };
+          if (shopId) {
+            ghnHeaders['ShopId'] = String(shopId).trim();
+          }
+
+          const ghnRes = await fetch(`${baseUrl}/v2/shipping-order/create`, {
+            method: 'POST',
+            headers: ghnHeaders,
+            body: JSON.stringify(ghnPayload)
+          });
+
+          const ghnData = await ghnRes.json().catch(() => ({}));
+
+          if (ghnData.code !== 200) {
+            console.error('[GHN Error] Create order failed:', ghnData);
+            return jsonResponse({
+              success: false,
+              message: `GHN từ chối tạo đơn: ${ghnData.message || ghnData.code_message_value || JSON.stringify(ghnData)}`,
+              ghnError: ghnData
+            }, 400);
+          }
+
+          // Thành công! GHN trả về mã vận đơn THẬT
+          const ghnResult = ghnData.data || {};
+          return jsonResponse({
+            success: true,
+            orderCode: ghnResult.order_code,
+            trackingNumber: ghnResult.order_code,
+            totalFee: ghnResult.total_fee,
+            expectedDeliveryTime: ghnResult.expected_delivery_time,
+            sortCode: ghnResult.sort_code,
+            transType: ghnResult.trans_type,
+            rawGhn: ghnResult
+          });
+        } catch (err) {
+          return jsonResponse({ success: false, message: `Lỗi kết nối GHN: ${err.message}` }, 500);
+        }
+      }
+
+      // /api/shipping/ghn/tracking-detail
+      if (pathname === '/api/shipping/ghn/tracking-detail') {
+        try {
+          const { orderCode, apiKey, isDev } = await request.json();
+          if (!orderCode) return errorResponse('Missing orderCode', 400);
+          if (!apiKey) return errorResponse('Missing apiKey', 400);
+
+          const baseUrl = isDev 
+            ? 'https://dev-online-gateway.ghn.vn/shiip/public-api' 
+            : 'https://online-gateway.ghn.vn/shiip/public-api';
+
+          const ghnRes = await fetch(`${baseUrl}/v2/shipping-order/detail`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Token': apiKey.trim()
+            },
+            body: JSON.stringify({ order_code: orderCode })
+          });
+
+          const ghnData = await ghnRes.json().catch(() => ({}));
+          if (ghnData.code !== 200) {
+            return jsonResponse({
+              success: false,
+              message: `Không tìm thấy vận đơn GHN: ${ghnData.message || 'Mã vận đơn không tồn tại'}`
+            }, 400);
+          }
+
+          return jsonResponse({
+            success: true,
+            data: ghnData.data
+          });
+        } catch (err) {
+          return jsonResponse({ success: false, message: err.message }, 500);
+        }
+      }
+
+      // /api/shipping/ghn/print-order
+      if (pathname === '/api/shipping/ghn/print-order') {
+        try {
+          const { orderCodes, apiKey, isDev } = await request.json();
+          const codes = Array.isArray(orderCodes) ? orderCodes : [orderCodes];
+          if (codes.length === 0) return errorResponse('Missing orderCodes', 400);
+          if (!apiKey) return errorResponse('Missing apiKey', 400);
+
+          const baseUrl = isDev 
+            ? 'https://dev-online-gateway.ghn.vn/shiip/public-api' 
+            : 'https://online-gateway.ghn.vn/shiip/public-api';
+
+          const ghnRes = await fetch(`${baseUrl}/v2/a5/gen-token`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Token': apiKey.trim()
+            },
+            body: JSON.stringify({ order_codes: codes })
+          });
+
+          const ghnData = await ghnRes.json().catch(() => ({}));
+          if (ghnData.code !== 200 || !ghnData.data?.token) {
+            return jsonResponse({
+              success: false,
+              message: `Không thể tạo token in GHN: ${ghnData.message || 'Lỗi tạo phiếu in'}`
+            }, 400);
+          }
+
+          const printUrl = isDev
+            ? `https://dev-online-gateway.ghn.vn/a5/public-api/printA5?token=${ghnData.data.token}`
+            : `https://online-gateway.ghn.vn/a5/public-api/printA5?token=${ghnData.data.token}`;
+
+          return jsonResponse({
+            success: true,
+            token: ghnData.data.token,
+            printUrl
+          });
+        } catch (err) {
+          return jsonResponse({ success: false, message: err.message }, 500);
+        }
+      }
+
+      // /api/shipping/ghn/cancel-order
+      if (pathname === '/api/shipping/ghn/cancel-order') {
+        try {
+          const { orderCodes, apiKey, isDev } = await request.json();
+          const codes = Array.isArray(orderCodes) ? orderCodes : [orderCodes];
+          if (codes.length === 0) return errorResponse('Missing orderCodes', 400);
+          if (!apiKey) return errorResponse('Missing apiKey', 400);
+
+          const baseUrl = isDev 
+            ? 'https://dev-online-gateway.ghn.vn/shiip/public-api' 
+            : 'https://online-gateway.ghn.vn/shiip/public-api';
+
+          const ghnRes = await fetch(`${baseUrl}/v2/switch-status/cancel`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Token': apiKey.trim()
+            },
+            body: JSON.stringify({ order_codes: codes })
+          });
+
+          const ghnData = await ghnRes.json().catch(() => ({}));
+          return jsonResponse({
+            success: ghnData.code === 200,
+            message: ghnData.message || 'Xử lý yêu cầu hủy đơn trên GHN',
+            ghnData
+          });
+        } catch (err) {
+          return jsonResponse({ success: false, message: err.message }, 500);
+        }
+      }
+
       return errorResponse('API endpoint not found', 404);
     }
 

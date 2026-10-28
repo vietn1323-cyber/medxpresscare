@@ -92,18 +92,53 @@ export const DEFAULT_SHIPPING_CARRIERS = [
 ];
 
 /**
- * Kiểm tra kết nối API giả lập/thực tế với Đơn vị vận chuyển
+ * Kiểm tra kết nối API với Đơn vị vận chuyển (Xác thực thực tế với máy chủ GHN)
  */
-export const testCarrierConnection = async (carrierId, apiKey, shopId) => {
+export const testCarrierConnection = async (carrierId, apiKey, shopId, isDev = false) => {
   if (!apiKey || !apiKey.trim()) {
     return {
       success: false,
-      message: 'Vui lòng nhập API Key / Token đối tác trước khi kiểm tra kết nối.'
+      message: 'Vui lòng nhập API Token / Key của đối tác trước khi kiểm tra kết nối.'
     };
   }
 
-  // Giả lập kiểm tra kết nối API vận chuyển trong 600ms
-  await new Promise(resolve => setTimeout(resolve, 600));
+  // Đối với GHN: Xác thực THỰC TẾ với máy chủ Giao Hàng Nhanh Express qua Cloudflare Worker proxy
+  if (carrierId === 'ghn') {
+    try {
+      const res = await fetch('/api/shipping/ghn/test-connection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          apiKey: apiKey.trim(),
+          shopId: shopId ? String(shopId).trim() : '',
+          isDev: Boolean(isDev)
+        })
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        return {
+          success: true,
+          message: data.message || 'Kết nối thành công tới máy chủ GHN Express! Kho hàng và biểu phí đã sẵn sàng.',
+          shop: data.shop,
+          shops: data.shops
+        };
+      } else {
+        return {
+          success: false,
+          message: data.message || 'Xác thực GHN không thành công. Vui lòng kiểm tra lại Token API hoặc Shop ID.'
+        };
+      }
+    } catch (err) {
+      return {
+        success: false,
+        message: `Lỗi kết nối tới máy chủ GHN: ${err.message}`
+      };
+    }
+  }
+
+  // Giả lập kiểm tra với các hãng chưa tích hợp API chính thức (Hỏa Tốc nội bộ, GHTK, Viettel)
+  await new Promise(resolve => setTimeout(resolve, 500));
 
   if (apiKey.length < 5) {
     return {
@@ -114,6 +149,6 @@ export const testCarrierConnection = async (carrierId, apiKey, shopId) => {
 
   return {
     success: true,
-    message: `Kết nối thành công tới máy chủ ${carrierId.toUpperCase()}! Kho hàng và biểu phí đã sẵn sàng.`
+    message: `Cấu hình ${carrierId.toUpperCase()} hợp lệ! Sẵn sàng đồng bộ vận đơn.`
   };
 };

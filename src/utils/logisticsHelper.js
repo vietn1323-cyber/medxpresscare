@@ -135,7 +135,7 @@ export const initializeOrderTracking = (order, carrierId = null, triggerType = '
     shippingMethod: chosenCarrierId,
     shippingCarrierName: carrier.name,
     carrierProgress: 30, // 30% khi xác nhận/in đơn
-    autoTracking: true,
+    autoTracking: order.isGhnSynced ? false : (order.autoTracking !== undefined ? order.autoTracking : true),
     isPrinted: triggerType === 'print' ? true : order.isPrinted,
     confirmedAt: order.confirmedAt || now.toISOString(),
     printedAt: triggerType === 'print' ? now.toISOString() : order.printedAt,
