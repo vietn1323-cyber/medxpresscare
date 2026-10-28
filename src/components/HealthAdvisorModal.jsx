@@ -131,7 +131,7 @@ export const AUDIENCE_CONCERNS = {
       summary: 'Da xỉn màu thiếu sức sống, xuất hiện nám mảng hai bên gò má, mất độ đàn hồi sau 28 tuổi.',
       mechanism: 'Tia UV và gốc tự do kích hoạt enzym Tyrosinase sản sinh hắc sắc tố Melanin, làm đứt gãy lưới sợi collagen mô liên kết.',
       keyNutrients: 'Chiết xuất Ý dĩ (Coix), Nano Curcumin tinh khiết 98%, Vitamin C hữu cơ.',
-      advice: 'Phác đồ kết hợp trong uống ngoài dưỡng: Dùng tinh chất Ý dĩ cô đặc ức chế tận gốc tế bào hắc tố Melanin và kích thích sản sinh collagen tuýp 1 săn chắc.',
+      advice: 'Liệu trình kết hợp trong uống ngoài dưỡng: Dùng tinh chất Ý dĩ cô đặc ức chế tận gốc tế bào hắc tố Melanin và kích thích sản sinh collagen tuýp 1 săn chắc.',
       lifestyle: 'Thoa kem chống nắng phổ rộng SPF 50+ mỗi ngày kể cả khi ở trong nhà. Ăn nhiều quả mọng giàu chất chống oxy hóa.',
       domesticId: 'vn-03', // Tinh Nghệ Nano Curcumin OIC New
       importedId: 'jp-01', // Viên Trắng Da DHC Coix Extract Ý Dĩ Nhật Bản
@@ -367,6 +367,10 @@ export const HealthAdvisorModal = ({
   const [selectedConcern, setSelectedConcern] = useState(null);
   const [selectedConditionId, setSelectedConditionId] = useState('none');
 
+  // Ngữ cảnh tư vấn riêng cho khung Chat (Người dùng chủ động chọn hoặc để AI tự động nhận diện)
+  const [chatAudience, setChatAudience] = useState('auto'); // 'auto' | 'elderly' | 'women' | 'men' | 'office' | 'kids'
+  const [chatCondition, setChatCondition] = useState('none'); // 'none' | 'stomach' | 'blood_pressure' | 'diabetes'
+
   // Trạng thái Live Chat AI
   const [chatMessages, setChatMessages] = useState([
     {
@@ -377,7 +381,7 @@ export const HealthAdvisorModal = ({
 Tôi ở đây để lắng nghe và đồng hành cùng quý khách về mọi vấn đề sức khỏe:
 🌿 Giải đáp thắc mắc về triệu chứng, cơ chế bệnh học và chế độ ăn uống, kiêng cữ
 💊 Hướng dẫn thời điểm uống, cách dùng và kiểm tra tương tác thuốc, bệnh nền an toàn
-🩺 Tư vấn phác đồ bổ trợ chuyên sâu (kết hợp giải pháp thảo dược nội địa & nhập khẩu chính ngạch khi quý khách cần)
+🩺 Tư vấn liệu trình bổ sung vi chất & dược mỹ phẩm chuyên sâu (kết hợp giải pháp nội địa & nhập khẩu chính ngạch khi quý khách cần)
 
 Quý khách đang gặp tình trạng khó chịu nào hoặc cần Dược sĩ hỗ trợ thông tin gì ạ?`,
       recommendedProducts: [],
@@ -478,9 +482,9 @@ Quý khách đang gặp tình trạng khó chịu nào hoặc cần Dược sĩ 
     try {
       const response = await consultWithAiPharmacist({
         userMessage: textToSend.trim(),
-        targetAudience: selectedAudienceId,
-        selectedConcern: activeConcern,
-        selectedCondition: selectedConditionId,
+        targetAudience: chatAudience === 'auto' ? '' : chatAudience,
+        selectedConcern: selectedConcern, // Không ép về activeConcern nếu chưa chọn
+        selectedCondition: chatCondition,
         products: products,
         apiKey: storeConfig?.aiApiKey || '',
         provider: storeConfig?.aiProvider || 'gemini',
@@ -526,7 +530,7 @@ Quý khách đang gặp tình trạng khó chịu nào hoặc cần Dược sĩ 
     { label: '🌿 Đau khớp gối nên kiêng ăn gì & tập bài gì?', query: 'Cho tôi hỏi người bị đau khớp gối và thoái hóa khớp thì nên kiêng ăn những món gì và có bài tập nào tập tại nhà không?' },
     { label: '⏰ Uống Canxi và Dầu cá vào lúc nào tốt nhất?', query: 'Dược sĩ cho tôi hỏi Canxi và Dầu cá Omega-3 nên uống vào thời điểm nào trong ngày để hấp thu tốt nhất?' },
     { label: '💊 Đang uống thuốc huyết áp dùng TPCN được không?', query: 'Bác đang uống thuốc điều trị huyết áp hàng ngày, nếu muốn dùng thêm thảo dược bổ não thì có cần lưu ý gì không?' },
-    { label: '🧓 Bác 65 tuổi bị thoái hóa khớp gối, tư vấn phác đồ', query: 'Bác năm nay 65 tuổi bị thoái hóa khớp gối đau nhức đi lại lục cục, tư vấn giúp bác sản phẩm hỗ trợ tái tạo sụn khớp an toàn cho dạ dày' },
+    { label: '🧓 Bác 65 tuổi bị thoái hóa khớp gối, tư vấn liệu trình', query: 'Bác năm nay 65 tuổi bị thoái hóa khớp gối đau nhức đi lại lục cục, tư vấn giúp bác sản phẩm hỗ trợ tái tạo sụn khớp an toàn cho dạ dày' },
     { label: '💼 Dân văn phòng ngồi máy tính hay bị khô mỏi mắt', query: 'Em làm văn phòng ngồi máy tính 8-10 tiếng mỗi ngày, mắt hay bị khô rát mỏi nhòe thì nên cải thiện thế nào?' }
   ];
 
@@ -578,7 +582,7 @@ Quý khách đang gặp tình trạng khó chịu nào hoặc cần Dược sĩ 
                 }`}
               >
                 <Activity className="w-3.5 h-3.5" />
-                <span>Khảo Sát Phác Đồ</span>
+                <span>Khảo Sát Nhu Cầu</span>
               </button>
               <button
                 onClick={() => setActiveTab('chat')}
@@ -594,6 +598,17 @@ Quý khách đang gặp tình trạng khó chịu nào hoặc cần Dược sĩ 
               </button>
             </div>
           </div>
+
+          
+        {/* BANNER BẢO VỆ PHÁP LÝ & PHẠM VI HOẠT ĐỘNG */}
+        <div className="bg-amber-50/90 border-b border-amber-200/90 px-4 py-2 flex items-center gap-2 text-[11px] sm:text-xs text-amber-900 font-medium">
+          <span className="font-black text-amber-800 uppercase bg-amber-200/80 px-2 py-0.5 rounded text-[10px] shrink-0">
+            Lưu Ý Y Tế
+          </span>
+          <span className="leading-tight">
+            MedXpressCare chỉ cung cấp <strong>Thực phẩm bảo vệ sức khỏe (TPCN) & Dược mỹ phẩm</strong>. Website <strong>KHÔNG BÁN THUỐC KÊ ĐƠN</strong> và không cung cấp phác đồ điều trị thay thế chẩn đoán của Bác sĩ.
+          </span>
+        </div>
 
           {/* Stepper Indicator nếu đang ở Wizard Mode */}
           {activeTab === 'wizard' && (
@@ -612,7 +627,7 @@ Quý khách đang gặp tình trạng khó chịu nào hoặc cần Dược sĩ 
                 <span className={step === 1 ? 'text-amber-300 font-bold' : ''}>1. Chọn Đối Tượng</span>
                 <span className={step === 2 ? 'text-amber-300 font-bold' : ''}>2. Mối Quan Tâm</span>
                 <span className={step === 3 ? 'text-amber-300 font-bold' : ''}>3. Bệnh Nền / Thuốc</span>
-                <span className={step === 4 ? 'text-amber-300 font-bold' : ''}>4. Phác Đồ Chuẩn</span>
+                <span className={step === 4 ? 'text-amber-300 font-bold' : ''}>4. Liệu Trình Bổ Sung</span>
               </div>
             </div>
           )}
@@ -802,7 +817,7 @@ Quý khách đang gặp tình trạng khó chịu nào hoặc cần Dược sĩ 
                   <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-200/60 pb-2">
                     <div className="flex items-center gap-2 font-black text-xs uppercase tracking-wide text-emerald-900">
                       <Sparkles className="w-4 h-4 text-emerald-600" />
-                      <span>Phác Đồ Cho: {activeConcern?.title}</span>
+                      <span>Liệu Trình Bổ Trợ Cho: {activeConcern?.title}</span>
                     </div>
                     <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-200/80 text-emerald-900">
                       Đối tượng: {currentAudience.title}
@@ -839,7 +854,7 @@ Quý khách đang gặp tình trạng khó chịu nào hoặc cần Dược sĩ 
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="text-xs font-black uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
                       <Award className="w-4 h-4 text-amber-500" />
-                      <span>2 Phương Án Điều Trị Chuẩn Y Khoa Cùng Công Năng:</span>
+                      <span>2 Phương Án Bổ Trợ Chuẩn Y Khoa Cùng Công Năng:</span>
                     </h4>
                     <span className="text-[11px] text-slate-400">Chọn giải pháp phù hợp ngân sách</span>
                   </div>
@@ -1029,6 +1044,64 @@ Quý khách đang gặp tình trạng khó chịu nào hoặc cần Dược sĩ 
         {activeTab === 'chat' && (
           <div className="flex flex-col flex-1 overflow-hidden h-[540px]">
             
+            {/* Thanh Ngữ Cảnh Tư Vấn Lâm Sàng (Context Bar) */}
+            <div className="bg-slate-900 text-white px-3 sm:px-4 py-2 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs shrink-0">
+              <div className="flex items-center gap-1.5 font-bold text-emerald-300">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span className="hidden sm:inline">Ngữ cảnh:</span>
+              </div>
+
+              {/* Nhóm 1: Đối tượng cần tư vấn */}
+              <div className="flex items-center gap-1 overflow-x-auto py-0.5 max-w-full">
+                <span className="text-[10px] text-slate-400 font-medium shrink-0">Tư vấn cho:</span>
+                {[
+                  { id: 'auto', label: 'Tự động' },
+                  { id: 'elderly', label: 'Bác 50+' },
+                  { id: 'women', label: 'Phụ nữ' },
+                  { id: 'men', label: 'Nam giới' },
+                  { id: 'office', label: 'Văn phòng' },
+                  { id: 'kids', label: 'Trẻ nhỏ' }
+                ].map(a => (
+                  <button
+                    key={a.id}
+                    type="button"
+                    onClick={() => setChatAudience(a.id)}
+                    className={`px-2 py-0.5 rounded-full text-[11px] font-bold transition-all shrink-0 cursor-pointer ${
+                      chatAudience === a.id
+                        ? 'bg-amber-400 text-slate-950 shadow-xs'
+                        : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700'
+                    }`}
+                  >
+                    {a.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Nhóm 2: Bệnh lý nền cần lưu ý */}
+              <div className="flex items-center gap-1 overflow-x-auto py-0.5 max-w-full">
+                <span className="text-[10px] text-slate-400 font-medium shrink-0">Bệnh nền:</span>
+                {[
+                  { id: 'none', label: 'Không' },
+                  { id: 'stomach', label: 'Dạ dày' },
+                  { id: 'blood_pressure', label: 'Huyết áp' },
+                  { id: 'diabetes', label: 'Tiểu đường' }
+                ].map(c => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setChatCondition(c.id)}
+                    className={`px-2 py-0.5 rounded-full text-[11px] font-bold transition-all shrink-0 cursor-pointer ${
+                      chatCondition === c.id
+                        ? 'bg-rose-500 text-white shadow-xs'
+                        : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700'
+                    }`}
+                  >
+                    {c.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Quick chips gợi ý câu hỏi theo đối tượng */}
             <div className="p-3 bg-slate-50 border-b border-slate-100 overflow-x-auto whitespace-nowrap flex items-center gap-2 shrink-0">
               <span className="text-[11px] font-bold text-slate-500 shrink-0 flex items-center gap-1">
@@ -1086,7 +1159,7 @@ Quý khách đang gặp tình trạng khó chịu nào hoặc cần Dược sĩ 
                         <div className="mt-3 pt-3 border-t border-slate-200/80 space-y-2">
                           <div className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200/60 inline-flex items-center gap-1.5 mb-1">
                             <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                            <span>Gợi ý phác đồ bổ trợ theo nhu cầu của bạn:</span>
+                            <span>Gợi ý giải pháp bổ sung theo nhu cầu của bạn:</span>
                           </div>
 
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">

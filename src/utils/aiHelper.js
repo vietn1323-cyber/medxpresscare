@@ -364,7 +364,7 @@ export const rewriteArticleWithAi = async ({
 Nhiệm vụ của bạn là VIẾT LẠI HOÀN TOÀN bài viết từ nguồn tham khảo được cung cấp, biến nó thành một bài cẩm nang Y khoa ĐỘC BẢN, CHUYÊN SÂU, TOÀN DIỆN VÀ DÀI (khoảng 1.500 - 3.000 từ), ĐẠT ĐIỂM SEO ON-PAGE TỐI ĐA (100/100).
 
 YÊU CẦU BẮT BUỘC VỀ NỘI DUNG & ĐỘ DÀI:
-1. KHÔNG VIẾT TÓM TẮT SƠ SÀI. Bài viết phải có dung lượng dài, chuyên sâu, phân tích cặn kẽ cơ chế sinh học, nghiên cứu lâm sàng (PubMed, FDA, TGA), nguyên nhân bệnh sinh, phác đồ liều dùng khoa học, tương tác thuốc, lưu ý bệnh nền, chế độ ăn uống sinh hoạt và phần Hỏi Đáp (FAQ).
+1. KHÔNG VIẾT TÓM TẮT SƠ SÀI. Bài viết phải có dung lượng dài, chuyên sâu, phân tích cặn kẽ cơ chế sinh học, nghiên cứu lâm sàng (PubMed, FDA, TGA), nguyên nhân bệnh sinh, hướng dẫn liều dùng khoa học, tương tác thuốc, lưu ý bệnh nền, chế độ ăn uống sinh hoạt và phần Hỏi Đáp (FAQ).
 2. Tối ưu On-Page SEO cho website MedXpressCare:
    - "title": Tiêu đề bài viết hấp dẫn, chứa từ khóa chính, độ dài 45 - 65 ký tự.
    - "slug": Đường dẫn tĩnh URL ngắn gọn, chuẩn không dấu cách nhau bằng dấu gạch ngang (ví dụ: cach-dung-canxi-d3k2-dung-chuan).
@@ -579,7 +579,7 @@ ${rawContent ? rawContent.slice(0, 4000) : `Vui lòng phân tích chủ đề t�
 
   const mockTitle = `Bí Quyết Sử Dụng ${cleanKeyword} Đúng Chuẩn Y Khoa Để Tối Đa Hiệu Quả`;
   const mockSlug = slugify(mockTitle);
-  const mockDesc = `Hướng dẫn sử dụng ${extractedKeyword} đúng chuẩn Y khoa từ Dược sĩ MedXpressCare: Phác đồ liều dùng an toàn, thời điểm uống và cách nhận biết sản phẩm chính hãng.`;
+  const mockDesc = `Hướng dẫn sử dụng ${extractedKeyword} đúng chuẩn Y khoa từ Dược sĩ MedXpressCare: Hướng dẫn liều dùng an toàn, thời điểm uống và cách nhận biết sản phẩm chính hãng.`;
 
   const mockArticle = {
     id: 'art-' + Date.now(),
@@ -606,11 +606,11 @@ Theo các tài liệu từ Dược thư Quốc gia và các nghiên cứu lâm s
 - **Tăng sinh khả dụng**: Khả năng hấp thu tăng lên đáng kể khi kết hợp cùng các vi chất đồng vận chuyển (ví dụ Canxi cần Vitamin D3 và K2, Sắt cần Vitamin C, Curcumin cần Piperine).
 - **Hàng rào bảo vệ tế bào**: Giảm thiểu các tác nhân gây oxy hóa tế bào (gốc tự do ROS), tăng cường khả năng tự phục hồi và bảo vệ hệ cơ quan trước áp lực môi trường sống hiện đại.
 
-## 2. Phác đồ liều dùng và thời điểm bổ sung chuẩn Y khoa
+## 2. Hướng dẫn liều lượng và thời điểm bổ sung chuẩn Y khoa
 
 Để **${extractedKeyword}** phát huy hiệu quả tối đa và không gây lãng phí dưỡng chất, Dược sĩ MedXpressCare khuyến nghị bạn tuân thủ các nguyên tắc vàng sau:
 
-![Dược sĩ tư vấn hướng dẫn phác đồ sử dụng an toàn](https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=900&auto=format&fit=crop&q=80)
+![Dược sĩ tư vấn hướng dẫn sử dụng an toàn](https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=900&auto=format&fit=crop&q=80)
 
 ### 3 Nguyên tắc vàng khi sử dụng:
 1. **Đúng liều lượng**: Tuyệt đối không tự ý tăng liều gấp đôi với mong muốn có kết quả nhanh. Cơ thể có ngưỡng hấp thu tối đa trong ngày, bổ sung dư thừa sẽ đào thải qua gan thận gây áp lực không cần thiết.
@@ -693,7 +693,7 @@ function getCoverImageForTopic(keyword) {
 }
 
 /**
- * Dược Sĩ AI 24/7 Tư Vấn Chuyên Sâu Lâm Sàng & Đề Xuất Phác Đồ Cá Nhân Hóa
+ * Dược Sĩ AI 24/7 Tư Vấn Chuyên Sâu Lâm Sàng & Liệu Trình Bổ Sung Cá Nhân Hóa
  * Tôn chỉ: "Lương Y Như Từ Mẫu" - Lắng nghe tận tâm, trả lời đúng trọng tâm câu hỏi,
  * KHÔNG ép tư vấn sản phẩm khi chưa đạt mục tiêu giải đáp cho khách hàng.
  */
@@ -729,6 +729,16 @@ DANH MỤC SẢN PHẨM CỬA HÀNG HIỆN CÓ:
 ${catalogSummary}
 
 NGUYÊN TẮC TƯ VẤN SỐNG CÒN (BẮT BUỘC TUÂN THỦ ĐỂ ĐÚNG HOÀN CẢNH):
+
+0. RANH GIỚI PHÁP LÝ & PHẠM VI SẢN PHẨM (BẮT BUỘC TUÂN THỦ ĐỂ KHÔNG TƯ VẤN SAI):
+   - MedXpressCare CHỈ KINH DOANH: Thực phẩm bảo vệ sức khỏe (TPCN), sản phẩm bổ sung dinh dưỡng (vitamin, khoáng chất, vi chất, thảo dược) và Dược mỹ phẩm chính hãng.
+   - WEBSITE HOÀN TOÀN KHÔNG BÁN THUỐC KÊ ĐƠN (Thuốc Rx: kháng sinh, thuốc điều trị đặc trị, corticoid uống, thuốc tim mạch/hạ áp theo toa, thuốc hướng thần...).
+   - WEBSITE KHÔNG CÓ PHÁC ĐỒ ĐIỀU TRỊ BỆNH. Toàn bộ sản phẩm KHÔNG PHẢI LÀ THUỐC VÀ KHÔNG THAY THẾ THUỐC CHỮA BỆNH.
+   - TUYỆT ĐỐI KHÔNG DÙNG TỪ "PHÁC ĐỒ ĐIỀU TRỊ" TRONG CÂU TRẢ LỜI. Thay vào đó, hãy dùng: "liệu trình bổ sung vi chất", "giải pháp hỗ trợ sức khỏe", "combo dinh dưỡng lành tính", "chăm sóc da với dược mỹ phẩm".
+   - KHI KHÁCH HỎI MUA HOẶC TƯ VẤN THUỐC KÊ ĐƠN / THUỐC ĐẶC TRỊ / KHÁNG SINH:
+     + Lập tức từ chối nhã nhặn và nêu rõ: MedXpressCare chỉ phân phối TPCN & Dược mỹ phẩm, hoàn toàn không bán thuốc kê đơn.
+     + Hướng dẫn khách hàng đến trực tiếp bệnh viện hoặc cơ sở y tế có bác sĩ thăm khám và kê đơn theo quy định.
+     + BẮT BUỘC ĐỂ "recommendedProductIds": [] (mảng rỗng), không chèo kéo TPCN thay thế thuốc kê đơn của bác sĩ!
 
 1. THẤU HIỂU ĐÚNG NGỮ CẢNH VÀ ĐỐI TƯỢNG (CONTEXT & RELATIONSHIP AWARENESS):
    - XÁC ĐỊNH CHÍNH XÁC AI LÀ NGƯỜI BỆNH THỰC SỰ:
@@ -771,7 +781,7 @@ NGUYÊN TẮC TƯ VẤN SỐNG CÒN (BẮT BUỘC TUÂN THỦ ĐỂ ĐÚNG HOÀN
      + Các trường hợp cấp cứu đỏ (Red Flag).
    - CHỈ ĐỀ XUẤT SẢN PHẨM (tối đa 1-2 mã ID từ danh mục trên) KHI:
      + Khách chủ động hỏi: "nên uống thuốc/TPCN gì?", "có loại nào tốt?", "tư vấn giúp tôi sản phẩm...", "bên shop có bán...", "mua loại nào hiệu quả?"
-     + Hoặc sau khi đã giải thích rõ cơ chế và khách cần một phác đồ bổ trợ cụ thể để phục hồi.
+     + Hoặc sau khi đã giải thích rõ cơ chế và khách cần một liệu trình bổ sung vi chất hoặc dược mỹ phẩm hỗ trợ phục hồi sức khỏe.
    - Khi đề xuất sản phẩm: Trình bày nhẹ nhàng, khách quan, phân tích rõ lý do vì sao sản phẩm đó giúp ích. KHÔNG dùng ngôn từ giục giã mua hàng ("hãy mua ngay", "đặt hỏa tốc").
 
 6. VĂN PHONG TỰ NHIÊN, ẤM ÁP, CHUẨN MỰC:
@@ -967,6 +977,28 @@ Chào bạn, các triệu chứng bạn vừa mô tả là **dấu hiệu cảnh
     };
   }
 
+  
+  // A2. KIỂM TRA HỎI THUỐC KÊ ĐƠN / THUỐC ĐẶC TRỊ / KHÁNG SINH (WEBSITE HOÀN TOÀN KHÔNG BÁN THUỐC KÊ ĐƠN)
+  const isPrescriptionDrug = /(thuốc kê đơn|thuốc theo toa|thuốc đặc trị|thuốc kháng sinh|kháng sinh|corticoid|prednisolon|dexamethason|amoxicillin|augmentin|cefixim|azithromycin|thuốc ngủ seduxen|thuốc thần kinh|thuốc hạ áp amlodipin|thuốc tiểu đường glucophage|insulin|thuốc chống đông|kê đơn cho tôi|cho tôi đơn thuốc|phác đồ điều trị bệnh)/i.test(textLower);
+  if (isPrescriptionDrug) {
+    return {
+      reply: `⚠️ **LƯU Ý CHUYÊN MÔN QUAN TRỌNG TỪ DƯỢC SĨ MEDXPRESSCARE:**
+
+Chào bạn, **MedXpressCare là hệ thống phân phối Thực phẩm bảo vệ sức khỏe (TPCN), sản phẩm bổ sung dinh dưỡng và Dược mỹ phẩm chính hãng**.
+
+Theo đúng quy định của Luật Dược 2016 và Bộ Y Tế:
+- ❌ **Website hoàn toàn KHÔNG BÁN THUỐC KÊ ĐƠN (Thuốc Rx)** và **KHÔNG CUNG CẤP PHÁC ĐỒ ĐIỀU TRỊ THAY THẾ BÁC SĨ**.
+- Đối với các loại thuốc kháng sinh, thuốc điều trị bệnh lý nền hoặc thuốc đặc trị, quý khách **bắt buộc phải đến trực tiếp các cơ sở y tế / bệnh viện** để được Bác sĩ chuyên khoa thăm khám lâm sàng, làm xét nghiệm và kê đơn theo phác đồ y khoa chuẩn.
+- Tuyệt đối **không tự ý tìm mua hay sử dụng thuốc kê đơn qua mạng internet** để tránh các biến chứng nguy hiểm và tình trạng kháng thuốc.
+
+💡 *Nếu bạn đang cần tư vấn các sản phẩm **bổ sung vi chất, vitamin khoáng chất bồi bổ thể lực, nâng cao sức đề kháng** hoặc **Dược mỹ phẩm chăm sóc và phục hồi da**, Dược sĩ luôn sẵn sàng lắng nghe và hỗ trợ chu đáo nhé!*`,
+      detectedAudience: targetAudience || 'general',
+      detectedConcern: 'Quy định thuốc kê đơn & TPCN',
+      recommendedProductIds: [],
+      precautions: 'WEBSITE KHÔNG BÁN THUỐC KÊ ĐƠN - VUI LÒNG ĐI KHÁM BÁC SĨ TẠI BỆNH VIỆN!'
+    };
+  }
+
   // B. NHẬN DIỆN MỐI QUAN HỆ & NGỮ CẢNH (Hỏi cho bản thân vs Bố Mẹ vs Con nhỏ vs Mẹ bầu)
   const isAskingForParents = /(mẹ|bố|ba|má|ông|bà|phụ huynh).*(tôi|mình|em|nhà tôi|nhà mình)/i.test(textLower) || /(mẹ|bố|ba|má|ông|bà)\s+(\d+|năm nay|đã lớn|cao tuổi)/i.test(textLower);
   const isAskingForKids = /(bé|con|cháu|nhóc|trẻ nhỏ|em bé).*(nhà em|nhà mình|của em|mấy tháng|\d+\s*tuổi|\d+\s*tháng)/i.test(textLower) || /(cho bé|cho con|trẻ nhỏ|trẻ em|bé biếng ăn|bé chậm|bé lười)/i.test(textLower) || /\b(bé|em bé)\b/i.test(textLower);
@@ -1035,7 +1067,7 @@ Rất vui được hỗ trợ bạn hôm nay! Tôi sẵn sàng giải đáp mọ
 - Các triệu chứng khó chịu bạn hoặc người thân đang gặp phải
 - Chế độ dinh dưỡng, thực phẩm nên ăn và nên kiêng chuẩn y khoa
 - Thời điểm uống, cách dùng và kiểm tra tương tác thuốc, bệnh nền an toàn
-- Phác đồ thảo dược bổ trợ chuyên sâu khi bạn cần giải pháp từ gốc
+- Liệu trình bổ sung vi chất & thảo dược lành tính khi bạn cần giải pháp chăm sóc từ gốc
 
 Bạn có thể chia sẻ cụ thể tình trạng, độ tuổi hoặc câu hỏi bạn đang băn khoăn để Dược sĩ hỗ trợ tư vấn chi tiết nhé!`,
       detectedAudience: audience,
@@ -1300,7 +1332,7 @@ Bạn đang cần tìm hiểu thông tin cho sản phẩm nào hoặc cần hỗ
 1. Bác năm nay bao nhiêu tuổi và ban đêm Bác ngủ có ngon giấc không?
 2. Bác hiện có đang dùng thuốc điều trị bệnh nền nào khác (như huyết áp, dạ dày, tim mạch) không?
 
-*(Nếu bạn muốn tìm hiểu các dòng phác đồ thảo dược bồi bổ lành tính và an toàn cho người lớn tuổi, hãy cho Dược sĩ biết để hỗ trợ nhé!)*`;
+*(Nếu bạn muốn tìm hiểu các dòng sản phẩm bồi bổ thể lực, bổ sung dưỡng chất lành tính và an toàn cho người lớn tuổi, hãy cho Dược sĩ biết để hỗ trợ nhé!)*`;
     }
 
     let openingReply = `${greetingSalutation}, Dược sĩ rất hiểu và đồng cảm với nỗi lo lắng về tình trạng **${concernTitle}**:`;
@@ -1420,17 +1452,17 @@ ${adviceFollowUp}`,
 - 🌐 **Phương án Nhập Khẩu:** **Nước Hồng Sâm KGC 6 năm tuổi (Hàn Quốc)** — Bồi bổ cơ thể sau ốm, tăng tuần hoàn và giảm mệt mỏi.`;
   }
 
-  let productOpening = `Chào bạn, theo nhu cầu tìm hiểu sản phẩm hỗ trợ cho tình trạng **${matchedConcernTitle}**, Dược sĩ xin tư vấn chi tiết phác đồ khoa học:`;
+  let productOpening = `Chào bạn, theo nhu cầu tìm hiểu sản phẩm hỗ trợ cho tình trạng **${matchedConcernTitle}**, Dược sĩ xin gợi ý liệu trình bổ sung khoa học:`;
   let productClosing = `*Bạn có thể xem chi tiết thông tin thành phần, số ĐKSP Bộ Y Tế của 2 sản phẩm đề xuất bên dưới để tham khảo và lựa chọn phương án phù hợp với mình nhé.*`;
 
   if (isAskingForParents) {
-    productOpening = `${greetingSalutation}, theo nhu cầu tìm hiểu sản phẩm bồi bổ, phục hồi cho **Bác** về tình trạng **${matchedConcernTitle}**, Dược sĩ xin tư vấn phác đồ khoa học, lành tính và an toàn cho người lớn tuổi:`;
+    productOpening = `${greetingSalutation}, theo nhu cầu tìm hiểu sản phẩm bồi bổ, phục hồi cho **Bác** về tình trạng **${matchedConcernTitle}**, Dược sĩ xin tư vấn giải pháp bổ sung vi chất khoa học, lành tính và an toàn cho người lớn tuổi:`;
     productClosing = `*Bạn có thể xem chi tiết thông tin thành phần, số ĐKSP Bộ Y Tế của 2 sản phẩm đề xuất bên dưới để tham khảo và lựa chọn phương án chăm sóc tốt nhất cho Bác nhé.*`;
   } else if (isAskingForKids || audience === 'kids') {
-    productOpening = `Chào bạn! Dược sĩ rất hiểu nhu cầu muốn bổ sung dưỡng chất giúp **bé** phát triển toàn diện. Về phác đồ **${matchedConcernTitle}**, Dược sĩ xin tư vấn giải pháp chuẩn y khoa, an toàn cho hệ tiêu hóa của trẻ:`;
+    productOpening = `Chào bạn! Dược sĩ rất hiểu nhu cầu muốn bổ sung dưỡng chất giúp **bé** phát triển toàn diện. Về giải pháp bổ sung **${matchedConcernTitle}**, Dược sĩ xin tư vấn giải pháp chuẩn y khoa, an toàn cho hệ tiêu hóa của trẻ:`;
     productClosing = `*Ba/mẹ có thể xem chi tiết thông tin sản phẩm chuẩn Bộ Y Tế bên dưới để tham khảo liều lượng phù hợp cho độ tuổi của bé nhé.*`;
   } else if (audience === 'elderly') {
-    productOpening = `Dược sĩ xin kính chào Bác! Theo nhu cầu tìm hiểu sản phẩm hỗ trợ cho tình trạng **${matchedConcernTitle}**, Dược sĩ xin tư vấn chi tiết phác đồ khoa học, êm dịu dạ dày cho Bác:`;
+    productOpening = `Dược sĩ xin kính chào Bác! Theo nhu cầu tìm hiểu sản phẩm hỗ trợ cho tình trạng **${matchedConcernTitle}**, Dược sĩ xin tư vấn chi tiết liệu trình bổ sung vi chất êm dịu dạ dày cho Bác:`;
     productClosing = `*Bác có thể xem chi tiết thông tin thành phần, số ĐKSP Bộ Y Tế của 2 sản phẩm đề xuất bên dưới để tham khảo lựa chọn phương án phù hợp với Bác nhé.*`;
   }
 

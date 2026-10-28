@@ -18,7 +18,7 @@ export const POLICIES = [
       {
         heading: '1. Phạm Vi Áp Dụng & Hình Thức Giao Hàng',
         content: `MedXpressCare áp dụng dịch vụ giao nhận dược phẩm và thực phẩm bảo vệ sức khỏe trên phạm vi toàn quốc với 2 hình thức chính:
-- **Giao hỏa tốc nội thành Hà Nội (1 - 2 giờ):** Áp dụng cho các quận Ba Đình, Cầu Giấy, Đống Đa, Hoàn Kiếm, Hai Bà Trưng, Thanh Xuân, Tây Hồ, Nam Từ Liêm, Bắc Từ Liêm, Hà Đông, Hoàng Mai, Long Biên. Đơn vị vận chuyển chuyên nghiệp MedXpress Express mang thuốc trực tiếp từ Tổng kho Cầu Giấy tới tay khách hàng.
+- **Giao hỏa tốc nội thành Hà Nội (1 - 2 giờ):** Áp dụng cho các quận Ba Đình, Cầu Giấy, Đống Đa, Hoàn Kiếm, Hai Bà Trưng, Thanh Xuân, Tây Hồ, Nam Từ Liêm, Bắc Từ Liêm, Hà Đông, Hoàng Mai, Long Biên. Đơn vị vận chuyển chuyên nghiệp MedXpress Express vận chuyển sản phẩm trực tiếp từ Tổng kho Cầu Giấy tới tay khách hàng.
 - **Giao hàng nhanh toàn quốc (1 - 3 ngày làm việc):** Phối hợp cùng các đối tác bưu chính uy tín hàng đầu: Giao Hàng Tiết Kiệm (GHTK), Giao Hàng Nhanh (GHN), Viettel Post và VNPost. Hàng hóa được đóng thùng niêm phong và gửi trực tiếp từ trung tâm phân phối Hà Nội.`
       },
       {
@@ -39,7 +39,7 @@ export const POLICIES = [
       },
       {
         heading: '4. Thời Gian Xử Lý & Giao Nhận Hàng',
-        content: `- **Xác nhận đơn thuốc:** Dược sĩ chuyên môn liên hệ xác nhận tiền sử bệnh lý và liều dùng trong vòng 15 - 30 phút sau khi quý khách đặt hàng trực tuyến (8h00 - 21h30 hàng ngày).
+        content: `- **Xác nhận đơn hàng & liều dùng:** Dược sĩ chuyên môn liên hệ xác nhận tiền sử dị ứng, tình trạng thể chất và hướng dẫn liều lượng bổ sung vi chất trong vòng 15 - 30 phút sau khi quý khách đặt hàng trực tuyến (8h00 - 21h30 hàng ngày).
 - **Thời gian giao dự kiến:**
   + Hà Nội hỏa tốc: 1 - 2 giờ sau khi Dược sĩ duyệt đơn.
   + Các tỉnh miền Bắc: 1 - 2 ngày làm việc.
@@ -255,7 +255,8 @@ export const POLICIES = [
       },
       {
         heading: '2. Tuyên Bố Miễn Trừ Trách Nhiệm Y Khoa Quan Trọng',
-        content: `Căn cứ theo quy định của Luật An toàn Thực phẩm và Bộ Y Tế Việt Nam:
+        content: `Căn cứ theo quy định của Luật An toàn Thực phẩm, Luật Dược 2016 và Bộ Y Tế Việt Nam:
+- ❌ **QUY ĐỊNH VỀ THUỐC KÊ ĐƠN & PHẠM VI HOẠT ĐỘNG:** Website MedXpressCare **HOÀN TOÀN KHÔNG BÁN THUỐC KÊ ĐƠN (Thuốc Rx)** và **KHÔNG CUNG CẤP PHÁC ĐỒ ĐIỀU TRỊ BỆNH THAY THẾ BÁC SĨ**. Danh mục kinh doanh của MedXpressCare chỉ bao gồm: Thực phẩm bảo vệ sức khỏe (TPCN), sản phẩm bổ sung dinh dưỡng (vitamin, khoáng chất, thảo dược bản địa & nhập ngoại) và Dược mỹ phẩm chính hãng.
 - ⚠️ **LƯU Ý:** Toàn bộ sản phẩm được phân loại là **Thực phẩm chức năng (Thực phẩm bảo vệ sức khỏe)** trên website KHÔNG PHẢI LÀ THUỐC VÀ KHÔNG CÓ TÁC DỤNG THAY THẾ THUỐC CHỮA BỆNH.
 - Tác dụng và hiệu quả của các vi chất dinh dưỡng phụ thuộc vào cơ địa, chế độ ăn uống và mức độ dung nạp của từng người.
 - Các nội dung bài viết cẩm nang y khoa hoặc gợi ý của Dược Sĩ AI mang tính chất tham khảo khoa học, không thay thế cho các chẩn đoán cận lâm sàng chuyên sâu (như chụp X-quang, xét nghiệm máu) tại các bệnh viện tuyến trung ương.`
