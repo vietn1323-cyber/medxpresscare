@@ -946,6 +946,24 @@ export default function App() {
     }
   }, [orders]);
 
+  // Đồng bộ đa tab tức thì (Realtime Cross-Tab Sync cho đơn hàng khi Admin thao tác hoặc đẩy GHN)
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'medxpress_admin_orders' && e.newValue) {
+        try {
+          const syncedOrders = JSON.parse(e.newValue);
+          if (Array.isArray(syncedOrders)) {
+            setOrders(syncedOrders);
+          }
+        } catch (err) {
+          console.error('Storage sync error:', err);
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   useEffect(() => {
     try {
       localStorage.setItem('medxpress_custom_products', JSON.stringify(productsList));

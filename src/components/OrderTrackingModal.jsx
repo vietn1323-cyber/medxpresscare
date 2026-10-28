@@ -124,7 +124,7 @@ export const OrderTrackingModal = ({
   }
 
   const carrier = getCarrierInfo(displayOrder.shippingMethod);
-  const trackingNo = displayOrder.trackingNumber || `GHTK-${displayOrder.id.replace(/[^0-9]/g, '') || '883921'}VN`;
+  const trackingNo = displayOrder.ghnOrderCode || (displayOrder.trackingNumber && !displayOrder.trackingNumber.startsWith('GHN-') ? displayOrder.trackingNumber : (displayOrder.shippingMethod === 'ghn' ? 'Chờ bưu cục GHN cấp mã' : displayOrder.trackingNumber || 'Đang cập nhật'));
   const timeline = Array.isArray(displayOrder.trackingTimeline) && displayOrder.trackingTimeline.length > 0
     ? displayOrder.trackingTimeline
     : [
@@ -367,38 +367,43 @@ export const OrderTrackingModal = ({
             </div>
           </div>
 
-          {/* Shipper & Delivery Vehicle Card */}
+          {/* Carrier Dispatch & Support Card */}
           <div className="p-3.5 bg-emerald-50/70 border border-emerald-200/80 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 font-extrabold flex items-center justify-center text-sm border border-emerald-300 shrink-0">
-                {displayOrder.shipper?.name ? displayOrder.shipper.name.charAt(0) : 'B'}
+                🚚
               </div>
               <div>
                 <div className="flex items-center gap-2">
                   <span className="font-extrabold text-xs text-slate-900">
-                    Bưu tá: {displayOrder.shipper?.name || carrier.shipper?.name || 'Nguyễn Văn Hưng'}
+                    {displayOrder.shippingMethod === 'ghn' ? 'Điều phối GHN Express' : (carrier.shipper?.name || carrier.name)}
                   </span>
                   <span className="text-[10px] font-bold bg-white text-emerald-800 px-2 py-0.5 rounded-md border border-emerald-200">
                     {carrier.name}
                   </span>
+                  {displayOrder.ghnOrderCode && (
+                    <span className="text-[10px] font-bold bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
+                      {displayOrder.ghnOrderCode}
+                    </span>
+                  )}
                 </div>
                 <div className="text-[11px] text-slate-600 mt-0.5">
-                  Hình thức giao: <strong>{displayOrder.shipper?.vehicle || carrier.shipper?.vehicle || 'Giao hàng tiêu chuẩn'}</strong>
+                  Hình thức giao: <strong>{displayOrder.shippingMethod === 'ghn' ? 'Mạng lưới chuyển phát nhanh GHN' : (carrier.shipper?.vehicle || 'Giao hàng tiêu chuẩn')}</strong>
                 </div>
                 <div className="text-[10px] text-emerald-700 flex items-center gap-1 mt-0.5">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>{displayOrder.shipper?.storage || carrier.shipper?.storage || 'Kiện hàng đóng gói niêm phong cẩn thận'}</span>
+                  <span>Bảo quản tiêu chuẩn GSP Dược phẩm 15-25°C • Bưu tá liên hệ trước khi phát</span>
                 </div>
               </div>
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
               <a
-                href={`tel:${displayOrder.shipper?.phone || carrier.shipper?.phone || '0982331450'}`}
-                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs flex items-center gap-1.5 shadow-sm transition-colors"
+                href={`tel:${displayOrder.shippingMethod === 'ghn' ? '1900636677' : (carrier.hotline?.replace(/\s+/g, '') || '18006868')}`}
+                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
               >
                 <Phone className="w-3 h-3" />
-                <span>Gọi Bưu Tá</span>
+                <span>Tổng Đài {displayOrder.shippingMethod === 'ghn' ? 'GHN: 1900 636677' : (carrier.hotline || 'Hỗ Trợ')}</span>
               </a>
             </div>
           </div>

@@ -59,12 +59,13 @@ export const OrderTrackingPage = ({
     setSearchedKeyword(rawKeyword.trim());
     setHasSearched(true);
 
-    // Tìm kiếm thông minh: Khớp Mã đơn, Mã vận đơn bưu cục, hoặc Số điện thoại
+    // Tìm kiếm thông minh: Khớp Mã đơn, Mã vận đơn bưu cục, Mã GHN, hoặc Số điện thoại
     const results = allAvailableOrders.filter(o => {
       const idMatch = o.id && o.id.toLowerCase().replace(/\s+/g, '').includes(q);
       const trackingMatch = o.trackingNumber && o.trackingNumber.toLowerCase().replace(/\s+/g, '').includes(q);
+      const ghnMatch = o.ghnOrderCode && o.ghnOrderCode.toLowerCase().replace(/\s+/g, '').includes(q);
       const phoneMatch = o.customer?.phone && o.customer.phone.replace(/\s+/g, '').includes(q);
-      return idMatch || trackingMatch || phoneMatch;
+      return idMatch || trackingMatch || ghnMatch || phoneMatch;
     });
 
     setMatchedOrders(results);
@@ -91,6 +92,16 @@ export const OrderTrackingPage = ({
       }
     }
   }, [initialCode, orders]);
+
+  // Tự động đồng bộ chi tiết đơn hàng đang xem khi danh sách orders cập nhật (VD: khi Admin đẩy sang GHN)
+  useEffect(() => {
+    if (selectedOrder) {
+      const refreshed = orders.find(o => o.id === selectedOrder.id);
+      if (refreshed) {
+        setSelectedOrder(refreshed);
+      }
+    }
+  }, [orders]);
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
@@ -303,34 +314,43 @@ export const OrderTrackingPage = ({
                       <Package className="w-4 h-4 text-emerald-600" />
                       <span>Mã Vận Đơn Bưu Cục Chính Thức:</span>
                     </div>
-                    <div className="font-mono font-black text-base text-emerald-800 tracking-wide">
-                      {selectedOrder.trackingNumber || 'S22.HN1.8839.2991882'}
+                    <div className="font-mono font-black text-base text-emerald-800 tracking-wide flex items-center gap-2">
+                      <span>
+                        {selectedOrder.ghnOrderCode || (selectedOrder.trackingNumber && !selectedOrder.trackingNumber.startsWith('GHN-') ? selectedOrder.trackingNumber : (selectedOrder.shippingMethod === 'ghn' ? 'Chờ bưu cục GHN cấp mã' : selectedOrder.trackingNumber || 'Đang cập nhật'))}
+                      </span>
+                      {selectedOrder.ghnOrderCode && (
+                        <span className="text-[10px] font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full uppercase">
+                          GHN Express
+                        </span>
+                      )}
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => handleCopy(selectedOrder.trackingNumber || selectedOrder.id, 'trackingNo')}
-                      className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all flex items-center gap-1"
+                      onClick={() => handleCopy(selectedOrder.ghnOrderCode || selectedOrder.trackingNumber || selectedOrder.id, 'trackingNo')}
+                      className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
                     >
                       {copiedText === 'trackingNo' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                       <span>{copiedText === 'trackingNo' ? 'Đã sao chép' : 'Sao chép mã'}</span>
                     </button>
                     
                     {/* Link sang trang bưu cục chính thức nếu có */}
-                    <a
-                      href={
-                        selectedOrder.shippingMethod === 'viettel' ? `https://viettelpost.com.vn/tra-cuu-hanh-trinh-don/?code=${selectedOrder.trackingNumber}` :
-                        selectedOrder.shippingMethod === 'ghn' ? `https://donhang.ghn.vn/?order_code=${selectedOrder.trackingNumber}` :
-                        `https://khachhang.giaohangtietkiem.vn/web/khach-hang/tra-cuu-van-don?tracking_code=${selectedOrder.trackingNumber}`
-                      }
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold border border-emerald-200 transition-all flex items-center gap-1"
-                    >
-                      <span>Kiểm tra trên Bưu cục</span>
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
+                    {(selectedOrder.ghnOrderCode || (selectedOrder.trackingNumber && !selectedOrder.trackingNumber.startsWith('GHN-'))) && (
+                      <a
+                        href={
+                          selectedOrder.shippingMethod === 'viettel' ? `https://viettelpost.com.vn/tra-cuu-hanh-trinh-don/?code=${selectedOrder.trackingNumber}` :
+                          selectedOrder.shippingMethod === 'ghn' ? `https://donhang.ghn.vn/?order_code=${selectedOrder.ghnOrderCode || selectedOrder.trackingNumber}` :
+                          `https://khachhang.giaohangtietkiem.vn/web/khach-hang/tra-cuu-van-don?tracking_code=${selectedOrder.trackingNumber}`
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold border border-emerald-200 transition-all flex items-center gap-1 cursor-pointer"
+                      >
+                        <span>Kiểm tra trên Bưu cục</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    )}
                   </div>
                 </div>
 
@@ -386,37 +406,49 @@ export const OrderTrackingPage = ({
                   </div>
                 </div>
 
-                {/* THÔNG TIN BƯU TÁ GIAO HÀNG (SHIPPER CARD) */}
-                {currentCarrier?.shipper && (
-                  <div className="bg-gradient-to-r from-emerald-50/60 via-teal-50/30 to-emerald-50/60 rounded-2xl p-4 border border-emerald-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-bold text-xl shadow-md shrink-0">
-                        {currentCarrier.shipper.name[0]}
+                {/* THÔNG TIN BƯU CỤC & ĐIỀU PHỐI GIAO HÀNG (CARRIER & DISPATCH CARD) */}
+                <div className="bg-gradient-to-r from-emerald-50/60 via-teal-50/30 to-emerald-50/60 rounded-2xl p-4 border border-emerald-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-bold text-xl shadow-md shrink-0">
+                      🚚
+                    </div>
+                    <div className="space-y-0.5">
+                      <div className="text-[10px] uppercase font-bold text-emerald-800 tracking-wider">
+                        Đơn vị vận chuyển & Điều phối giao hàng
                       </div>
-                      <div className="space-y-0.5">
-                        <div className="text-[10px] uppercase font-bold text-emerald-800 tracking-wider">
-                          Bưu tá phụ trách kiện hàng
-                        </div>
-                        <div className="font-extrabold text-sm text-slate-900">
-                          {currentCarrier.shipper.name}
-                        </div>
-                        <div className="text-[11px] text-slate-600 flex items-center gap-2">
-                          <span>{currentCarrier.shipper.vehicle}</span>
-                          <span>•</span>
-                          <span className="text-emerald-700 font-semibold">{currentCarrier.shipper.storage}</span>
-                        </div>
+                      <div className="font-extrabold text-sm text-slate-900 flex items-center gap-2">
+                        <span>{selectedOrder.shippingMethod === 'ghn' ? 'Giao Hàng Nhanh (GHN Express)' : (currentCarrier?.name || 'Bưu cục chuyển phát')}</span>
+                        {selectedOrder.ghnOrderCode && (
+                          <span className="text-[10px] font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
+                            Mã GHN: {selectedOrder.ghnOrderCode}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-slate-600 flex flex-wrap items-center gap-2">
+                        <span>{selectedOrder.shippingMethod === 'ghn' ? 'Mạng lưới bưu cục GHN Express toàn quốc' : (currentCarrier?.shipper?.vehicle || 'Giao hàng tiêu chuẩn')}</span>
+                        <span>•</span>
+                        <span className="text-emerald-700 font-semibold">
+                          {selectedOrder.status === 'shipping' 
+                            ? 'Bưu tá tuyến phát đang giao hàng tận nơi' 
+                            : 'Bảo quản tiêu chuẩn GSP Dược phẩm 15-25°C'}
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-slate-500 italic mt-0.5">
+                        * Bưu tá trực tiếp liên hệ người nhận trước khi phát. Quý khách được quyền kiểm tra gói thuốc nguyên niêm phong.
                       </div>
                     </div>
+                  </div>
 
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto shrink-0">
                     <a
-                      href={`tel:${currentCarrier.shipper.phone.replace(/\s+/g, '')}`}
-                      className="w-full sm:w-auto px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs transition-all shadow-sm flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+                      href={`tel:${selectedOrder.shippingMethod === 'ghn' ? '1900636677' : (currentCarrier?.hotline?.replace(/\s+/g, '') || '18006868')}`}
+                      className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <Phone className="w-4 h-4 animate-pulse" />
-                      <span>Gọi Bưu Tá: {currentCarrier.shipper.phone}</span>
+                      <span>Tổng đài {selectedOrder.shippingMethod === 'ghn' ? 'GHN: 1900 636677' : (currentCarrier?.hotline || '1800 6868')}</span>
                     </a>
                   </div>
-                )}
+                </div>
               </div>
 
               {/* LỊCH SỬ HÀNH TRÌNH THỜI GIAN THỰC (TIMELINE DETAIL) */}

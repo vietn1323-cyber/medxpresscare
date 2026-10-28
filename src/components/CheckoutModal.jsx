@@ -234,7 +234,10 @@ export const CheckoutModal = ({
 
     // Generate random order code
     const generated = 'MXC-' + Math.floor(100000 + Math.random() * 900000);
-    const trackingNo = (formData.shippingMethod === 'ghtk' ? 'GHTK-' : formData.shippingMethod === 'ghn' ? 'GHN-' : 'MXC-') + Math.floor(100000 + Math.random() * 900000) + 'VN';
+    // Đối với GHN Express thực tế, mã vận đơn sẽ do API máy chủ GHN cấp chính thức (VD: GYMHGEYK) khi Shop đẩy đơn
+    const trackingNo = formData.shippingMethod === 'ghn' 
+      ? '' 
+      : (formData.shippingMethod === 'ghtk' ? 'GHTK-' : 'MXC-') + Math.floor(100000 + Math.random() * 900000) + 'VN';
     setOrderCode(generated);
 
     // Lưu thông tin điểm thưởng

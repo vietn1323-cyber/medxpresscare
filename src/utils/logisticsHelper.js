@@ -14,10 +14,10 @@ export const CARRIER_METADATA = {
     hotline: '1800 6868',
     isExpress: true,
     shipper: {
-      name: 'Trần Hoàng Nam',
-      phone: '0918 667 223',
-      vehicle: 'Giao hàng hỏa tốc',
-      storage: 'Kiện hàng đóng gói niêm phong cẩn thận'
+      name: 'Đội Vận Chuyển Hỏa Tốc MedXpressCare',
+      phone: '1800 6868',
+      vehicle: 'Xe chuyên dụng bảo quản thuốc',
+      storage: 'Thùng bảo ôn chuyên dụng GSP 15-25°C'
     }
   },
   ghtk: {
@@ -28,8 +28,8 @@ export const CARRIER_METADATA = {
     color: 'emerald',
     hotline: '1900 6092',
     shipper: {
-      name: 'Nguyễn Văn Hưng',
-      phone: '0982 331 450',
+      name: 'Điều phối viên GHTK',
+      phone: '1900 6092',
       vehicle: 'Giao hàng tiêu chuẩn',
       storage: 'Kiện hàng đóng gói niêm phong cẩn thận'
     }
@@ -42,9 +42,9 @@ export const CARRIER_METADATA = {
     color: 'blue',
     hotline: '1900 636677',
     shipper: {
-      name: 'Lê Quốc Tuấn',
-      phone: '0974 112 589',
-      vehicle: 'Giao hàng nhanh',
+      name: 'Điều phối viên GHN Express',
+      phone: '1900 636677',
+      vehicle: 'Mạng lưới bưu cục GHN Express toàn quốc',
       storage: 'Kiện hàng đóng gói niêm phong cẩn thận'
     }
   },
@@ -56,9 +56,9 @@ export const CARRIER_METADATA = {
     color: 'rose',
     hotline: '1900 8095',
     shipper: {
-      name: 'Phạm Minh Đức',
-      phone: '0965 882 119',
-      vehicle: 'Bưu chính tiêu chuẩn',
+      name: 'Điều phối viên Viettel Post',
+      phone: '1900 8095',
+      vehicle: 'Bưu chính tiêu chuẩn Viettel Post',
       storage: 'Kiện hàng đóng gói niêm phong cẩn thận'
     }
   }
@@ -159,7 +159,7 @@ export const stepOrderToShipping = (order) => {
     status: 'shipping',
     stage: 'carrier_pickup',
     title: `Bưu tá ${carrier.name} đã lấy hàng & Đang phát hỏa tốc`,
-    desc: `Bưu tá ${shipper.name} (SĐT: ${shipper.phone}) đã nhận kiện hàng, đang trên tuyến đường giao tới: ${order.customer?.address || 'địa chỉ khách hàng'}.`,
+    desc: `Bưu cục ${carrier.name} (Hotline hỗ trợ: ${carrier.hotline}) đã nhận kiện hàng, đang trên tuyến đường giao tới: ${order.customer?.address || 'địa chỉ khách hàng'}.`,
     location: `Bưu cục chuyển phát ${carrier.name}`
   };
 
