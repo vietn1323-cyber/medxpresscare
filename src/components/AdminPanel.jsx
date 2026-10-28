@@ -22,7 +22,7 @@ import { DEFAULT_VOUCHERS, getVoucherTimeStatus, isVoucherTimeValid } from '../d
 import { DEFAULT_HERO_BANNERS } from '../data/banners';
 import { INITIAL_REVIEWS } from '../data/reviews';
 import { BulkImportModal } from './BulkImportModal';
-import { RETURN_REASONS } from '../utils/logisticsHelper';
+import { RETURN_REASONS, formatCleanTrackingTime } from '../utils/logisticsHelper';
 import { POLICIES } from '../data/policies';
 import { 
   createGhnOrder, 
@@ -1052,17 +1052,17 @@ export const AdminPanel = ({
             trackingTimeline: [
               ...(order.trackingTimeline || []),
               {
-                time: new Date().toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }),
+                time: formatCleanTrackingTime(new Date()),
                 status: 'confirmed',
                 stage: 'ghn_created',
-                title: 'Đã tạo vận đơn thành công trên GHN Express',
-                desc: `Mã vận đơn chính thức: ${res.orderCode}. Phân loại bưu cục: ${res.sortCode || 'Chuẩn'}. Cước phí: ${(res.totalFee || 0).toLocaleString('vi-VN')}₫. Đang chờ bưu tá GHN tới kho lấy hàng.`,
-                location: 'Tổng kho Dược MedXpressCare'
+                title: 'Đã bàn giao cho đơn vị vận chuyển (GHN Express)',
+                desc: 'Bưu tá đang trên đường đến lấy hàng. Đơn vị vận chuyển: GHN Express.',
+                location: 'Kho hàng MedXpressCare'
               }
             ]
           });
         }
-        alert(`🎉 THÀNH CÔNG! Đã đẩy đơn hàng #${order.id} sang GHN Express.\nMã vận đơn chính thức: ${res.orderCode}\nPhân loại bưu cục: ${res.sortCode || 'Tiêu chuẩn'}\nCước vận chuyển: ${(res.totalFee || 0).toLocaleString('vi-VN')}₫`);
+        alert(`🎉 THÀNH CÔNG! Đã đẩy đơn hàng #${order.id} sang GHN Express.\nMã vận đơn chính thức: ${res.orderCode}`);
       }
     } catch (err) {
       alert(`❌ LỖI ĐẨY ĐƠN SANG GHN:\n${err.message || 'Không thể tạo đơn trên máy chủ GHN. Vui lòng kiểm tra lại Token hoặc Shop ID.'}`);
@@ -1090,17 +1090,17 @@ export const AdminPanel = ({
             trackingTimeline: [
               ...(order.trackingTimeline || []),
               {
-                time: new Date().toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }),
+                time: formatCleanTrackingTime(new Date()),
                 status: mapped.status,
                 stage: `ghn_${detail.status}`,
-                title: `[GHN Trực Tiếp] ${mapped.label}`,
-                desc: `Trạng thái hiện tại trên hệ thống GHN: "${detail.status}". Bưu cục: ${detail.station_name || 'GHN Hub'}.`,
+                title: mapped.label,
+                desc: mapped.desc || 'Kiện hàng đang được bưu cục GHN Express xử lý.',
                 location: detail.station_name || 'Bưu cục GHN Express'
               }
             ]
           });
         }
-        alert(`Đã đồng bộ trạng thái thực tế từ GHN:\n- Mã vận đơn: ${orderCode}\n- Trạng thái: ${mapped.label} (${detail.status})`);
+        alert(`Đã đồng bộ trạng thái thực tế từ GHN:\n- Mã vận đơn: ${orderCode}\n- Trạng thái: ${mapped.label}`);
       }
     } catch (err) {
       alert(`Không thể đồng bộ từ GHN: ${err.message}`);
@@ -2688,7 +2688,7 @@ export const AdminPanel = ({
                                   <strong>Lý do bưu tá báo:</strong> <span className="underline italic font-medium">{order.failureReason || 'Không liên lạc được người nhận sau nhiều lần gọi'}</span>
                                 </p>
                                 <p className="text-[11px] text-rose-700 mt-0.5">
-                                  Kiện thuốc đang được [{order.shippingCarrierName || 'Bưu cục'}] hoàn trả về Tổng kho Dược MedXpressCare. Vui lòng theo dõi khi hàng tới cửa kho.
+                                  Kiện thuốc đang được [{order.shippingCarrierName || 'Bưu cục'}] hoàn trả về Kho hàng MedXpressCare. Vui lòng theo dõi khi hàng tới cửa kho.
                                 </p>
                               </div>
                             </div>

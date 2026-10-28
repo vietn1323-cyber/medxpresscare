@@ -207,25 +207,70 @@ export function mapGhnStatusToLocal(ghnStatus) {
     case 'ready_to_pick':
     case 'picking':
     case 'money_collect_picking':
-      return { status: 'confirmed', label: 'GHN chờ bưu tá lấy hàng', progress: 35 };
+      return { 
+        status: 'confirmed', 
+        label: 'Bưu tá đang trên đường đến lấy hàng', 
+        desc: 'Bưu cục GHN Express đã tiếp nhận và đang điều phối bưu tá tới lấy hàng.',
+        progress: 35 
+      };
     case 'storing':
     case 'sorting':
-      return { status: 'confirmed', label: 'Kiện hàng đã nhập kho GHN', progress: 50 };
+      return { 
+        status: 'confirmed', 
+        label: 'Đang vận chuyển', 
+        desc: 'Kiện hàng đang được phân loại và vận chuyển qua trung tâm GHN Express.',
+        progress: 50 
+      };
     case 'delivering':
     case 'money_collect_delivering':
-      return { status: 'shipping', label: 'Bưu tá GHN đang giao tới khách', progress: 75 };
+      return { 
+        status: 'shipping', 
+        label: 'Đang giao hàng tới người nhận', 
+        desc: 'Bưu tá GHN Express đang trên tuyến đường giao tới địa chỉ khách hàng.',
+        progress: 75 
+      };
     case 'delivered':
-      return { status: 'completed', label: 'Giao hàng thành công', progress: 100 };
+      return { 
+        status: 'completed', 
+        label: 'Giao hàng thành công', 
+        desc: 'Kiện hàng đã được giao thành công tới người nhận.',
+        progress: 100 
+      };
     case 'delivery_fail':
-      return { status: 'returning', label: 'GHN báo giao không thành công', progress: 85 };
+      return { 
+        status: 'returning', 
+        label: 'Giao hàng chưa thành công', 
+        desc: 'Bưu tá chưa thể giao hàng thành công đến người nhận.',
+        progress: 85 
+      };
     case 'return':
     case 'returning':
-      return { status: 'returning', label: 'GHN đang chuyển hoàn về kho', progress: 90 };
+      return { 
+        status: 'returning', 
+        label: 'Đang chuyển hoàn về kho', 
+        desc: 'Kiện hàng đang trên tuyến chuyển hoàn về kho hàng MedXpressCare.',
+        progress: 90 
+      };
     case 'returned':
-      return { status: 'returned_pending_check', label: 'Kiện hàng hoàn đã về tới kho', progress: 95 };
+      return { 
+        status: 'returned_pending_check', 
+        label: 'Đã hoàn trả về kho', 
+        desc: 'Kiện hàng hoàn đã về tới kho hàng MedXpressCare.',
+        progress: 95 
+      };
     case 'cancel':
-      return { status: 'cancelled', label: 'Đã hủy trên GHN', progress: 0 };
+      return { 
+        status: 'cancelled', 
+        label: 'Đơn hàng đã hủy', 
+        desc: 'Đơn vận chuyển trên hệ thống GHN Express đã hủy.',
+        progress: 0 
+      };
     default:
-      return { status: 'confirmed', label: `Bưu cục GHN: ${ghnStatus}`, progress: 50 };
+      return { 
+        status: 'confirmed', 
+        label: 'Đang vận chuyển', 
+        desc: 'Kiện hàng đang được bưu cục GHN Express xử lý.',
+        progress: 50 
+      };
   }
 }

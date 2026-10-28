@@ -4,7 +4,7 @@ import {
   Package, ShieldCheck, RefreshCw, Copy, ExternalLink,
   Printer, ArrowRight, AlertCircle, Sparkles, Search
 } from 'lucide-react';
-import { getCarrierInfo } from '../utils/logisticsHelper';
+import { getCarrierInfo, cleanTrackingItem, formatCleanTrackingTime } from '../utils/logisticsHelper';
 
 export const OrderTrackingModal = ({
   isOpen,
@@ -124,17 +124,17 @@ export const OrderTrackingModal = ({
   }
 
   const carrier = getCarrierInfo(displayOrder.shippingMethod);
-  const trackingNo = displayOrder.ghnOrderCode || (displayOrder.trackingNumber && !displayOrder.trackingNumber.startsWith('GHN-') ? displayOrder.trackingNumber : (displayOrder.shippingMethod === 'ghn' ? 'Chờ bưu cục GHN cấp mã' : displayOrder.trackingNumber || 'Đang cập nhật'));
+  const trackingNo = (displayOrder.ghnOrderCode || (displayOrder.trackingNumber && !displayOrder.trackingNumber.startsWith('GHN-') ? displayOrder.trackingNumber : (displayOrder.shippingMethod === 'ghn' ? 'Chờ bưu cục GHN cấp mã' : displayOrder.trackingNumber || 'Đang cập nhật'))).toUpperCase();
   const timeline = Array.isArray(displayOrder.trackingTimeline) && displayOrder.trackingTimeline.length > 0
     ? displayOrder.trackingTimeline
     : [
         {
-          time: new Date(displayOrder.createdAt).toLocaleString('vi-VN'),
+          time: formatCleanTrackingTime(displayOrder.createdAt || new Date()),
           status: 'pending',
           stage: 'order_created',
-          title: 'Đơn hàng được khởi tạo thành công',
+          title: 'Đơn hàng đã được khởi tạo thành công',
           desc: 'Khách hàng đặt hàng trực tuyến trên MedXpressCare.',
-          location: 'Hệ thống online'
+          location: 'Kho hàng MedXpressCare'
         }
       ];
 
@@ -382,8 +382,8 @@ export const OrderTrackingModal = ({
                     {carrier.name}
                   </span>
                   {displayOrder.ghnOrderCode && (
-                    <span className="text-[10px] font-bold bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
-                      {displayOrder.ghnOrderCode}
+                    <span className="text-[10px] font-bold bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded uppercase">
+                      {displayOrder.ghnOrderCode.toUpperCase()}
                     </span>
                   )}
                 </div>
@@ -466,7 +466,7 @@ export const OrderTrackingModal = ({
                 </p>
                 <p className="text-[11px] text-rose-700">
                   {isAdmin 
-                    ? 'Kiện hàng đang được quay đầu về Tổng kho Dược MedXpressCare.' 
+                    ? 'Kiện hàng đang được quay đầu về Kho hàng MedXpressCare.' 
                     : `Kiện hàng đang được chuyển hoàn về nhà thuốc. Dược sĩ sẽ liên hệ hỗ trợ bạn, hoặc quý khách vui lòng gọi Hotline ${hotline || '1800 6868'}.`}
                 </p>
               </div>
@@ -518,7 +518,7 @@ export const OrderTrackingModal = ({
             </h5>
 
             <div className="relative pl-6 space-y-4 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
-              {timeline.slice().reverse().map((item, idx) => {
+              {timeline.map(cleanTrackingItem).filter(Boolean).slice().reverse().map((item, idx) => {
                 const isLatest = idx === 0;
                 return (
                   <div key={idx} className="relative group">

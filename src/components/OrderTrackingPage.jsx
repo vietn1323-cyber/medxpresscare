@@ -5,7 +5,7 @@ import {
   AlertCircle, Sparkles, ExternalLink, PhoneCall, HelpCircle,
   FileCheck2, ChevronRight, Stethoscope, ChevronDown, RotateCcw
 } from 'lucide-react';
-import { getCarrierInfo } from '../utils/logisticsHelper';
+import { getCarrierInfo, cleanTrackingItem } from '../utils/logisticsHelper';
 import { PRODUCTS } from '../data/products';
 
 // Đơn hàng mẫu Demo giúp khách hàng trải nghiệm tính năng tra cứu ngay lập tức
@@ -316,7 +316,7 @@ export const OrderTrackingPage = ({
                     </div>
                     <div className="font-mono font-black text-base text-emerald-800 tracking-wide flex items-center gap-2">
                       <span>
-                        {selectedOrder.ghnOrderCode || (selectedOrder.trackingNumber && !selectedOrder.trackingNumber.startsWith('GHN-') ? selectedOrder.trackingNumber : (selectedOrder.shippingMethod === 'ghn' ? 'Chờ bưu cục GHN cấp mã' : selectedOrder.trackingNumber || 'Đang cập nhật'))}
+                        {(selectedOrder.ghnOrderCode || (selectedOrder.trackingNumber && !selectedOrder.trackingNumber.startsWith('GHN-') ? selectedOrder.trackingNumber : (selectedOrder.shippingMethod === 'ghn' ? 'Chờ bưu cục GHN cấp mã' : selectedOrder.trackingNumber || 'Đang cập nhật'))).toUpperCase()}
                       </span>
                       {selectedOrder.ghnOrderCode && (
                         <span className="text-[10px] font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full uppercase">
@@ -419,8 +419,8 @@ export const OrderTrackingPage = ({
                       <div className="font-extrabold text-sm text-slate-900 flex items-center gap-2">
                         <span>{selectedOrder.shippingMethod === 'ghn' ? 'Giao Hàng Nhanh (GHN Express)' : (currentCarrier?.name || 'Bưu cục chuyển phát')}</span>
                         {selectedOrder.ghnOrderCode && (
-                          <span className="text-[10px] font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
-                            Mã GHN: {selectedOrder.ghnOrderCode}
+                          <span className="text-[10px] font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full uppercase">
+                            Mã GHN: {selectedOrder.ghnOrderCode.toUpperCase()}
                           </span>
                         )}
                       </div>
@@ -464,7 +464,7 @@ export const OrderTrackingPage = ({
                 </div>
 
                 <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-slate-200">
-                  {(selectedOrder.trackingTimeline || []).slice().reverse().map((step, idx) => (
+                  {((selectedOrder.trackingTimeline || []).map(cleanTrackingItem).filter(Boolean)).slice().reverse().map((step, idx) => (
                     <div key={idx} className="relative group">
                       {/* Timeline dot */}
                       <div className={`absolute -left-6 top-1 w-3.5 h-3.5 rounded-full border-2 bg-white transition-all ${
