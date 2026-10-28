@@ -3,6 +3,69 @@
  * Hỗ trợ toàn bộ API Dược phẩm, D1 Database, Đơn hàng, Bài viết & AI Dược Sĩ Lâm Sàng
  */
 
+import webpush from 'web-push';
+
+const VAPID_PUBLIC_KEY = 'BGiqquRV_799dDEJLH1DYpT-k957puxsiEPvORHnVoh2MZc2wRFxwEWtAJ45_CyQDUUWGrZO2em9KqHJNrybPgA';
+const VAPID_PRIVATE_KEY = 'ZmS4M078UwQACEzUmzsGgKQPaSHfcFR2ylEBQjxxaRY';
+const VAPID_SUBJECT = 'mailto:support@medxpresscare.com';
+
+// Cấu hình VAPID Signing chuẩn RFC 8292
+try {
+  webpush.setVapidDetails(
+    VAPID_SUBJECT,
+    VAPID_PUBLIC_KEY,
+    VAPID_PRIVATE_KEY
+  );
+} catch (e) {
+  console.warn('[WebPush] setVapidDetails init error:', e);
+}
+
+/**
+ * Gửi thông báo đẩy chuẩn Web Push protocol (RFC 8030 / RFC 8291 / RFC 8292)
+ * Ký VAPID chuẩn và mã hóa payload bằng aes128gcm với cặp khóa của thiết bị
+ */
+export async function sendPushNotification(subscription, payload, options = {}) {
+  if (!subscription || !subscription.endpoint) {
+    throw new Error('Subscription endpoint is required');
+  }
+
+  const pushSubscription = {
+    endpoint: subscription.endpoint,
+    keys: {
+      p256dh: subscription.keys?.p256dh || subscription.p256dh,
+      auth: subscription.keys?.auth || subscription.auth
+    }
+  };
+
+  const payloadString = typeof payload === 'string' ? payload : JSON.stringify(payload);
+
+  const pushOptions = {
+    TTL: options.TTL || 86400, // 24 giờ
+    urgency: options.urgency || 'high',
+    topic: options.topic || 'medxpress-reminder',
+    ...options
+  };
+
+  try {
+    const result = await webpush.sendNotification(pushSubscription, payloadString, pushOptions);
+    return {
+      success: true,
+      statusCode: result.statusCode,
+      headers: result.headers,
+      body: result.body,
+      endpoint: subscription.endpoint
+    };
+  } catch (error) {
+    console.error(`[WebPush] sendNotification error (${subscription.endpoint}):`, error?.message || error);
+    return {
+      success: false,
+      statusCode: error?.statusCode || 500,
+      error: error?.message || String(error),
+      endpoint: subscription.endpoint
+    };
+  }
+}
+
 const CORS_HEADERS = {
   'Content-Type': 'application/json; charset=utf-8',
   'Access-Control-Allow-Origin': '*',
@@ -617,6 +680,31 @@ Viết bài y khoa chuẩn SEO On-Page. Trả về JSON: {"title": "...", "summa
             targets = targets.filter(s => s.customerId === customerId);
           }
 
+          // Gửi thông báo đẩy chuẩn Web Push protocol với VAPID signing & mã hoá aes128gcm
+          const notificationPayload = {
+            title: title || 'MedXpressCare Thông Báo',
+            body: body || '',
+            icon: icon || '/pwa-192x192.png',
+            image: image || null,
+            url: url || '/',
+            tag: 'medxpress-' + Date.now(),
+            timestamp: Date.now()
+          };
+
+          const pushResults = [];
+          for (const target of targets) {
+            try {
+              const res = await sendPushNotification(target, notificationPayload);
+              pushResults.push(res);
+            } catch (targetErr) {
+              pushResults.push({
+                success: false,
+                endpoint: target.endpoint,
+                error: targetErr.message || String(targetErr)
+              });
+            }
+          }
+
           // Lưu log thông báo đã gửi vào D1
           let logs = await getCollection(db, 'push_notifications_log') || [];
           const notifLog = {
@@ -627,6 +715,8 @@ Viết bài y khoa chuẩn SEO On-Page. Trả về JSON: {"title": "...", "summa
             image: image || null,
             url: url || '/',
             targetCount: targets.length,
+            successCount: pushResults.filter(r => r.success).length,
+            results: pushResults,
             sentAt: new Date().toISOString()
           };
           logs.unshift(notifLog);
@@ -634,9 +724,11 @@ Viết bài y khoa chuẩn SEO On-Page. Trả về JSON: {"title": "...", "summa
 
           return jsonResponse({
             success: true,
-            message: `Đã kích hoạt gửi thông báo đẩy tới ${targets.length} thiết bị`,
+            message: `Đã gửi thông báo đẩy tới ${targets.length} thiết bị qua Web Push protocol chuẩn (VAPID Signed)`,
             notification: notifLog,
-            targetCount: targets.length
+            targetCount: targets.length,
+            successCount: notifLog.successCount,
+            results: pushResults
           });
         } catch (err) {
           return errorResponse(err.message, 500);

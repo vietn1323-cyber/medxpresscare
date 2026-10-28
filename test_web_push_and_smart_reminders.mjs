@@ -168,6 +168,31 @@ assert.ok(adminContent.includes('Bắn Web Push'), 'Admin Panel có nút kích h
 
 console.log('  ✅ PASSED: Toàn bộ giao diện Header, Checkout, Admin & Modal đã kết nối đồng bộ.');
 
+// 7. Kiểm tra Thư Viện web-push & Hàm sendPushNotification Ký VAPID Chuẩn
+console.log('\n--- 7. Kiểm thử Web Push Protocol VAPID Signing (web-push) ---');
+import webpush from 'web-push';
+import { sendPushNotification as sendPushService } from './src/services/pushNotificationService.js';
+import { sendPushNotification as sendPushWorker } from './worker.js';
+
+assert.strictEqual(typeof webpush.sendNotification, 'function', 'web-push thư viện sẵn sàng');
+assert.strictEqual(typeof sendPushService, 'function', 'sendPushNotification service sẵn sàng');
+assert.strictEqual(typeof sendPushWorker, 'function', 'sendPushNotification worker sẵn sàng');
+
+// Kiểm tra xử lý ngoại lệ khi thiếu endpoint
+await assert.rejects(
+  async () => { await sendPushService(null, { title: 'Test' }); },
+  /endpoint is required/i,
+  'Hàm từ chối subscription không có endpoint'
+);
+
+// Kiểm tra worker.js có cấu hình web-push và VAPID signing
+assert.ok(workerContent.includes("import webpush from 'web-push'"), 'worker.js import web-push');
+assert.ok(workerContent.includes('webpush.setVapidDetails'), 'worker.js cấu hình VAPID Signing');
+assert.ok(workerContent.includes('sendPushNotification'), 'worker.js có hàm sendPushNotification');
+assert.ok(workerContent.includes('webpush.sendNotification'), 'worker.js gọi webpush.sendNotification chuẩn RFC');
+
+console.log('  ✅ PASSED: Thư viện web-push và hàm sendPushNotification ký VAPID chuẩn RFC 8292.');
+
 console.log('\n================================================================');
-console.log('   🎉 TẤT CẢ 6 NHÓM TEST CASES WEB PUSH & REMINDERS ĐỀU PASSED!  ');
+console.log('   🎉 TẤT CẢ 7 NHÓM TEST CASES WEB PUSH & REMINDERS ĐỀU PASSED!  ');
 console.log('================================================================');

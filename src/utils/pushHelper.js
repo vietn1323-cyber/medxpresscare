@@ -136,3 +136,26 @@ export async function unsubscribeUserFromPush() {
     return false;
   }
 }
+
+/**
+ * Gửi thông báo đẩy thông qua Backend Cloudflare Worker (Ký VAPID chuẩn RFC 8292 & web-push)
+ */
+export async function sendPushNotification(payload, endpoint = null) {
+  try {
+    const res = await fetch('/api/push/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: payload.title || 'MedXpressCare - Nhắc Nhở',
+        body: payload.body || 'Đã đến giờ uống thuốc theo phác đồ Dược sĩ AI!',
+        icon: payload.icon || '/pwa-192x192.png',
+        url: payload.url || '/',
+        endpoint: endpoint || undefined
+      })
+    });
+    return await res.json();
+  } catch (err) {
+    console.error('[WebPush] Error sending push via backend:', err);
+    throw err;
+  }
+}
