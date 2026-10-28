@@ -20,6 +20,7 @@ export const CheckoutModal = ({
   setAppliedVoucher,
   onClearCart,
   onOrderCreated,
+  onUpdateOrderPaymentMethod,
   customer,
   onOpenAuthModal,
   onUpdateCustomerPoints,
@@ -37,7 +38,7 @@ export const CheckoutModal = ({
     fullName: '',
     phone: '',
     email: '',
-    province: 'Hà Nội',
+    province: 'Thành phố Hà Nội',
     district: '',
     address: '',
     shippingMethod: 'ghtk', // ghtk (Giao hàng nhanh) | express (Giao hỏa tốc HN) | ghn | viettel
@@ -55,7 +56,47 @@ export const CheckoutModal = ({
   const [completedOrder, setCompletedOrder] = useState(null);
   const [copiedField, setCopiedField] = useState('');
   const [useQrFallback, setUseQrFallback] = useState(false);
+  const [isChangingPaymentMethod, setIsChangingPaymentMethod] = useState(false);
   const [errors, setErrors] = useState({});
+
+  const isHanoiProvince = (prov) => {
+    if (!prov) return false;
+    const s = String(prov).toLowerCase();
+    return s.includes('hà nội') || s === 'hn';
+  };
+
+  const handleChangePaymentMethod = (newMethod) => {
+    setFormData(prev => ({ ...prev, paymentMethod: newMethod }));
+    setIsChangingPaymentMethod(false);
+
+    const targetOrderId = completedOrder?.id || orderCode;
+    if (completedOrder) {
+      const updatedOrder = {
+        ...completedOrder,
+        paymentMethod: newMethod,
+        paymentStatus: newMethod === 'cod' ? 'unpaid' : completedOrder.paymentStatus,
+        status: newMethod === 'cod' ? 'pending' : completedOrder.status
+      };
+      setCompletedOrder(updatedOrder);
+
+      // Cập nhật localStorage
+      try {
+        const stored = localStorage.getItem('medxpress_admin_orders');
+        if (stored) {
+          const list = JSON.parse(stored);
+          const next = list.map(o => o.id === targetOrderId ? { ...o, paymentMethod: newMethod } : o);
+          localStorage.setItem('medxpress_admin_orders', JSON.stringify(next));
+        }
+      } catch (e) {
+        console.warn('Lỗi cập nhật local storage order:', e);
+      }
+
+      // Thông báo cập nhật đơn hàng
+      if (onUpdateOrderPaymentMethod) {
+        onUpdateOrderPaymentMethod(targetOrderId, newMethod);
+      }
+    }
+  };
 
   const handleCopyText = (text, fieldName) => {
     if (!text) return;
@@ -75,6 +116,7 @@ export const CheckoutModal = ({
     setOrderCode('');
     setUseQrFallback(false);
     setCopiedField('');
+    setIsChangingPaymentMethod(false);
     onClose();
   };
 
@@ -138,7 +180,7 @@ export const CheckoutModal = ({
   let giftItem = null;
 
   if (currentVoucherObj) {
-    const res = calculateVoucherDiscount(currentVoucherObj, subtotal, 25000, cartItems);
+    const res = calculateVoucherDiscount(currentVoucherObj, subtotal, 35000, cartItems);
     if (res.isValid) {
       discountAmount = res.discountAmount;
       voucherShippingDiscount = res.shippingDiscount;
@@ -161,14 +203,14 @@ export const CheckoutModal = ({
   const pointsDiscountAmount = calculatePointsDiscount(actualPointsToUse); // 1 điểm = 1.000₫
 
   // Kiểm tra giỏ hàng có combo liệu trình không (combo 3 / 6 hộp được miễn phí ship)
-  const selectedCarrier = activeCarriers.find(c => c.id === formData.shippingMethod) || activeCarriers[0] || { baseFee: 22000, name: 'Giao hàng' };
+  const selectedCarrier = activeCarriers.find(c => c.id === formData.shippingMethod) || activeCarriers[0] || { baseFee: 35000, name: 'Giao hàng' };
   const hasComboItem = cartItems.some(item => item.comboType && item.comboType !== 'single');
   const isExpress = formData.shippingMethod === 'express';
   // Đơn hỏa tốc không áp dụng freeship; Giao hàng nhanh áp dụng freeship khi >= 500k hoặc có voucher FREESHIP hoặc combo
   const isStandardFreeShip = !isExpress && (subtotal >= 500000 || appliedVoucher === 'FREESHIP' || voucherShippingDiscount > 0 || hasComboItem);
   const isFreeShip = isStandardFreeShip;
-  // Với đơn hỏa tốc: cước trao đổi thực tế khi chốt đơn
-  const shippingFee = isExpress ? 0 : (isFreeShip ? 0 : (selectedCarrier.baseFee ?? 22000));
+  // Mặc định phí giao hàng 35.000đ nếu không được freeship
+  const shippingFee = isExpress ? 0 : (isFreeShip ? 0 : (selectedCarrier.baseFee ?? 35000));
 
   const grandTotal = Math.max(0, subtotal - discountAmount - pointsDiscountAmount + shippingFee);
 
@@ -177,7 +219,7 @@ export const CheckoutModal = ({
     const newErrors = {};
     if (!formData.fullName.trim()) newErrors.fullName = 'Vui lòng nhập họ và tên';
     if (!formData.phone.trim()) newErrors.phone = 'Vui lòng nhập số điện thoại để Dược sĩ liên hệ';
-    if (!formData.district.trim()) newErrors.district = 'Vui lòng chọn hoặc nhập Xã / Phường sau sáp nhập';
+    if (!formData.district.trim()) newErrors.district = 'Vui lòng chọn hoặc nhập Phường / Xã';
     if (!formData.address.trim()) newErrors.address = 'Vui lòng nhập địa chỉ nhận hàng chi tiết';
 
     if (Object.keys(newErrors).length > 0) {
@@ -485,8 +527,100 @@ export const CheckoutModal = ({
                             Tự động xác nhận 24/7
                           </span>
                         </div>
+
+                        {/* Đổi phương thức thanh toán khác */}
+                        <div className="pt-2 text-center border-t border-slate-200/80">
+                          {!isChangingPaymentMethod ? (
+                            <button
+                              type="button"
+                              onClick={() => setIsChangingPaymentMethod(true)}
+                              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-emerald-700 underline decoration-slate-300 hover:decoration-emerald-500 underline-offset-4 transition-colors cursor-pointer py-1"
+                            >
+                              <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
+                              <span>Đổi phương thức thanh toán khác</span>
+                            </button>
+                          ) : (
+                            <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-left space-y-2.5 animate-in fade-in zoom-in-95 mt-1">
+                              <div className="flex items-center justify-between">
+                                <span className="font-bold text-xs text-amber-900 flex items-center gap-1.5">
+                                  <Banknote className="w-4 h-4 text-amber-700" />
+                                  Chọn phương thức thanh toán thay thế:
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => setIsChangingPaymentMethod(false)}
+                                  className="text-[11px] text-slate-500 hover:text-slate-800 font-semibold cursor-pointer"
+                                >
+                                  Đóng
+                                </button>
+                              </div>
+
+                              <div className="space-y-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => handleChangePaymentMethod('cod')}
+                                  className="w-full p-2.5 rounded-xl border border-emerald-300 bg-white hover:bg-emerald-50/70 flex items-center justify-between transition-all cursor-pointer text-left shadow-2xs"
+                                >
+                                  <div className="flex items-center gap-2.5">
+                                    <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold shrink-0">
+                                      <Banknote className="w-4 h-4 text-emerald-700" />
+                                    </div>
+                                    <div>
+                                      <div className="font-bold text-xs text-slate-900">Thanh toán tiền mặt khi nhận hàng (COD)</div>
+                                      <div className="text-[10px] text-slate-500">Thanh toán trực tiếp cho bưu tá khi nhận kiện hàng</div>
+                                    </div>
+                                  </div>
+                                  <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-lg shrink-0">
+                                    Chuyển sang COD
+                                  </span>
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </>
                     )}
+                  </div>
+                );
+              })()}
+
+              {/* Khối xác nhận đơn COD nếu khách chọn thanh toán khi nhận hàng */}
+              {formData.paymentMethod === 'cod' && (() => {
+                const displayGrandTotal = completedOrder ? completedOrder.grandTotal : grandTotal;
+                return (
+                  <div className="p-4 rounded-3xl bg-slate-50 border border-slate-200 max-w-md mx-auto text-left text-xs space-y-3 shadow-sm animate-in fade-in">
+                    <div className="flex items-center justify-between">
+                      <div className="font-bold text-slate-800 flex items-center gap-2">
+                        <Banknote className="w-4 h-4 text-emerald-600" />
+                        <span>Thanh Toán Tiền Mặt Khi Nhận Hàng (COD):</span>
+                      </div>
+                      <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        COD Tiền Mặt
+                      </span>
+                    </div>
+
+                    <div className="p-3.5 rounded-2xl bg-white border border-slate-200 space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-600">Số tiền bưu tá sẽ thu khi giao:</span>
+                        <strong className="font-mono text-emerald-700 font-black text-base">{displayGrandTotal.toLocaleString('vi-VN')}₫</strong>
+                      </div>
+                      <p className="text-[11px] text-slate-500 leading-relaxed">
+                        📦 Quý khách vui lòng chuẩn bị đúng số tiền trên khi bưu tá giao hàng. Kiện hàng được niêm phong tem GSP, quý khách được xem hàng trước khi thanh toán.
+                      </p>
+                    </div>
+
+                    {/* Nút đổi sang VietQR nếu khách muốn chuyển sang thanh toán trước */}
+                    <div className="pt-1 text-center border-t border-slate-200/80">
+                      <button
+                        type="button"
+                        onClick={() => handleChangePaymentMethod('vietqr')}
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-emerald-700 underline decoration-slate-300 hover:decoration-emerald-500 underline-offset-4 transition-colors cursor-pointer py-1"
+                      >
+                        <QrCode className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Đổi phương thức thanh toán khác</span>
+                      </button>
+                    </div>
                   </div>
                 );
               })()}
@@ -750,8 +884,8 @@ export const CheckoutModal = ({
                     setFormData(prev => ({
                       ...prev,
                       province: newProv,
-                      // Nếu chuyển sang tỉnh khác Hà Nội mà đang chọn hỏa tốc, tự động chuyển về Giao hàng nhanh (GHTK)
-                      shippingMethod: (newProv !== 'Hà Nội' && prev.shippingMethod === 'express') ? 'ghtk' : prev.shippingMethod
+                      // Nếu chuyển sang tỉnh khác ngoài Hà Nội mà đang chọn hỏa tốc, tự động chuyển về Giao hàng nhanh (GHTK)
+                      shippingMethod: (!isHanoiProvince(newProv) && prev.shippingMethod === 'express') ? 'ghtk' : prev.shippingMethod
                     }));
                   }}
                   onWardChange={(newWard) => {
@@ -812,7 +946,7 @@ export const CheckoutModal = ({
                   ) : (
                     activeCarriers.map((carrier) => {
                       const isExpressCarrier = carrier.id === 'express';
-                      const isExpressDisabled = isExpressCarrier && formData.province !== 'Hà Nội';
+                      const isExpressDisabled = isExpressCarrier && !isHanoiProvince(formData.province);
 
                       return (
                         <label 

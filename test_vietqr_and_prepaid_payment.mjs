@@ -93,9 +93,11 @@ assert(checkoutModalContent.includes('const [completedOrder, setCompletedOrder] 
 assert(checkoutModalContent.includes('setCompletedOrder(newOrderObj)'), 'handleSubmit phải lưu newOrderObj vào completedOrder');
 assert(checkoutModalContent.includes('completedOrder ? completedOrder.grandTotal : grandTotal'), 'VietQR box phải lấy grandTotal từ completedOrder');
 assert(checkoutModalContent.includes('completedOrder ? completedOrder.id : orderCode'), 'VietQR box phải lấy id từ completedOrder');
+assert(checkoutModalContent.includes('Đổi phương thức thanh toán khác'), 'CheckoutModal phải có nút Đổi phương thức thanh toán khác');
+assert(checkoutModalContent.includes('handleChangePaymentMethod'), 'CheckoutModal phải có hàm xử lý chuyển đổi phương thức');
 assert(!checkoutModalContent.includes('data=2|99|'), 'Đã loại bỏ hoàn toàn cú pháp ví ảo 2|99| không hợp lệ');
 
-console.log('  ✅ PASSED: CheckoutModal lưu giữ trọn vẹn giá trị đơn hàng thực tế (1.595.000₫), ngăn chặn triệt để lỗi rơi về 25.000đ khi giỏ hàng xóa.');
+console.log('  ✅ PASSED: CheckoutModal lưu giữ trọn vẹn giá trị đơn hàng thực tế (1.595.000₫) và hỗ trợ đổi phương thức thanh toán linh hoạt.');
 
 // 4. Kiểm tra hiển thị COD 0đ cho đơn VietQR trong OrderTrackingPage & OrderTrackingModal
 console.log('\n--- 4. Kiểm thử hiển thị COD 0đ cho đơn thanh toán trước VietQR ---');
@@ -109,13 +111,14 @@ assert(trackingModalContent.includes('Bưu tá thu 0₫'), 'OrderTrackingModal p
 
 console.log('  ✅ PASSED: Giao diện tra cứu đơn hàng hiển thị minh bạch: Tổng tiền 1.595.000₫ và Bưu tá thu COD: 0₫.');
 
-// 5. Kiểm tra worker.js cấu hình GHN payment_type_id & cod_amount khi prepaid
-console.log('\n--- 5. Kiểm thử Cloudflare Worker đẩy đơn VietQR sang GHN với COD 0đ ---');
+// 5. Kiểm tra worker.js cấu hình GHN payment_type_id & cod_amount khi prepaid & cod_failed_amount 35k
+console.log('\n--- 5. Kiểm thử Cloudflare Worker đẩy đơn sang GHN với Shop trả ship & GTB 35.000đ ---');
 const workerContent = fs.readFileSync('worker.js', 'utf8');
 assert(workerContent.includes("const codAmount = order.paymentMethod === 'vietqr' ? 0 : Math.round(order.grandTotal || 0)"), 'codAmount cho đơn VietQR phải là 0');
-assert(workerContent.includes("payment_type_id: order.paymentMethod === 'vietqr' ? 1 : 2"), 'payment_type_id cho đơn VietQR phải là 1 (Người gửi trả cước)');
+assert(workerContent.includes("payment_type_id: 1"), 'payment_type_id phải là 1 (Shop bên gửi trả cước vận chuyển GHN)');
+assert(workerContent.includes("cod_failed_amount: 35000"), 'cod_failed_amount phải là 35000 (phí giao hàng thất bại GTB GHN)');
 
-console.log('  ✅ PASSED: Cloudflare Worker GHN Proxy tự động thiết lập COD 0đ và payment_type_id = 1 cho đơn trả trước.');
+console.log('  ✅ PASSED: Cloudflare Worker GHN Proxy tự động thiết lập COD 0đ cho đơn trả trước, payment_type_id = 1 (Shop trả ship) và GTB 35.000đ.');
 
 // 6. Kiểm tra AdminPanel Live VietQR Preview
 console.log('\n--- 6. Kiểm thử xem trước trực tiếp VietQR trong AdminPanel ---');

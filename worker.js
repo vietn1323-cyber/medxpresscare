@@ -1047,8 +1047,8 @@ Viết bài y khoa chuẩn SEO On-Page. Trả về JSON: {"title": "...", "summa
 
           // Chuẩn bị payload gửi GHN
           const ghnPayload = {
-            payment_type_id: order.paymentMethod === 'vietqr' ? 1 : 2, // 1: Bên gửi trả (Prepaid/VietQR COD 0đ), 2: Bên mua trả cước COD
-            note: 'Kiện hàng Dược phẩm/TPCN MedXpressCare niêm phong tem GSP. Cho xem hàng không cho thử.',
+            payment_type_id: 1, // 1: Bên gửi / Shop trả cước vận chuyển (Người nhận không phải trả cước)
+            note: 'Kiện hàng Dược phẩm/TPCN MedXpressCare niêm phong tem GSP. Cho xem hàng không cho thử. Giao thất bại thu 35.000đ.',
             required_note: 'CHOXEMHANGKHONGTHU',
             return_phone: returnPhone,
             return_address: returnAddress,
@@ -1059,6 +1059,7 @@ Viết bài y khoa chuẩn SEO On-Page. Trả về JSON: {"title": "...", "summa
             to_ward_name: toWard,
             to_district_name: toDistrict,
             cod_amount: codAmount,
+            cod_failed_amount: 35000, // Phí thu hộ nếu giao không thành công (GTB của GHN)
             content: `Đơn hàng MedXpressCare #${order.id} (${items.length} hộp TPCN)`,
             weight: Math.max(250, items.reduce((sum, it) => sum + (it.weight * it.quantity), 0)),
             length: 20,

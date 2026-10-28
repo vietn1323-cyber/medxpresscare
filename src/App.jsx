@@ -1139,6 +1139,24 @@ export default function App() {
     }
   };
 
+  // Cập nhật phương thức thanh toán của đơn hàng khi khách đổi phương thức sau khi đặt
+  const handleUpdateOrderPaymentMethod = (orderId, newPaymentMethod) => {
+    setOrders(prev => prev.map(o => {
+      if (o.id === orderId) {
+        const updated = {
+          ...o,
+          paymentMethod: newPaymentMethod,
+          paymentStatus: newPaymentMethod === 'cod' ? 'unpaid' : o.paymentStatus,
+          status: newPaymentMethod === 'cod' ? 'pending' : o.status
+        };
+        apiClient.saveNewOrder(updated);
+        return updated;
+      }
+      return o;
+    }));
+    showToast(`Đã chuyển đơn hàng ${orderId} sang thanh toán ${newPaymentMethod === 'cod' ? 'tiền mặt khi nhận hàng (COD)' : 'Chuyển khoản VietQR'}!`);
+  };
+
   // Nhanh chóng đặt lại sản phẩm từ Tủ thuốc AI / Nhắc tái đặt hàng
   const handleQuickReorder = (item) => {
     const prod = productsList.find(p => p.id === (item.productId || item.id)) || {
@@ -2464,6 +2482,7 @@ export default function App() {
         setAppliedVoucher={setAppliedVoucher}
         onClearCart={handleClearCart}
         onOrderCreated={handleOrderCreated}
+        onUpdateOrderPaymentMethod={handleUpdateOrderPaymentMethod}
         storeConfig={storeConfig}
         customer={currentCustomer}
         onOpenAuthModal={() => { setCustomerAuthInitialTab('login'); setIsCustomerAuthOpen(true); }}
