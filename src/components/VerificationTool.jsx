@@ -156,7 +156,7 @@ export const VerificationTool = ({ initialRegNumber = '', onClose, products = []
             <div className="relative flex-1">
               <input
                 type="text"
-                placeholder="Nhập số ĐKSP (VD: 10238/2019/ĐKSP, 3721/2021/ĐKSP...)"
+                placeholder="Nhập số ĐKSP in trên nhãn sản phẩm..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium focus:bg-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
@@ -165,26 +165,11 @@ export const VerificationTool = ({ initialRegNumber = '', onClose, products = []
             </div>
             <button
               type="submit"
-              className="px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md transition-all shrink-0"
+              className="px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md transition-all shrink-0 cursor-pointer"
             >
               Tra Cứu
             </button>
           </form>
-
-          {/* Quick Samples */}
-          <div className="flex items-center gap-2 flex-wrap text-xs text-slate-500">
-            <span className="font-semibold">Mẫu tra cứu nhanh:</span>
-            {['10238/2019/ĐKSP', '3721/2021/ĐKSP', '4192/2021/ĐKSP', '5684/2021/ĐKSP', '7824/2020/ĐKSP'].map((num) => (
-              <button
-                key={num}
-                type="button"
-                onClick={() => { setQuery(num); handleSearch(null, num); }}
-                className="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 border border-slate-200 font-mono text-[11px] transition-colors"
-              >
-                {num}
-              </button>
-            ))}
-          </div>
 
           {/* Result Card */}
           {result && (

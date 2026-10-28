@@ -9,161 +9,8 @@ import { getCarrierInfo } from '../utils/logisticsHelper';
 import { PRODUCTS } from '../data/products';
 
 // Đơn hàng mẫu Demo giúp khách hàng trải nghiệm tính năng tra cứu ngay lập tức
-export const DEMO_TRACKING_ORDERS = [
-  {
-    id: 'MXC-892410',
-    trackingNumber: 'S22.HN1.8839.2991882',
-    createdAt: new Date(Date.now() - 4 * 3600 * 1000).toISOString(),
-    status: 'shipping',
-    carrierProgress: 75,
-    shippingMethod: 'ghtk',
-    shippingCarrierName: 'Giao Hàng Nhanh (GHTK)',
-    customer: {
-      fullName: 'Nguyễn Văn An',
-      phone: '0988 123 456',
-      address: 'Số 45 Đường Cầu Giấy, Phường Quan Hoa, Quận Cầu Giấy, Hà Nội'
-    },
-    items: [
-      { id: 'vn-01', name: 'Viên Khớp Bách Niên Kiện (Hộp 80 viên)', price: 699000, quantity: 2, image: PRODUCTS[0]?.image },
-      { id: 'us-01', name: 'Glucosamine HCL with MSM 1500mg Kirkland Mỹ (375 viên)', price: 650000, quantity: 1, image: PRODUCTS[6]?.image }
-    ],
-    subtotal: 2048000,
-    shippingFee: 0,
-    discountAmount: 50000,
-    grandTotal: 1998000,
-    paymentMethod: 'cod',
-    trackingTimeline: [
-      {
-        time: new Date(Date.now() - 4 * 3600 * 1000).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' Hôm nay',
-        status: 'pending',
-        stage: 'order_created',
-        title: 'Đơn hàng được tiếp nhận thành công',
-        desc: 'Hệ thống MedXpressCare tiếp nhận đơn đặt thuốc trực tuyến.',
-        location: 'Trụ sở Trung tâm Dược MedXpressCare Hà Nội'
-      },
-      {
-        time: new Date(Date.now() - 3 * 3600 * 1000).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' Hôm nay',
-        status: 'confirmed',
-        stage: 'packed_gsp',
-        title: 'Dược sĩ kiểm duyệt & Đóng gói chuẩn GSP',
-        desc: 'Kiểm tra tem chống giả, hạn dùng >24 tháng, đóng hộp xốp chống sốc và niêm phong tem vỡ Bộ Y Tế.',
-        location: 'Kho Dược GSP MedXpressCare Cầu Giấy'
-      },
-      {
-        time: new Date(Date.now() - 2 * 3600 * 1000).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' Hôm nay',
-        status: 'shipping',
-        stage: 'in_transit',
-        title: 'Bưu cục GHTK đã tiếp nhận kiện hàng',
-        desc: 'Kiện hàng đã xuất kho trung chuyển, phân loại tự động về Hub Cầu Giấy.',
-        location: 'Bưu cục GHTK Cầu Giấy - Hà Nội'
-      },
-      {
-        time: new Date(Date.now() - 35 * 60 * 1000).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' Hôm nay',
-        status: 'shipping',
-        stage: 'out_for_delivery',
-        title: 'Bưu tá đang trên đường phát hỏa tốc',
-        desc: 'Bưu tá Nguyễn Văn Hưng (0982 331 450) đang giao hàng đến địa chỉ người nhận. Quý khách vui lòng để ý điện thoại.',
-        location: 'Tuyến đường Cầu Giấy - Quan Hoa'
-      }
-    ]
-  },
-  {
-    id: 'MXC-741285',
-    trackingNumber: 'VTP982314HN',
-    createdAt: new Date(Date.now() - 8 * 3600 * 1000).toISOString(),
-    status: 'confirmed',
-    carrierProgress: 35,
-    shippingMethod: 'viettel',
-    shippingCarrierName: 'Viettel Post Bưu Chính',
-    customer: {
-      fullName: 'Trần Thị Mai',
-      phone: '0912 345 678',
-      address: 'Tòa nhà Landmark 72, Đường Phạm Hùng, Quận Nam Từ Liêm, Hà Nội'
-    },
-    items: [
-      { id: 'au-02', name: 'Canxi Sữa Tảo Biển Bio Island Milk Calcium Úc Cho Bé (90 viên)', price: 460000, quantity: 2, image: PRODUCTS[1]?.image }
-    ],
-    subtotal: 920000,
-    shippingFee: 0,
-    discountAmount: 0,
-    grandTotal: 920000,
-    paymentMethod: 'vietqr',
-    trackingTimeline: [
-      {
-        time: new Date(Date.now() - 8 * 3600 * 1000).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' Hôm nay',
-        status: 'pending',
-        stage: 'order_created',
-        title: 'Đơn hàng được tiếp nhận & Thanh toán VietQR',
-        desc: 'Ngân hàng xác nhận đã nhận đủ 920.000₫.',
-        location: 'Hệ thống tự động MedXpressCare'
-      },
-      {
-        time: new Date(Date.now() - 6 * 3600 * 1000).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' Hôm nay',
-        status: 'confirmed',
-        stage: 'packed_gsp',
-        title: 'Đã đóng gói chuẩn GSP & Bàn giao bưu tá',
-        desc: 'Đã dán mã vận đơn VTP982314HN, chờ xe thư bưu chính Viettel Post xuất phát.',
-        location: 'Kho Dược GSP Hà Nội'
-      }
-    ]
-  },
-  {
-    id: 'MXC-339182',
-    trackingNumber: 'MPX-2H-09211',
-    createdAt: new Date(Date.now() - 26 * 3600 * 1000).toISOString(),
-    status: 'completed',
-    carrierProgress: 100,
-    shippingMethod: 'express',
-    shippingCarrierName: 'MedXpress Hỏa Tốc (2 Giờ Nội Thành HN)',
-    customer: {
-      fullName: 'Lê Hoàng Nam',
-      phone: '0904 987 654',
-      address: 'Số 18 Ngõ 82 Phố Chùa Láng, Phường Láng Thượng, Đống Đa, Hà Nội'
-    },
-    items: [
-      { id: 'vn-05', name: 'Sâm Ngọc Linh K5 Quốc Bảo Việt Nam (Hộp 20 gói)', price: 1250000, quantity: 1, image: PRODUCTS[4]?.image }
-    ],
-    subtotal: 1250000,
-    shippingFee: 0,
-    discountAmount: 100000,
-    grandTotal: 1150000,
-    paymentMethod: 'cod',
-    trackingTimeline: [
-      {
-        time: '09:15 Hôm qua',
-        status: 'pending',
-        stage: 'order_created',
-        title: 'Tiếp nhận đơn giao hỏa tốc 2 giờ',
-        desc: 'Khách hàng chọn hình thức giao hỏa tốc nội thành Hà Nội.',
-        location: 'MedXpressCare Hà Nội'
-      },
-      {
-        time: '09:30 Hôm qua',
-        status: 'confirmed',
-        stage: 'packed_gsp',
-        title: 'Dược sĩ hoàn tất đóng gói bảo quản mát',
-        desc: 'Bàn giao trực tiếp cho shipper hỏa tốc chuyên trách.',
-        location: 'Cơ sở Dược Đống Đa'
-      },
-      {
-        time: '10:05 Hôm qua',
-        status: 'shipping',
-        stage: 'out_for_delivery',
-        title: 'Shipper đang di chuyển giao hàng',
-        desc: 'Shipper Trần Hoàng Nam (0918 667 223) đang giao đến Chùa Láng.',
-        location: 'Phố Chùa Láng, Đống Đa'
-      },
-      {
-        time: '10:45 Hôm qua',
-        status: 'completed',
-        stage: 'delivered',
-        title: 'Giao hàng thành công & Khách đã đồng kiểm',
-        desc: 'Khách hàng đã mở hộp đồng kiểm tra tem phụ Bộ Y Tế và thanh toán tiền mặt 1.150.000₫.',
-        location: 'Người nhận đã ký nhận'
-      }
-    ]
-  }
-];
+// Đơn hàng mẫu demo đã được loại bỏ để chỉ tra cứu đơn thực tế của khách
+export const DEMO_TRACKING_ORDERS = [];
 
 export const OrderTrackingPage = ({
   orders = [],
@@ -182,7 +29,7 @@ export const OrderTrackingPage = ({
   const [expandedFaqIndex, setExpandedFaqIndex] = useState(null);
 
   // Tổng hợp tất cả đơn hàng (Đơn thực tế trong hệ thống + Đơn mẫu demo để khách luôn tra cứu được)
-  const allAvailableOrders = [...orders, ...DEMO_TRACKING_ORDERS];
+  const allAvailableOrders = orders || [];
 
   // Helper hàm mask bảo vệ dữ liệu PII người nhận
   const maskPhone = (phone) => {
@@ -336,7 +183,7 @@ export const OrderTrackingPage = ({
             <div className="relative flex-1 w-full">
               <input
                 type="text"
-                placeholder="Nhập Mã đơn (MXC-892410), Mã vận đơn (S22..., GHN..., VTP...) hoặc SĐT (0988...)..."
+                placeholder="Nhập Mã đơn hàng (MXC-...), Mã vận đơn bưu cục, hoặc Số điện thoại đặt hàng..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
@@ -346,7 +193,7 @@ export const OrderTrackingPage = ({
                 <button
                   type="button"
                   onClick={() => { setSearchInput(''); executeSearch(''); }}
-                  className="absolute right-3.5 top-3.5 text-xs text-slate-400 hover:text-slate-600 font-bold"
+                  className="absolute right-3.5 top-3.5 text-xs text-slate-400 hover:text-slate-600 font-bold cursor-pointer"
                 >
                   Xóa
                 </button>
@@ -361,35 +208,6 @@ export const OrderTrackingPage = ({
               <span>Tra Cứu Ngay</span>
             </button>
           </form>
-
-          {/* Quick Demo Search Chips */}
-          <div className="flex flex-wrap items-center gap-2 text-xs pt-1 border-t border-slate-100">
-            <span className="text-slate-400 font-medium flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              Thử nhanh đơn mẫu:
-            </span>
-            <button
-              type="button"
-              onClick={() => { setSearchInput('MXC-892410'); executeSearch('MXC-892410'); }}
-              className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-mono font-bold text-[11px] border border-emerald-200 transition-all"
-            >
-              MXC-892410 (Đang giao hỏa tốc)
-            </button>
-            <button
-              type="button"
-              onClick={() => { setSearchInput('MXC-741285'); executeSearch('MXC-741285'); }}
-              className="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-800 font-mono font-bold text-[11px] border border-blue-200 transition-all"
-            >
-              MXC-741285 (Đang đóng gói Viettel Post)
-            </button>
-            <button
-              type="button"
-              onClick={() => { setSearchInput('0988 123 456'); executeSearch('0988 123 456'); }}
-              className="px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-800 font-mono font-bold text-[11px] border border-purple-200 transition-all"
-            >
-              Tra cứu theo SĐT (0988 123 456)
-            </button>
-          </div>
         </div>
       </div>
 
@@ -800,20 +618,14 @@ export const OrderTrackingPage = ({
                 <span>Mẹo Tra Cứu Nhanh:</span>
               </div>
               <ul className="space-y-1 list-disc list-inside text-[11px] text-slate-500">
-                <li>Nhập đúng định dạng mã đơn hàng: <strong>MXC-892410</strong></li>
+                <li>Nhập đúng định dạng mã đơn hàng: <strong>MXC-xxxxxx</strong></li>
                 <li>Nhập mã vận đơn bưu cục: <strong>S22.HN1...</strong>, <strong>GHN...</strong>, <strong>VTP...</strong></li>
                 <li>Hoặc nhập chính xác số điện thoại người nhận đã đăng ký khi đặt hàng.</li>
               </ul>
             </div>
 
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
-              <button
-                onClick={() => { setSearchInput('MXC-892410'); executeSearch('MXC-892410'); }}
-                className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-all shadow-sm flex items-center gap-1.5"
-              >
-                <Sparkles className="w-4 h-4" />
-                <span>Xem Thử Đơn Hàng Mẫu Demo</span>
-              </button>
+              
               
               <a
                 href={`tel:${hotline.replace(/\s+/g, '')}`}
