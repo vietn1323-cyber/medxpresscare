@@ -4,7 +4,7 @@ import {
   Truck, RefreshCw, FileText, Heart, Stethoscope 
 } from 'lucide-react';
 
-export const Footer = ({ onOpenVerifier, onOpenAdvisor, onOpenAdmin, hotline = '1800 6868' }) => {
+export const Footer = ({ onOpenVerifier, onOpenAdvisor, onOpenAdmin, onNavigateToTracking, hotline = '1800 6868' }) => {
   return (
     <footer className="bg-slate-900 text-slate-300 mt-20 pt-14 pb-8 border-t border-slate-800">
       <div className="max-w-7xl mx-auto px-4">
@@ -84,6 +84,14 @@ export const Footer = ({ onOpenVerifier, onOpenAdvisor, onOpenAdmin, hotline = '
               Dịch Vụ & Tra Cứu
             </h4>
             <ul className="space-y-2 text-xs text-slate-400">
+              <li>
+                <button 
+                  onClick={onNavigateToTracking || onOpenVerifier}
+                  className="hover:text-emerald-400 transition-colors flex items-center gap-1.5 text-left cursor-pointer"
+                >
+                  <span>🚚</span> Tra cứu Vận đơn Trực Tuyến
+                </button>
+              </li>
               <li>
                 <button 
                   onClick={onOpenVerifier}

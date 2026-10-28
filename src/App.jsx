@@ -27,6 +27,7 @@ import { AdminLoginModal } from './components/AdminLoginModal';
 import { CustomerAuthModal } from './components/CustomerAuthModal';
 import { CustomerProfileModal } from './components/CustomerProfileModal';
 import { OrderTrackingModal } from './components/OrderTrackingModal';
+import { OrderTrackingPage } from './components/OrderTrackingPage';
 import { cleanPrice } from './utils/csvHelper';
 import { apiClient } from './services/apiClient';
 import { 
@@ -223,8 +224,9 @@ export default function App() {
   // Dedicated Article Detail Page View (Hiển thị bài viết trên trang riêng thay vì modal nổi)
   const [viewingArticle, setViewingArticle] = useState(null);
 
-  // View mode hiện tại: 'home' (Trang chủ) | 'products' (Trang danh mục sản phẩm chuyên biệt)
+  // View mode hiện tại: 'home' (Trang chủ) | 'products' (Trang danh mục sản phẩm) | 'tracking' (Trang tra cứu vận đơn)
   const [currentView, setCurrentView] = useState('home');
+  const [trackingPageInitialCode, setTrackingPageInitialCode] = useState('');
 
   // Điều hướng chuyển sang Trang Sản Phẩm chuyên biệt với bộ lọc nguồn gốc
   const handleNavigateToProducts = (origin = 'all') => {
@@ -244,14 +246,28 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Điều hướng chuyển sang Trang Tra Cứu Vận Đơn chuyên biệt cho khách hàng
+  const handleNavigateToTracking = (code = '') => {
+    setViewingArticle(null);
+    setCurrentView('tracking');
+    setTrackingPageInitialCode(code || '');
+    if (code) {
+      window.location.hash = `#tra-cuu-van-don?code=${encodeURIComponent(code)}`;
+    } else {
+      window.location.hash = '#tra-cuu-van-don';
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleGoHome = () => {
     setViewingArticle(null);
     setCurrentView('home');
+    setTrackingPageInitialCode('');
     window.location.hash = '';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Đồng bộ bài viết và trang sản phẩm đang xem với URL hash
+  // Đồng bộ bài viết, trang sản phẩm và trang tra cứu vận đơn với URL hash
   useEffect(() => {
     const handleHashSync = () => {
       const hash = window.location.hash || '';
@@ -283,12 +299,20 @@ export default function App() {
           setSelectedCountry('all');
         }
         return;
+      } else if (hash.startsWith('#tra-cuu-van-don') || hash.startsWith('#tra-cuu-don-hang')) {
+        setViewingArticle(null);
+        setCurrentView('tracking');
+        const codeMatch = hash.match(/code=([^&]+)/);
+        if (codeMatch && codeMatch[1]) {
+          setTrackingPageInitialCode(decodeURIComponent(codeMatch[1]));
+        }
+        return;
       }
 
       if (viewingArticle) {
         setViewingArticle(null);
       }
-      if (!hash.startsWith('#san-pham') && currentView === 'products' && (hash === '' || hash === '#')) {
+      if (!hash.startsWith('#san-pham') && !hash.startsWith('#tra-cuu') && (currentView === 'products' || currentView === 'tracking') && (hash === '' || hash === '#')) {
         setCurrentView('home');
       }
     };
@@ -1537,6 +1561,7 @@ export default function App() {
         onOpenAdvisor={() => setIsAdvisorOpen(true)}
         onOpenVerifier={() => { setVerifierInitialReg(''); setIsVerifierOpen(true); }}
         onOpenOrderTracking={() => setIsOrderTrackingOpen(true)}
+        onNavigateToTracking={handleNavigateToTracking}
         customer={currentCustomer}
         onOpenAuthModal={() => { setCustomerAuthInitialTab('login'); setIsCustomerAuthOpen(true); }}
         onOpenProfileModal={() => setIsCustomerProfileOpen(true)}
@@ -1547,7 +1572,7 @@ export default function App() {
         hotline={storeConfig.hotline}
       />
 
-      {/* Hiển thị Trang Chi Tiết Bài Viết (Full-Page View), Trang Sản Phẩm Chuyên Biệt, hoặc Trang Chủ */}
+      {/* Hiển thị Trang Chi Tiết Bài Viết (Full-Page View), Trang Tra Cứu Vận Đơn, Trang Sản Phẩm Chuyên Biệt, hoặc Trang Chủ */}
       {viewingArticle ? (
         <ArticleDetailPage
           article={viewingArticle}
@@ -1557,6 +1582,15 @@ export default function App() {
           onSelectArticle={handleOpenArticle}
           onSelectProduct={(p) => setActiveProductDetail(p)}
           onAddToCart={handleAddToCart}
+          hotline={storeConfig.hotline}
+        />
+      ) : currentView === 'tracking' ? (
+        <OrderTrackingPage
+          orders={orders}
+          initialCode={trackingPageInitialCode}
+          onGoHome={handleGoHome}
+          onOpenAdvisor={() => setIsAdvisorOpen(true)}
+          onOpenProductDetail={(p) => setActiveProductDetail(p)}
           hotline={storeConfig.hotline}
         />
       ) : currentView === 'products' ? (
@@ -1844,6 +1878,7 @@ export default function App() {
         onOpenVerifier={() => { setVerifierInitialReg(''); setIsVerifierOpen(true); }}
         onOpenAdvisor={() => setIsAdvisorOpen(true)}
         onOpenAdmin={handleOpenAdminPortal}
+        onNavigateToTracking={handleNavigateToTracking}
         hotline={storeConfig.hotline}
       />
 
@@ -1940,8 +1975,7 @@ export default function App() {
           onWarehouseArrival={handleWarehouseArrival}
           onConfirmReturnedOrder={handleConfirmReturnedOrder}
           onOpenOrderTracking={(order) => {
-            setTrackingOrderCode(order?.id || '');
-            setIsOrderTrackingOpen(true);
+            handleNavigateToTracking(order?.id || '');
           }}
         />
       )}
@@ -1993,6 +2027,7 @@ export default function App() {
         onUpdateCustomerPoints={handleUpdateCustomerPoints}
         vouchers={vouchersList}
         onOpenVoucherModal={() => setIsVoucherModalOpen(true)}
+        onNavigateToTracking={handleNavigateToTracking}
       />
 
       {/* 6. Customer Authentication Modal (Đăng Nhập / Đăng Ký) */}
@@ -2017,8 +2052,7 @@ export default function App() {
           orders={orders}
           onUpdateCustomer={handleUpdateCustomerInfo}
           onOpenOrderTracking={(order) => {
-            setTrackingOrderCode(order?.id || '');
-            setIsOrderTrackingOpen(true);
+            handleNavigateToTracking(order?.id || '');
           }}
         />
       )}

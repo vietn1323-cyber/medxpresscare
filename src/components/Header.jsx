@@ -20,6 +20,7 @@ export const Header = ({
   onOpenAdvisor,
   onOpenVerifier,
   onOpenOrderTracking,
+  onNavigateToTracking,
   customer,
   onOpenAuthModal,
   onOpenProfileModal,
@@ -74,8 +75,14 @@ export const Header = ({
             <span className="text-emerald-500 hidden sm:inline">|</span>
 
             <button 
-              onClick={onOpenOrderTracking}
-              className="hover:text-emerald-200 transition-colors hidden sm:flex items-center gap-1 font-medium underline underline-offset-2"
+              onClick={() => {
+                if (onNavigateToTracking) {
+                  onNavigateToTracking();
+                } else if (onOpenOrderTracking) {
+                  onOpenOrderTracking();
+                }
+              }}
+              className="hover:text-emerald-200 transition-colors flex items-center gap-1 font-medium underline underline-offset-2 cursor-pointer"
             >
               <Truck className="w-3.5 h-3.5 text-emerald-300" />
               Tra cứu Vận đơn
@@ -307,6 +314,17 @@ export const Header = ({
 
           {/* Quick Action Badges */}
           <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => onNavigateToTracking ? onNavigateToTracking() : onOpenOrderTracking ? onOpenOrderTracking() : null}
+              className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
+                currentView === 'tracking'
+                  ? 'bg-teal-700 text-white shadow-xs'
+                  : 'text-teal-800 bg-teal-100/80 hover:bg-teal-200/90'
+              }`}
+            >
+              <Truck className="w-3.5 h-3.5" />
+              <span>Tra Vận Đơn</span>
+            </button>
             {onOpenVouchers && (
               <button
                 onClick={onOpenVouchers}

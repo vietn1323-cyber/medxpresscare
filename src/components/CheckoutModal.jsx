@@ -22,6 +22,7 @@ export const CheckoutModal = ({
   onUpdateCustomerPoints,
   vouchers = DEFAULT_VOUCHERS,
   onOpenVoucherModal,
+  onNavigateToTracking,
   storeConfig = {
     bankName: 'MB Bank (Quân Đội)',
     bankAccountNumber: '0968686868',
@@ -374,10 +375,24 @@ export const CheckoutModal = ({
                 )}
               </div>
 
-              <div className="pt-3">
+              <div className="pt-3 flex flex-wrap items-center justify-center gap-3">
+                {onNavigateToTracking && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      onNavigateToTracking(orderCode);
+                    }}
+                    className="px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-700/20 flex items-center gap-2 transition-all cursor-pointer"
+                  >
+                    <Truck className="w-4 h-4" />
+                    <span>🚚 Theo Dõi Vận Đơn Ngay</span>
+                  </button>
+                )}
                 <button
+                  type="button"
                   onClick={onClose}
-                  className="px-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm transition-all"
+                  className="px-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm transition-all cursor-pointer"
                 >
                   Hoàn Tất & Tiếp Tục Mua Sắm
                 </button>
