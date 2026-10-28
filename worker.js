@@ -958,18 +958,35 @@ Viết bài y khoa chuẩn SEO On-Page. Trả về JSON: {"title": "...", "summa
         }
       }
 
+      // Helper lấy Token GHN từ body, query, D1 store_config hoặc env
+      async function resolveGhnToken(reqApiKey) {
+        if (reqApiKey && reqApiKey.trim()) return reqApiKey.trim();
+        const qToken = url.searchParams.get('token') || url.searchParams.get('apiKey');
+        if (qToken && qToken.trim()) return qToken.trim();
+        if (env && env.GHN_API_TOKEN) return env.GHN_API_TOKEN.trim();
+        if (db) {
+          try {
+            const cfg = await getCollection(db, 'store_config');
+            const ghn = (cfg?.shippingCarriers || []).find(c => c.id === 'ghn');
+            if (ghn && ghn.apiKey && ghn.apiKey.trim()) return ghn.apiKey.trim();
+          } catch (e) {}
+        }
+        return '';
+      }
+
       // /api/shipping/ghn/master-data/provinces
       if (pathname === '/api/shipping/ghn/master-data/provinces') {
         try {
-          const { apiKey } = await request.json().catch(() => ({}));
+          const body = request.method === 'POST' ? await request.json().catch(() => ({})) : {};
+          const token = await resolveGhnToken(body.apiKey);
           const baseUrl = 'https://online-gateway.ghn.vn/shiip/public-api';
 
-          if (apiKey) {
+          if (token) {
             const ghnRes = await fetch(`${baseUrl}/master-data/province`, {
-              headers: { 'Content-Type': 'application/json', 'Token': apiKey.trim() }
+              headers: { 'Content-Type': 'application/json', 'Token': token }
             });
             const data = await ghnRes.json().catch(() => ({}));
-            if (data.code === 200 && Array.isArray(data.data)) {
+            if (data.code === 200 && Array.isArray(data.data) && data.data.length > 0) {
               return jsonResponse({ success: true, data: data.data });
             }
           }
@@ -982,24 +999,26 @@ Viết bài y khoa chuẩn SEO On-Page. Trả về JSON: {"title": "...", "summa
       // /api/shipping/ghn/master-data/districts
       if (pathname === '/api/shipping/ghn/master-data/districts') {
         try {
-          const { provinceId, apiKey } = await request.json().catch(() => ({}));
+          const body = request.method === 'POST' ? await request.json().catch(() => ({})) : {};
+          const provinceId = body.provinceId || body.province_id || url.searchParams.get('province_id') || url.searchParams.get('provinceId');
+          const token = await resolveGhnToken(body.apiKey);
           const baseUrl = 'https://online-gateway.ghn.vn/shiip/public-api';
 
-          if (apiKey && provinceId) {
+          if (token && provinceId) {
             const ghnRes = await fetch(`${baseUrl}/master-data/district`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'Token': apiKey.trim() },
+              headers: { 'Content-Type': 'application/json', 'Token': token },
               body: JSON.stringify({ province_id: Number(provinceId) })
             });
             const data = await ghnRes.json().catch(() => ({}));
-            if (data.code === 200 && Array.isArray(data.data)) {
+            if (data.code === 200 && Array.isArray(data.data) && data.data.length > 0) {
               return jsonResponse({ success: true, data: data.data });
             }
           }
           const districts = getGhnDistricts(provinceId);
           return jsonResponse({ success: true, data: districts });
         } catch (err) {
-          const districts = getGhnDistricts(provinceId);
+          const districts = getGhnDistricts(url.searchParams.get('province_id') || url.searchParams.get('provinceId'));
           return jsonResponse({ success: true, data: districts });
         }
       }
@@ -1007,23 +1026,25 @@ Viết bài y khoa chuẩn SEO On-Page. Trả về JSON: {"title": "...", "summa
       // /api/shipping/ghn/master-data/wards
       if (pathname === '/api/shipping/ghn/master-data/wards') {
         try {
-          const { districtId, apiKey } = await request.json().catch(() => ({}));
+          const body = request.method === 'POST' ? await request.json().catch(() => ({})) : {};
+          const districtId = body.districtId || body.district_id || url.searchParams.get('district_id') || url.searchParams.get('districtId');
+          const token = await resolveGhnToken(body.apiKey);
           const baseUrl = 'https://online-gateway.ghn.vn/shiip/public-api';
 
-          if (apiKey && districtId) {
+          if (token && districtId) {
             const ghnRes = await fetch(`${baseUrl}/master-data/ward?district_id=${districtId}`, {
               method: 'GET',
-              headers: { 'Content-Type': 'application/json', 'Token': apiKey.trim() }
+              headers: { 'Content-Type': 'application/json', 'Token': token }
             });
             const data = await ghnRes.json().catch(() => ({}));
-            if (data.code === 200 && Array.isArray(data.data)) {
+            if (data.code === 200 && Array.isArray(data.data) && data.data.length > 0) {
               return jsonResponse({ success: true, data: data.data });
             }
           }
           const wards = getGhnWards(districtId);
           return jsonResponse({ success: true, data: wards });
         } catch (err) {
-          const wards = getGhnWards(districtId);
+          const wards = getGhnWards(url.searchParams.get('district_id') || url.searchParams.get('districtId'));
           return jsonResponse({ success: true, data: wards });
         }
       }

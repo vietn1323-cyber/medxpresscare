@@ -224,7 +224,18 @@ export const CheckoutModal = ({
     const newErrors = {};
     if (!formData.fullName.trim()) newErrors.fullName = 'Vui lòng nhập họ và tên';
     if (!formData.phone.trim()) newErrors.phone = 'Vui lòng nhập số điện thoại để Dược sĩ liên hệ';
-    if (!formData.district.trim()) newErrors.district = 'Vui lòng chọn hoặc nhập Phường / Xã';
+    if (!formData.province || !formData.province.trim()) {
+      newErrors.province = 'Vui lòng chọn Tỉnh / Thành phố';
+    }
+    // Ràng buộc bắt buộc phải chọn Quận/Huyện với mã DistrictID chuẩn GHN
+    if (!formData.to_district_id && !formData.districtId) {
+      newErrors.district = 'Vui lòng chọn Quận / Huyện';
+    }
+    // Ràng buộc bắt buộc phải chọn Phường/Xã với mã WardCode chuẩn GHN
+    if (!formData.to_ward_code && !formData.wardCode) {
+      newErrors.ward = 'Vui lòng chọn Phường / Xã';
+      newErrors.district = newErrors.district || 'Vui lòng chọn Phường / Xã';
+    }
     if (!formData.address.trim()) newErrors.address = 'Vui lòng nhập địa chỉ nhận hàng chi tiết';
 
     if (Object.keys(newErrors).length > 0) {
@@ -891,42 +902,61 @@ export const CheckoutModal = ({
                 {/* Mô Hình Địa Chỉ Chuẩn GHN (Tỉnh/Thành phố, Quận/Huyện to_district_id, Phường/Xã <option value="Mã_WardCode">) */}
                 <TwoTierAddressFields
                   province={formData.province}
+                  provinceId={formData.provinceId}
                   district={formData.district}
                   districtId={formData.to_district_id || formData.districtId}
                   ward={formData.ward}
                   wardCode={formData.to_ward_code || formData.wardCode}
-                  onProvinceChange={(newProv) => {
+                  apiKey={storeConfig?.shippingCarriers?.find(c => c.id === 'ghn')?.apiKey}
+                  onProvinceChange={(newProv, newProvId) => {
                     setFormData(prev => ({
                       ...prev,
                       province: newProv,
+                      provinceId: newProvId,
+                      district: '',
+                      districtId: null,
+                      to_district_id: null,
+                      ward: '',
+                      wardCode: '',
+                      to_ward_code: '',
                       // Nếu chuyển sang tỉnh khác ngoài Hà Nội mà đang chọn hỏa tốc, tự động chuyển về Giao hàng nhanh (GHTK)
                       shippingMethod: (!isHanoiProvince(newProv) && prev.shippingMethod === 'express') ? 'ghtk' : prev.shippingMethod
                     }));
+                    if (errors.province) setErrors(prev => ({ ...prev, province: '' }));
                   }}
                   onDistrictChange={(distName, distId) => {
                     setFormData(prev => ({
                       ...prev,
                       district: distName,
-                      districtId: distId,
-                      to_district_id: distId
+                      districtId: distId ? Number(distId) : null,
+                      to_district_id: distId ? Number(distId) : null,
+                      ward: '',
+                      wardCode: '',
+                      to_ward_code: ''
                     }));
+                    if (errors.district) setErrors(prev => ({ ...prev, district: '' }));
                   }}
                   onWardChange={(newWard, newWardCode, distId, distName) => {
                     setFormData(prev => ({
                       ...prev,
                       ward: newWard,
                       district: distName || prev.district,
-                      districtId: distId || prev.districtId,
-                      to_district_id: distId || prev.to_district_id,
-                      wardCode: newWardCode || prev.wardCode,
-                      to_ward_code: newWardCode || prev.to_ward_code
+                      districtId: distId ? Number(distId) : prev.districtId,
+                      to_district_id: distId ? Number(distId) : prev.to_district_id,
+                      wardCode: newWardCode ? String(newWardCode) : '',
+                      to_ward_code: newWardCode ? String(newWardCode) : ''
                     }));
+                    if (errors.ward) setErrors(prev => ({ ...prev, ward: '' }));
                     if (errors.district) setErrors(prev => ({ ...prev, district: '' }));
                   }}
                   onWardCodeChange={(code) => {
-                    setFormData(prev => ({ ...prev, wardCode: code, to_ward_code: code }));
+                    setFormData(prev => ({ ...prev, wardCode: code ? String(code) : '', to_ward_code: code ? String(code) : '' }));
+                    if (errors.ward) setErrors(prev => ({ ...prev, ward: '' }));
+                    if (errors.district) setErrors(prev => ({ ...prev, district: '' }));
                   }}
-                  errorWard={errors.district}
+                  errorProvince={errors.province}
+                  errorDistrict={errors.district}
+                  errorWard={errors.ward || errors.district}
                 />
 
                 <div className="text-xs">
@@ -1217,9 +1247,15 @@ export const CheckoutModal = ({
 
               {/* Submit Button */}
               <div className="pt-2">
+                {Object.keys(errors).length > 0 && (
+                  <div className="mb-2.5 p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2 text-rose-700 text-xs font-bold animate-shake">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                    <span>Vui lòng chọn đầy đủ Tỉnh/Thành phố, Quận/Huyện, Phường/Xã và nhập địa chỉ chi tiết trước khi đặt hàng.</span>
+                  </div>
+                )}
                 <button
                   type="submit"
-                  className="w-full py-4 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-extrabold text-sm sm:text-base shadow-xl shadow-emerald-600/30 flex items-center justify-center gap-2 transition-all"
+                  className="w-full py-4 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-extrabold text-sm sm:text-base shadow-xl shadow-emerald-600/30 flex items-center justify-center gap-2 transition-all cursor-pointer"
                 >
                   <span>Xác Nhận Đặt Hàng ({grandTotal.toLocaleString('vi-VN')}₫)</span>
                   <ArrowRight className="w-5 h-5" />
