@@ -1127,18 +1127,6 @@ export default function App() {
     showToast(`✅ Đã xóa ${prodIds.length} sản phẩm thành công!`);
   };
 
-  const handleResetProductsToDefault = () => {
-    if (!window.confirm('Khôi phục lại 21 sản phẩm mẫu ban đầu của MedXpressCare?')) return;
-    setProductsList(PRODUCTS);
-    try {
-      localStorage.setItem('medxpress_custom_products', JSON.stringify(PRODUCTS));
-    } catch (e) {
-      console.error(e);
-    }
-    apiClient.saveProductsNow(PRODUCTS);
-    showToast('✅ Đã khôi phục 21 sản phẩm mẫu thành công!');
-  };
-
   const handleBulkUpdateProducts = (updatedProducts) => {
     if (!Array.isArray(updatedProducts) || updatedProducts.length === 0) return;
     const map = new Map(updatedProducts.map(p => [p.id, p]));
@@ -1436,22 +1424,6 @@ export default function App() {
   const handleUpdateStoreConfig = (newCfg) => {
     setStoreConfig(newCfg);
     showToast(`Đã lưu cấu hình cửa hàng thành công!`);
-  };
-
-  // Xóa sạch toàn bộ dữ liệu đơn hàng & khách hàng thử nghiệm
-  const handleClearAllTestData = () => {
-    setOrders([]);
-    localStorage.removeItem('medxpress_admin_orders');
-    setCustomersList([]);
-    localStorage.removeItem('medxpress_customers_db');
-    setCurrentCustomer(null);
-    localStorage.removeItem('medxpress_current_customer');
-    setCart([]);
-    localStorage.removeItem('medxpress_cart');
-    setWishlist([]);
-    localStorage.removeItem('medxpress_wishlist');
-    apiClient.clearTestOrders();
-    showToast(`✅ Đã xóa sạch toàn bộ dữ liệu đơn hàng và khách hàng thử nghiệm trên cả Cloudflare D1!`);
   };
 
   // Quản lý Cẩm Nang & Bài Viết Y Khoa Chuẩn SEO
@@ -2048,7 +2020,6 @@ export default function App() {
           onBulkDeleteProducts={handleBulkDeleteProducts}
           onBulkUpdateProducts={handleBulkUpdateProducts}
           onBulkImportProducts={handleBulkImportProducts}
-          onResetProductsToDefault={handleResetProductsToDefault}
           registrations={registrationsDb}
           onAddRegistration={handleAddRegistration}
           onUpdateRegistration={handleUpdateRegistration}
@@ -2056,7 +2027,6 @@ export default function App() {
           onBulkImportRegistrations={handleBulkImportRegistrations}
           storeConfig={storeConfig}
           onUpdateStoreConfig={handleUpdateStoreConfig}
-          onClearTestData={handleClearAllTestData}
           customers={customersList}
           onBonusPoints={handleAdminBonusPoints}
           articles={articlesList}

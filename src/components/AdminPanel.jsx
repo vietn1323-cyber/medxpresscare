@@ -40,7 +40,6 @@ export const AdminPanel = ({
   onBulkDeleteProducts,
   onBulkUpdateProducts,
   onBulkImportProducts,
-  onResetProductsToDefault,
   registrations = {},
   onAddRegistration,
   onUpdateRegistration,
@@ -48,7 +47,6 @@ export const AdminPanel = ({
   onBulkImportRegistrations,
   storeConfig,
   onUpdateStoreConfig,
-  onClearTestData,
   customers = [],
   onBonusPoints,
   articles = [],
@@ -2948,17 +2946,6 @@ export const AdminPanel = ({
                     <FileSpreadsheet className="w-3.5 h-3.5 text-blue-600" />
                     <span>Nhập File Hàng Loạt</span>
                   </button>
-                  {onResetProductsToDefault && (
-                    <button
-                      type="button"
-                      onClick={onResetProductsToDefault}
-                      className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl flex items-center gap-1.5 border border-slate-200 transition-all cursor-pointer"
-                      title="Khôi phục lại danh sách 21 sản phẩm mẫu ban đầu của MedXpressCare"
-                    >
-                      <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
-                      <span>Khôi Phục SP Mẫu</span>
-                    </button>
-                  )}
                   <button
                     type="button"
                     onClick={() => setShowAddProduct(!showAddProduct)}
@@ -3659,7 +3646,7 @@ export const AdminPanel = ({
                     <Package className="w-12 h-12 text-slate-300 mx-auto" />
                     <div className="font-bold text-sm text-slate-700">Kho sản phẩm hiện đang trống (0 sản phẩm)</div>
                     <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                      Bạn đã xóa sạch các sản phẩm mẫu. Bạn có thể thêm sản phẩm mới thủ công, nhập file CSV hàng loạt hoặc khôi phục lại dữ liệu mẫu bất kỳ lúc nào.
+                      Hiện tại chưa có sản phẩm nào trong kho. Bạn có thể thêm sản phẩm mới thủ công hoặc nhập file CSV/Excel hàng loạt.
                     </p>
                     <div className="flex items-center justify-center gap-2 pt-2">
                       <button
@@ -3669,16 +3656,6 @@ export const AdminPanel = ({
                       >
                         Thêm Sản Phẩm Mới
                       </button>
-                      {onResetProductsToDefault && (
-                        <button
-                          type="button"
-                          onClick={onResetProductsToDefault}
-                          className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 cursor-pointer flex items-center gap-1.5 shadow-xs"
-                        >
-                          <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
-                          <span>Khôi Phục 21 SP Mẫu</span>
-                        </button>
-                      )}
                     </div>
                   </div>
                 ) : filteredAdminProducts.length === 0 ? (
@@ -3727,17 +3704,6 @@ export const AdminPanel = ({
                     <FileSpreadsheet className="w-3.5 h-3.5 text-blue-600" />
                     <span>Nhập File Hàng Loạt</span>
                   </button>
-                  {onResetProductsToDefault && (
-                    <button
-                      type="button"
-                      onClick={onResetProductsToDefault}
-                      className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl flex items-center gap-1.5 border border-slate-200 transition-all cursor-pointer"
-                      title="Khôi phục lại danh sách 21 sản phẩm mẫu ban đầu của MedXpressCare"
-                    >
-                      <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
-                      <span>Khôi Phục SP Mẫu</span>
-                    </button>
-                  )}
                   <button
                     type="button"
                     onClick={handleOpenAddReg}
@@ -6385,31 +6351,6 @@ export const AdminPanel = ({
                     </div>
                   </div>
                 </div>
-              </div>
-
-              {/* Dọn Dẹp Dữ Liệu Thử Nghiệm */}
-              <div className="p-4 bg-rose-50/80 rounded-2xl border border-rose-200/90 space-y-2 mt-4">
-                <div className="flex items-center gap-2 text-rose-900 font-extrabold text-xs">
-                  <Trash2 className="w-4 h-4 text-rose-600" />
-                  <span>Dọn Dẹp & Xóa Dữ Liệu Thử Nghiệm</span>
-                </div>
-                <p className="text-[11px] text-rose-700">
-                  Xóa sạch toàn bộ các đơn hàng thử nghiệm, tài khoản khách hàng mẫu và làm sạch bộ nhớ tạm (localStorage) để chuẩn bị cho việc bán hàng thực tế.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (window.confirm('Bạn có chắc chắn muốn xóa toàn bộ dữ liệu đơn hàng và khách hàng thử nghiệm không? Thao tác này không thể hoàn tác.')) {
-                      if (onClearTestData) {
-                        onClearTestData();
-                      }
-                    }
-                  }}
-                  className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-1.5"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>Xóa Sạch Dữ Liệu Thử Nghiệm Ngay</span>
-                </button>
               </div>
 
               <div className="pt-2">
