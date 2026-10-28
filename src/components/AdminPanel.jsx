@@ -630,6 +630,7 @@ export const AdminPanel = ({
   const [showAddVoucherModal, setShowAddVoucherModal] = useState(false);
   const [editingVoucher, setEditingVoucher] = useState(null);
   const [voucherProductSearch, setVoucherProductSearch] = useState('');
+  const [giftProductSearch, setGiftProductSearch] = useState('');
   const [voucherFormData, setVoucherFormData] = useState({
     code: '',
     title: '',
@@ -639,6 +640,7 @@ export const AdminPanel = ({
     maxDiscount: 50000,
     minQuantity: 1,
     comboTier: null,
+    giftProductId: '',
     giftName: '',
     giftValue: 0,
     giftImage: '',
@@ -4401,10 +4403,11 @@ export const AdminPanel = ({
                       title: '',
                       discountType: 'gift',
                       discountValue: 0,
+                      giftProductId: '',
                       giftName: '',
-                      giftValue: 120000,
-                      giftImage: 'https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=600&auto=format&fit=crop&q=80',
-                      minOrderValue: 500000,
+                      giftValue: 0,
+                      giftImage: '',
+                      minOrderValue: 0,
                       maxDiscount: 0,
                       minQuantity: 1,
                       comboTier: null,
@@ -4416,10 +4419,11 @@ export const AdminPanel = ({
                       applicableCategories: [],
                       applicableProducts: [],
                       enabled: true,
-                      badgeText: 'Tặng Quà Tri Ân',
+                      badgeText: '',
                       description: ''
                     });
                     setVoucherProductSearch('');
+                    setGiftProductSearch('');
                     setShowAddVoucherModal(true);
                   }}
                   className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all shrink-0 cursor-pointer"
@@ -4601,11 +4605,13 @@ export const AdminPanel = ({
                                         applicableProducts: Array.isArray(v.applicableProducts) ? v.applicableProducts : [],
                                         minQuantity: v.minQuantity || 1,
                                         comboTier: v.comboTier || null,
+                                        giftProductId: v.giftProductId || '',
                                         giftName: v.giftName || '',
                                         giftValue: v.giftValue || 0,
                                         giftImage: v.giftImage || ''
                                       });
                                       setVoucherProductSearch('');
+                                      setGiftProductSearch('');
                                       setShowAddVoucherModal(true);
                                     }}
                                     className="p-1.5 text-slate-400 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
@@ -4676,6 +4682,26 @@ export const AdminPanel = ({
                         e.preventDefault();
                         if (!voucherFormData.code.trim()) return;
 
+                        if (voucherFormData.discountType === 'gift' && !voucherFormData.giftProductId && !voucherFormData.giftName) {
+                          alert('Vui lòng chọn một sản phẩm trong danh mục sản phẩm làm quà tặng!');
+                          return;
+                        }
+
+                        // Tự động đồng bộ thông tin sản phẩm quà tặng từ danh mục products
+                        let resolvedGiftProductId = voucherFormData.giftProductId || '';
+                        let resolvedGiftName = voucherFormData.giftName ? voucherFormData.giftName.trim() : '';
+                        let resolvedGiftValue = Number(voucherFormData.giftValue) || 0;
+                        let resolvedGiftImage = voucherFormData.giftImage ? voucherFormData.giftImage.trim() : '';
+
+                        if (resolvedGiftProductId && products) {
+                          const matchedProduct = products.find(p => p.id === resolvedGiftProductId);
+                          if (matchedProduct) {
+                            resolvedGiftName = matchedProduct.name;
+                            resolvedGiftValue = matchedProduct.price || 0;
+                            resolvedGiftImage = matchedProduct.image || '';
+                          }
+                        }
+
                         const cleanedCode = voucherFormData.code.trim().toUpperCase();
                         const payload = {
                           ...voucherFormData,
@@ -4686,9 +4712,10 @@ export const AdminPanel = ({
                           maxDiscount: Number(voucherFormData.maxDiscount) || 0,
                           minQuantity: Number(voucherFormData.minQuantity) || 1,
                           usageLimit: Number(voucherFormData.usageLimit) || 1000,
-                          giftName: voucherFormData.giftName ? voucherFormData.giftName.trim() : '',
-                          giftValue: Number(voucherFormData.giftValue) || 0,
-                          giftImage: voucherFormData.giftImage ? voucherFormData.giftImage.trim() : '',
+                          giftProductId: resolvedGiftProductId,
+                          giftName: resolvedGiftName,
+                          giftValue: resolvedGiftValue,
+                          giftImage: resolvedGiftImage,
                           applicableCategories: Array.isArray(voucherFormData.applicableCategories) ? voucherFormData.applicableCategories : [],
                           applicableProducts: Array.isArray(voucherFormData.applicableProducts) ? voucherFormData.applicableProducts : []
                         };
@@ -4750,67 +4777,169 @@ export const AdminPanel = ({
                           </div>
 
                           {voucherFormData.discountType === 'gift' ? (
-                            <div className="col-span-1 sm:col-span-2 p-3 bg-rose-50/70 border border-rose-200 rounded-xl space-y-2.5">
-                              <div className="font-extrabold text-rose-900 text-xs flex items-center gap-1.5">
-                                <span>🎁 Cài Đặt Quà Tặng Kèm Đơn Hàng</span>
-                              </div>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                                <div>
-                                  <label className="block text-slate-700 font-bold mb-1">Tên Quà Tặng: *</label>
-                                  <input
-                                    type="text"
-                                    required
-                                    placeholder="VD: Hộp Trà Thảo Mộc Đông Trùng 15 Gói"
-                                    value={voucherFormData.giftName || ''}
-                                    onChange={(e) => setVoucherFormData({ ...voucherFormData, giftName: e.target.value })}
-                                    className="w-full px-3 py-1.5 bg-white border border-rose-200 rounded-xl font-bold focus:ring-2 focus:ring-rose-500 focus:outline-none"
-                                  />
+                            <div className="col-span-1 sm:col-span-2 p-3.5 bg-rose-50/70 border-2 border-rose-200 rounded-2xl space-y-3">
+                              <div className="flex items-center justify-between">
+                                <div className="font-extrabold text-rose-950 text-xs flex items-center gap-1.5">
+                                  <span>🎁 Chọn Sản Phẩm Quà Tặng Trong Danh Mục</span>
                                 </div>
-                                <div>
-                                  <label className="block text-slate-700 font-bold mb-1">Trị Giá Ước Tính (₫):</label>
-                                  <input
-                                    type="number"
-                                    placeholder="VD: 120000"
-                                    value={voucherFormData.giftValue || 0}
-                                    onChange={(e) => setVoucherFormData({ ...voucherFormData, giftValue: e.target.value })}
-                                    className="w-full px-3 py-1.5 bg-white border border-rose-200 rounded-xl font-bold focus:ring-2 focus:ring-rose-500 focus:outline-none"
-                                  />
-                                </div>
+                                <span className="text-[10px] text-rose-700 bg-rose-100 font-bold px-2 py-0.5 rounded-full">
+                                  Trích xuất từ danh mục sản phẩm
+                                </span>
                               </div>
-                              <div>
-                                <label className="block text-slate-700 font-bold mb-1">Link Ảnh Quà Tặng:</label>
-                                <input
-                                  type="text"
-                                  placeholder="https://images.unsplash.com/..."
-                                  value={voucherFormData.giftImage || ''}
-                                  onChange={(e) => setVoucherFormData({ ...voucherFormData, giftImage: e.target.value })}
-                                  className="w-full px-3 py-1.5 bg-white border border-rose-200 rounded-xl text-xs focus:ring-2 focus:ring-rose-500 focus:outline-none"
-                                />
-                                {/* Quick gift presets */}
-                                <div className="flex flex-wrap items-center gap-1.5 mt-2 pt-1 border-t border-rose-200/60 text-[10px]">
-                                  <span className="text-slate-500 font-bold">Mẫu gợi ý:</span>
-                                  {[
-                                    { name: 'Hộp Trà Thảo Mộc Đông Trùng', val: 120000, img: 'https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=600&auto=format&fit=crop&q=80' },
-                                    { name: 'Bình Giữ Nhiệt MedXpress 500ml', val: 180000, img: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=600&auto=format&fit=crop&q=80' },
-                                    { name: 'Hộp Khẩu Trang 4 Lớp Kháng Khuẩn', val: 45000, img: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=600&auto=format&fit=crop&q=80' }
-                                  ].map((pr, idx) => (
-                                    <button
-                                      key={idx}
-                                      type="button"
-                                      onClick={() => setVoucherFormData({
-                                        ...voucherFormData,
-                                        giftName: pr.name,
-                                        giftValue: pr.val,
-                                        giftImage: pr.img,
-                                        badgeText: `Tặng ${pr.name}`
-                                      })}
-                                      className="px-2 py-0.5 rounded-lg bg-white hover:bg-rose-100 text-rose-800 border border-rose-200 font-semibold transition-colors cursor-pointer"
+
+                              {/* Đã chọn sản phẩm quà tặng */}
+                              {voucherFormData.giftProductId ? (
+                                (() => {
+                                  const selectedProd = (products || []).find(p => p.id === voucherFormData.giftProductId) || {
+                                    id: voucherFormData.giftProductId,
+                                    name: voucherFormData.giftName,
+                                    price: voucherFormData.giftValue,
+                                    image: voucherFormData.giftImage
+                                  };
+                                  return (
+                                    <div className="p-3 bg-white border border-rose-300 rounded-xl shadow-xs flex items-center justify-between gap-3 animate-in fade-in">
+                                      <div className="flex items-center gap-3 min-w-0">
+                                        <img 
+                                          src={selectedProd.image || voucherFormData.giftImage || '/logo-icon.png'} 
+                                          alt={selectedProd.name} 
+                                          className="w-14 h-14 object-contain rounded-lg border border-slate-200 bg-slate-50 p-1 shrink-0" 
+                                        />
+                                        <div className="min-w-0">
+                                          <div className="flex items-center gap-1.5 flex-wrap">
+                                            <span className="font-mono text-[10px] font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-700">
+                                              ID: {selectedProd.id}
+                                            </span>
+                                            {selectedProd.brand && (
+                                              <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
+                                                {selectedProd.brand}
+                                              </span>
+                                            )}
+                                          </div>
+                                          <h5 className="font-extrabold text-xs text-slate-900 truncate mt-0.5">
+                                            {selectedProd.name}
+                                          </h5>
+                                          <div className="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5">
+                                            <span>Trị giá niêm yết: <strong className="text-rose-600 font-bold">{(selectedProd.price || 0).toLocaleString('vi-VN')}₫</strong></span>
+                                            <span>•</span>
+                                            <span className="text-emerald-700 font-bold">Tặng miễn phí (0₫)</span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setVoucherFormData(prev => ({
+                                            ...prev,
+                                            giftProductId: '',
+                                            giftName: '',
+                                            giftValue: 0,
+                                            giftImage: ''
+                                          }));
+                                        }}
+                                        className="px-2.5 py-1.5 bg-rose-100 hover:bg-rose-200 text-rose-800 rounded-lg text-xs font-bold transition-colors cursor-pointer shrink-0"
+                                      >
+                                        Đổi sản phẩm
+                                      </button>
+                                    </div>
+                                  );
+                                })()
+                              ) : (
+                                /* Chưa chọn: Cho phép chọn từ danh sách sản phẩm hoặc tìm kiếm nhanh */
+                                <div className="space-y-2.5 bg-white p-3 rounded-xl border border-rose-200">
+                                  <div>
+                                    <label className="block text-slate-700 font-bold mb-1">
+                                      Chọn sản phẩm làm quà tặng: *
+                                    </label>
+                                    <select
+                                      value={voucherFormData.giftProductId || ''}
+                                      onChange={(e) => {
+                                        const prodId = e.target.value;
+                                        if (!prodId) return;
+                                        const prod = (products || []).find(p => p.id === prodId);
+                                        if (prod) {
+                                          setVoucherFormData(prev => ({
+                                            ...prev,
+                                            giftProductId: prod.id,
+                                            giftName: prod.name,
+                                            giftValue: prod.price || 0,
+                                            giftImage: prod.image || '',
+                                            badgeText: prev.badgeText ? prev.badgeText : `Tặng ${prod.name}`
+                                          }));
+                                        }
+                                      }}
+                                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs focus:ring-2 focus:ring-rose-500 focus:outline-none"
                                     >
-                                      + {pr.name}
-                                    </button>
-                                  ))}
+                                      <option value="">-- Click để chọn sản phẩm quà tặng từ danh mục ({products?.length || 0} sản phẩm) --</option>
+                                      {(products || []).map(p => (
+                                        <option key={p.id} value={p.id}>
+                                          [{p.id}] {p.name} — {(p.price || 0).toLocaleString('vi-VN')}₫ {p.brand ? `(${p.brand})` : ''}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
+
+                                  <div className="pt-1 border-t border-slate-100">
+                                    <div className="relative mb-2">
+                                      <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
+                                      <input
+                                        type="text"
+                                        placeholder="Hoặc tìm nhanh theo tên / mã / thương hiệu..."
+                                        value={giftProductSearch}
+                                        onChange={(e) => setGiftProductSearch(e.target.value)}
+                                        className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-rose-400"
+                                      />
+                                    </div>
+
+                                    <div className="max-h-44 overflow-y-auto space-y-1.5 no-scrollbar">
+                                      {(products || [])
+                                        .filter(p => {
+                                          if (!giftProductSearch.trim()) return true;
+                                          const term = giftProductSearch.toLowerCase();
+                                          return (p.name || '').toLowerCase().includes(term) ||
+                                                 (p.id || '').toLowerCase().includes(term) ||
+                                                 (p.brand || '').toLowerCase().includes(term);
+                                        })
+                                        .slice(0, 8)
+                                        .map(p => (
+                                          <div
+                                            key={p.id}
+                                            onClick={() => {
+                                              setVoucherFormData(prev => ({
+                                                ...prev,
+                                                giftProductId: p.id,
+                                                giftName: p.name,
+                                                giftValue: p.price || 0,
+                                                giftImage: p.image || '',
+                                                badgeText: prev.badgeText ? prev.badgeText : `Tặng ${p.name}`
+                                              }));
+                                              setGiftProductSearch('');
+                                            }}
+                                            className="flex items-center justify-between p-1.5 rounded-lg border border-slate-100 hover:border-rose-300 hover:bg-rose-50/50 transition-colors cursor-pointer group"
+                                          >
+                                            <div className="flex items-center gap-2 min-w-0 pr-2">
+                                              <img 
+                                                src={p.image || '/logo-icon.png'} 
+                                                alt={p.name} 
+                                                className="w-8 h-8 rounded object-contain bg-slate-50 border border-slate-200 shrink-0" 
+                                              />
+                                              <div className="min-w-0">
+                                                <div className="font-bold text-xs text-slate-800 group-hover:text-rose-900 truncate">
+                                                  {p.name}
+                                                </div>
+                                                <div className="text-[10px] text-slate-500">
+                                                  {p.id} • {p.brand} • <strong className="text-rose-600">{(p.price || 0).toLocaleString('vi-VN')}₫</strong>
+                                                </div>
+                                              </div>
+                                            </div>
+                                            <span className="text-[10px] font-bold text-rose-700 bg-rose-100 group-hover:bg-rose-600 group-hover:text-white px-2 py-1 rounded-md transition-colors shrink-0">
+                                              Chọn quà 🎁
+                                            </span>
+                                          </div>
+                                        ))}
+                                    </div>
+                                  </div>
                                 </div>
-                              </div>
+                              )}
                             </div>
                           ) : (
                             <>

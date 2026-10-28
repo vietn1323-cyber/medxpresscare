@@ -162,27 +162,49 @@ assert.ok(adminPanelCode.includes('Gói Combo & Số Lượng Hộp Tối Thiể
 
 console.log('  ✅ PASSED: Toàn bộ mã nguồn Frontend và Backend đã khớp chuẩn 100% không còn hardcode.');
 
-// 5. KIỂM THỬ CHƯƠNG TRÌNH KHUYẾN MẠI TẶNG QUÀ (GIFT PROMOTIONS)
+// 5. KIỂM THỬ CHƯƠNG TRÌNH KHUYẾN MẠI TẶNG QUÀ (GIFT PROMOTIONS) VỚI SẢN PHẨM CHỌN TỪ DANH MỤC
 console.log('\n--- 5. Kiểm tra chương trình khuyến mại quà tặng (Gift Promotions) ---');
-const giftPromos = getProductGiftPromotions(jointProduct, DEFAULT_VOUCHERS);
+
+// Đảm bảo không còn dữ liệu mẫu chương trình quà tặng trong DEFAULT_VOUCHERS
+const sampleGiftVouchers = DEFAULT_VOUCHERS.filter(v => v.discountType === 'gift');
+assert.strictEqual(sampleGiftVouchers.length, 0, 'DEFAULT_VOUCHERS đã được loại bỏ 100% dữ liệu mẫu chương trình quà tặng');
+
+// Kiểm thử logic tạo chương trình tặng quà với sản phẩm chọn từ danh mục sản phẩm
+const dynamicGiftVoucher = {
+  id: 'vouch-gift-dynamic',
+  code: 'GIFTPRODUCT',
+  title: `Tặng ${jointProduct.name} Cho Đơn Từ 500K`,
+  discountType: 'gift',
+  giftProductId: jointProduct.id,
+  giftName: jointProduct.name,
+  giftValue: jointProduct.price,
+  giftImage: jointProduct.image,
+  minOrderValue: 500000,
+  minQuantity: 1,
+  enabled: true,
+  startDate: '2026-01-01',
+  expiryDate: '2026-12-31',
+  applicableScope: 'all',
+  applicableCategories: [],
+  applicableProducts: []
+};
+
+const giftPromos = getProductGiftPromotions(jointProduct, [dynamicGiftVoucher]);
 assert.ok(Array.isArray(giftPromos), 'giftPromos phải là mảng');
-assert.ok(giftPromos.length >= 2, `Phải có ít nhất 2 chương trình tặng quà mặc định (hiện có: ${giftPromos.length})`);
+assert.strictEqual(giftPromos.length, 1, 'Nhận diện đúng 1 chương trình tặng quà động');
+assert.strictEqual(giftPromos[0].giftProductId, jointProduct.id, 'giftProductId khớp chuẩn với sản phẩm trong danh mục');
 
-const giftVoucher500 = DEFAULT_VOUCHERS.find(v => v.code === 'QUATANG500');
-assert.ok(giftVoucher500, 'Phải có voucher quà tặng QUATANG500');
-assert.strictEqual(giftVoucher500.discountType, 'gift');
-assert.ok(giftVoucher500.giftName, 'Phải có tên quà tặng');
-assert.strictEqual(giftVoucher500.usedCount, 0, 'Dữ liệu mới usedCount phải là 0');
-
-// Test calculateVoucherDiscount với voucher quà tặng
-const giftCalcUnder = calculateVoucherDiscount(giftVoucher500, 400000);
+// Test calculateVoucherDiscount với voucher quà tặng chọn từ sản phẩm
+const giftCalcUnder = calculateVoucherDiscount(dynamicGiftVoucher, 400000);
 assert.strictEqual(giftCalcUnder.isValid, false, 'Đơn dưới 500k không được áp dụng quà tặng 500k');
 
-const giftCalcOk = calculateVoucherDiscount(giftVoucher500, 600000);
+const giftCalcOk = calculateVoucherDiscount(dynamicGiftVoucher, 600000);
 assert.strictEqual(giftCalcOk.isValid, true, 'Đơn từ 500k được nhận quà tặng');
 assert.strictEqual(giftCalcOk.isGift, true, 'isGift phải là true');
 assert.strictEqual(giftCalcOk.discountAmount, 0, 'Voucher quà tặng không trừ tiền mà kèm vật phẩm');
-assert.strictEqual(giftCalcOk.giftItem.name, giftVoucher500.giftName, 'Tên quà tặng phải khớp');
+assert.strictEqual(giftCalcOk.giftItem.name, jointProduct.name, 'Tên quà tặng phải khớp với sản phẩm chọn trong danh mục');
+assert.strictEqual(giftCalcOk.giftItem.id, jointProduct.id, 'ID quà tặng phải khớp với ID sản phẩm được chọn');
+assert.strictEqual(giftCalcOk.giftItem.value, jointProduct.price, 'Trị giá quà tặng phải bằng giá niêm yết của sản phẩm');
 
 const cartDrawerCode = fs.readFileSync(path.join(__dirname, 'src/components/CartDrawer.jsx'), 'utf-8');
 const checkoutModalCode = fs.readFileSync(path.join(__dirname, 'src/components/CheckoutModal.jsx'), 'utf-8');
@@ -191,7 +213,9 @@ const voucherModalCode = fs.readFileSync(path.join(__dirname, 'src/components/Vo
 assert.ok(cartDrawerCode.includes('giftItem'), 'CartDrawer.jsx hiển thị quà tặng kèm trong giỏ hàng');
 assert.ok(checkoutModalCode.includes('giftItem'), 'CheckoutModal.jsx lưu quà tặng kèm vào đơn hàng');
 assert.ok(voucherModalCode.includes('gift'), 'VoucherModal.jsx có tab lọc Quà Tặng Kèm');
-assert.ok(adminPanelCode.includes('gift'), 'AdminPanel.jsx hỗ trợ quản lý voucher quà tặng');
+assert.ok(adminPanelCode.includes('Chọn Sản Phẩm Quà Tặng Trong Danh Mục'), 'AdminPanel.jsx cho chọn sản phẩm trực tiếp từ danh mục');
+assert.ok(adminPanelCode.includes('giftProductId'), 'AdminPanel.jsx lưu trường giftProductId từ danh mục');
+assert.ok(!adminPanelCode.includes('Hộp Khẩu Trang 4 Lớp Kháng Khuẩn'), 'AdminPanel.jsx đã loại bỏ 100% các mẫu quà tặng test cũ');
 
 console.log('  ✅ PASSED: Chương trình khuyến mại quà tặng hoạt động chính xác từ Admin đến Giỏ hàng & Thanh toán.');
 

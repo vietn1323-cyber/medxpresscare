@@ -526,10 +526,16 @@ export default function App() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // Bảo toàn và nâng cấp dữ liệu: reset lượt dùng mẫu cũ và bổ sung phạm vi
+          // Bảo toàn và nâng cấp dữ liệu: loại bỏ các mẫu quà tặng test cũ (vouch-gift-01, vouch-gift-02, QUATANG500, BINHYTE)
+          const filteredParsed = parsed.filter(v => 
+            v.id !== 'vouch-gift-01' && 
+            v.id !== 'vouch-gift-02' && 
+            v.code !== 'QUATANG500' && 
+            v.code !== 'BINHYTE'
+          );
           const voucherMap = new Map();
           DEFAULT_VOUCHERS.forEach(v => voucherMap.set(v.id, v));
-          parsed.forEach(v => {
+          filteredParsed.forEach(v => {
             const defaultItem = voucherMap.get(v.id) || {};
             // Nếu usedCount là số liệu mẫu cũ (142, 524, 89, 65, 41, 168, 92), reset về 0
             const cleanUsedCount = [142, 524, 89, 65, 41, 168, 92].includes(v.usedCount) ? 0 : (v.usedCount || 0);
@@ -544,6 +550,7 @@ export default function App() {
               applicableProducts: Array.isArray(v.applicableProducts) ? v.applicableProducts : (defaultItem.applicableProducts || []),
               minQuantity: v.minQuantity || defaultItem.minQuantity || 1,
               comboTier: v.comboTier !== undefined ? v.comboTier : (defaultItem.comboTier || null),
+              giftProductId: v.giftProductId || defaultItem.giftProductId || '',
               giftName: v.giftName || defaultItem.giftName || '',
               giftValue: v.giftValue !== undefined ? v.giftValue : (defaultItem.giftValue || 0),
               giftImage: v.giftImage || defaultItem.giftImage || ''

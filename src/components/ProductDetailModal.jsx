@@ -313,11 +313,12 @@ export const ProductDetailModal = ({
                   <div className="p-2.5 rounded-xl bg-white/80 border border-slate-200/90 flex flex-wrap items-center justify-between gap-1 text-[11px] text-slate-600">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <Tag className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                      <span>Mã giảm giá & quà tặng:</span>
-                      <span className="font-mono font-bold bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded border border-amber-200">FREESHIP</span>
-                      <span className="font-mono font-bold bg-rose-100 text-rose-900 px-1.5 py-0.5 rounded border border-rose-200">QUATANG500</span>
-                      <span className="font-mono font-bold bg-emerald-100 text-emerald-900 px-1.5 py-0.5 rounded border border-emerald-200">MEDXPRESS50</span>
-                      <span className="font-mono font-bold bg-blue-100 text-blue-900 px-1.5 py-0.5 rounded border border-blue-200">COMBO3HOP</span>
+                      <span>Mã ưu đãi đang áp dụng:</span>
+                      {(vouchers || []).filter(v => v.enabled).slice(0, 4).map(v => (
+                        <span key={v.id} className="font-mono font-bold bg-amber-50 text-amber-900 px-1.5 py-0.5 rounded border border-amber-200">
+                          {v.code}
+                        </span>
+                      ))}
                     </div>
                     {onOpenVouchers && (
                       <button
