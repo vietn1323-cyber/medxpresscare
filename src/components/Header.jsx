@@ -33,7 +33,9 @@ export const Header = ({
   hotline = '1800 6868',
   products = [],
   onOpenProductDetail,
-  onOpenPWAInstall
+  onOpenPWAInstall,
+  onOpenMedicineCabinet,
+  refillsNearRunoutCount = 0
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -110,6 +112,23 @@ export const Header = ({
               >
                 <Smartphone className="w-3 h-3 text-amber-300" />
                 <span>Cài App</span>
+              </button>
+            )}
+
+            {/* Tủ thuốc & Lịch uống AI button */}
+            {onOpenMedicineCabinet && (
+              <button 
+                onClick={onOpenMedicineCabinet}
+                className="hover:text-emerald-200 transition-colors flex items-center gap-1 font-medium underline underline-offset-2 cursor-pointer relative shrink-0"
+                title="Tủ Thuốc & Lịch Nhắc Uống AI"
+              >
+                <span className="text-xs">💊</span>
+                <span className="hidden sm:inline">Tủ Thuốc AI</span>
+                {refillsNearRunoutCount > 0 && (
+                  <span className="bg-rose-500 text-white text-[9px] font-extrabold px-1 rounded-full animate-pulse shadow-2xs">
+                    {refillsNearRunoutCount}
+                  </span>
+                )}
               </button>
             )}
 
@@ -606,6 +625,26 @@ export const Header = ({
                     <span>Cài Đặt App Vào Điện Thoại</span>
                   </div>
                   <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded">PWA</span>
+                </button>
+              )}
+
+              {/* Tủ Thuốc & Lịch Nhắc Uống AI */}
+              {onOpenMedicineCabinet && (
+                <button
+                  onClick={() => { setIsMobileMenuOpen(false); onOpenMedicineCabinet(); }}
+                  className="w-full flex items-center justify-between p-3 rounded-xl bg-emerald-50 text-emerald-950 font-bold border border-emerald-200 cursor-pointer hover:bg-emerald-100 transition-colors"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-base">💊</span>
+                    <span>Tủ Thuốc & Lịch Uống AI</span>
+                  </div>
+                  {refillsNearRunoutCount > 0 ? (
+                    <span className="text-[10px] bg-rose-600 text-white font-extrabold px-2 py-0.5 rounded-full animate-pulse">
+                      {refillsNearRunoutCount} sắp hết
+                    </span>
+                  ) : (
+                    <span className="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded-full">AI 24/7</span>
+                  )}
                 </button>
               )}
 

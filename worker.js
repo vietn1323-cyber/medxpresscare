@@ -539,6 +539,253 @@ Viết bài y khoa chuẩn SEO On-Page. Trả về JSON: {"title": "...", "summa
         }
       }
 
+      // /api/push/vapid-public-key
+      if (pathname === '/api/push/vapid-public-key') {
+        return jsonResponse({
+          success: true,
+          publicKey: 'BGiqquRV_799dDEJLH1DYpT-k957puxsiEPvORHnVoh2MZc2wRFxwEWtAJ45_CyQDUUWGrZO2em9KqHJNrybPgA'
+        });
+      }
+
+      // /api/push/subscribe
+      if (pathname === '/api/push/subscribe') {
+        if (!db) return errorResponse('D1 database not configured', 500);
+        try {
+          const payload = await request.json();
+          if (!payload.endpoint) return errorResponse('Missing push endpoint', 400);
+
+          let subs = await getCollection(db, 'push_subscriptions') || [];
+          const existingIdx = subs.findIndex(s => s.endpoint === payload.endpoint);
+          const subRecord = {
+            id: 'sub-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+            endpoint: payload.endpoint,
+            keys: payload.keys || {},
+            customerId: payload.customerId || null,
+            customerName: payload.customerName || null,
+            customerPhone: payload.customerPhone || null,
+            userAgent: payload.userAgent || '',
+            platform: payload.platform || 'web',
+            enabled: true,
+            updatedAt: new Date().toISOString()
+          };
+
+          if (existingIdx >= 0) {
+            subs[existingIdx] = { ...subs[existingIdx], ...subRecord, id: subs[existingIdx].id };
+          } else {
+            subs.unshift(subRecord);
+          }
+
+          await setCollection(db, 'push_subscriptions', subs);
+          return jsonResponse({ success: true, count: subs.length, subscription: subRecord });
+        } catch (err) {
+          return errorResponse(err.message, 500);
+        }
+      }
+
+      // /api/push/unsubscribe
+      if (pathname === '/api/push/unsubscribe') {
+        if (!db) return errorResponse('D1 database not configured', 500);
+        try {
+          const { endpoint } = await request.json();
+          let subs = await getCollection(db, 'push_subscriptions') || [];
+          subs = subs.filter(s => s.endpoint !== endpoint);
+          await setCollection(db, 'push_subscriptions', subs);
+          return jsonResponse({ success: true, count: subs.length });
+        } catch (err) {
+          return errorResponse(err.message, 500);
+        }
+      }
+
+      // /api/push/subscriptions
+      if (pathname === '/api/push/subscriptions') {
+        if (!db) return errorResponse('D1 database not configured', 500);
+        const subs = await getCollection(db, 'push_subscriptions') || [];
+        return jsonResponse({ success: true, subscriptions: subs, count: subs.length });
+      }
+
+      // /api/push/send
+      if (pathname === '/api/push/send') {
+        if (!db) return errorResponse('D1 database not configured', 500);
+        try {
+          const { title, body, icon, image, url, customerId, endpoint } = await request.json();
+          let subs = await getCollection(db, 'push_subscriptions') || [];
+          
+          let targets = subs.filter(s => s.enabled);
+          if (endpoint) {
+            targets = targets.filter(s => s.endpoint === endpoint);
+          } else if (customerId) {
+            targets = targets.filter(s => s.customerId === customerId);
+          }
+
+          // Lưu log thông báo đã gửi vào D1
+          let logs = await getCollection(db, 'push_notifications_log') || [];
+          const notifLog = {
+            id: 'notif-' + Date.now(),
+            title: title || 'MedXpressCare Thông Báo',
+            body: body || '',
+            icon: icon || '/pwa-192x192.png',
+            image: image || null,
+            url: url || '/',
+            targetCount: targets.length,
+            sentAt: new Date().toISOString()
+          };
+          logs.unshift(notifLog);
+          await setCollection(db, 'push_notifications_log', logs.slice(0, 100));
+
+          return jsonResponse({
+            success: true,
+            message: `Đã kích hoạt gửi thông báo đẩy tới ${targets.length} thiết bị`,
+            notification: notifLog,
+            targetCount: targets.length
+          });
+        } catch (err) {
+          return errorResponse(err.message, 500);
+        }
+      }
+
+      // /api/reminders/medications (Lịch Nhắc Uống Thuốc AI)
+      if (pathname === '/api/reminders/medications') {
+        if (!db) return errorResponse('D1 database not configured', 500);
+
+        if (request.method === 'GET') {
+          const customerId = searchParams.get('customerId');
+          const schedules = await getCollection(db, 'medication_schedules') || [];
+          if (customerId) {
+            const filtered = schedules.filter(s => s.customerId === customerId);
+            return jsonResponse({ success: true, schedules: filtered });
+          }
+          return jsonResponse({ success: true, schedules });
+        }
+
+        if (request.method === 'POST') {
+          try {
+            const payload = await request.json();
+            let schedules = await getCollection(db, 'medication_schedules') || [];
+            if (Array.isArray(payload)) {
+              await setCollection(db, 'medication_schedules', payload);
+              return jsonResponse({ success: true, count: payload.length });
+            } else if (payload && (payload.id || payload.productId)) {
+              const id = payload.id || ('med-' + Date.now() + '-' + Math.floor(Math.random() * 1000));
+              const item = { ...payload, id, updatedAt: new Date().toISOString() };
+              const idx = schedules.findIndex(s => s.id === id);
+              if (idx >= 0) schedules[idx] = item;
+              else schedules.unshift(item);
+              await setCollection(db, 'medication_schedules', schedules);
+              return jsonResponse({ success: true, schedule: item });
+            }
+            return errorResponse('Invalid medication schedule data', 400);
+          } catch (err) {
+            return errorResponse(err.message, 500);
+          }
+        }
+
+        if (request.method === 'DELETE') {
+          const id = searchParams.get('id');
+          if (!id) return errorResponse('Missing schedule id', 400);
+          let schedules = await getCollection(db, 'medication_schedules') || [];
+          schedules = schedules.filter(s => s.id !== id);
+          await setCollection(db, 'medication_schedules', schedules);
+          return jsonResponse({ success: true, deleted: id });
+        }
+      }
+
+      // /api/reminders/refills (Lịch Nhắc Tái Đặt Hàng Trước 2-3 Ngày)
+      if (pathname === '/api/reminders/refills') {
+        if (!db) return errorResponse('D1 database not configured', 500);
+
+        if (request.method === 'GET') {
+          const customerId = searchParams.get('customerId');
+          let refills = await getCollection(db, 'refill_schedules') || [];
+          
+          // Tính toán lại daysRemaining và isNearRunout chuẩn xác theo thời gian thực
+          const now = new Date();
+          refills = refills.map(item => {
+            if (item.runoutDateStr) {
+              const runout = new Date(item.runoutDateStr);
+              const diffDays = Math.ceil((runout.getTime() - now.getTime()) / (24 * 60 * 60 * 1000));
+              const daysRemaining = Math.max(0, diffDays);
+              return {
+                ...item,
+                daysRemaining,
+                isNearRunout: daysRemaining <= 3 && daysRemaining >= 0
+              };
+            }
+            return item;
+          });
+
+          if (customerId) {
+            const filtered = refills.filter(r => r.customerId === customerId);
+            return jsonResponse({ success: true, refills: filtered });
+          }
+          return jsonResponse({ success: true, refills });
+        }
+
+        if (request.method === 'POST') {
+          try {
+            const payload = await request.json();
+            let refills = await getCollection(db, 'refill_schedules') || [];
+            if (Array.isArray(payload)) {
+              await setCollection(db, 'refill_schedules', payload);
+              return jsonResponse({ success: true, count: payload.length });
+            } else if (payload && (payload.id || payload.productId)) {
+              const id = payload.id || ('refill-' + Date.now() + '-' + Math.floor(Math.random() * 1000));
+              const item = { ...payload, id, updatedAt: new Date().toISOString() };
+              const idx = refills.findIndex(r => r.id === id);
+              if (idx >= 0) refills[idx] = item;
+              else refills.unshift(item);
+              await setCollection(db, 'refill_schedules', refills);
+              return jsonResponse({ success: true, refill: item });
+            }
+            return errorResponse('Invalid refill schedule data', 400);
+          } catch (err) {
+            return errorResponse(err.message, 500);
+          }
+        }
+
+        if (request.method === 'DELETE') {
+          const id = searchParams.get('id');
+          if (!id) return errorResponse('Missing refill id', 400);
+          let refills = await getCollection(db, 'refill_schedules') || [];
+          refills = refills.filter(r => r.id !== id);
+          await setCollection(db, 'refill_schedules', refills);
+          return jsonResponse({ success: true, deleted: id });
+        }
+      }
+
+      // /api/cron/check-reminders (Quét tự động các lịch nhắc sắp đến hạn 2-3 ngày hoặc giờ uống thuốc)
+      if (pathname === '/api/cron/check-reminders') {
+        if (!db) return errorResponse('D1 database not configured', 500);
+        try {
+          let refills = await getCollection(db, 'refill_schedules') || [];
+          const now = new Date();
+          const dueRefills = [];
+
+          for (const item of refills) {
+            if (item.enabled && item.runoutDateStr && !item.reminderSent) {
+              const runout = new Date(item.runoutDateStr);
+              const diffDays = Math.ceil((runout.getTime() - now.getTime()) / (24 * 60 * 60 * 1000));
+              if (diffDays <= 3 && diffDays >= 0) {
+                dueRefills.push(item);
+              }
+            }
+          }
+
+          return jsonResponse({
+            success: true,
+            checkedAt: now.toISOString(),
+            dueRefillsCount: dueRefills.length,
+            dueRefills: dueRefills.map(r => ({
+              productName: r.productName,
+              daysRemaining: r.daysRemaining || 2,
+              customerName: r.customerName || 'Khách hàng',
+              customerId: r.customerId
+            }))
+          });
+        } catch (err) {
+          return errorResponse(err.message, 500);
+        }
+      }
+
       return errorResponse('API endpoint not found', 404);
     }
 

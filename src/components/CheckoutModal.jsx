@@ -24,6 +24,7 @@ export const CheckoutModal = ({
   vouchers = DEFAULT_VOUCHERS,
   onOpenVoucherModal,
   onNavigateToTracking,
+  onOpenMedicineCabinet,
   storeConfig = {
     bankName: 'MB Bank (Quân Đội)',
     bankAccountNumber: '0968686868',
@@ -261,6 +262,37 @@ export const CheckoutModal = ({
                 <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto mt-1">
                   Mã đơn hàng của quý khách: <strong className="font-mono text-emerald-700 font-bold text-base">{orderCode}</strong>
                 </p>
+              </div>
+
+              {/* Lời Nhắc Uống Thuốc AI & Nhắc Tái Đặt Hàng Trước 2 - 3 Ngày */}
+              <div className="p-4 rounded-3xl bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border-2 border-emerald-300 max-w-lg mx-auto text-left text-xs space-y-2.5 shadow-xs">
+                <div className="flex items-center justify-between">
+                  <div className="font-extrabold text-emerald-950 flex items-center gap-2">
+                    <span className="text-xl">💊</span>
+                    <span>Dược Sĩ AI Đã Lên Sẵn Lịch Uống Thuốc Cho Bạn</span>
+                  </div>
+                  <span className="text-[10px] bg-emerald-700 text-white font-black px-2 py-0.5 rounded-full">
+                    AI 24/7
+                  </span>
+                </div>
+                <p className="text-slate-600 text-[11px] leading-relaxed">
+                  Hệ thống đã tự động cài đặt các cữ uống thuốc chuẩn y khoa (Sáng/Tối) và hẹn <strong>nhắc tái đặt hàng trước 2 - 3 ngày</strong> khi hộp thuốc sắp hết để bạn nhận hàng vừa kịp lúc hộp cũ hết!
+                </p>
+                <div className="flex items-center gap-2 pt-1">
+                  {onOpenMedicineCabinet && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onClose();
+                        onOpenMedicineCabinet();
+                      }}
+                      className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
+                    >
+                      <span>Xem & Tùy Chỉnh Giờ Uống (Tủ Thuốc AI)</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* VietQR dynamic transfer box if VietQR selected */}

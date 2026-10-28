@@ -35,6 +35,8 @@ import { apiClient } from './services/apiClient';
 import { usePWAInstall } from './hooks/usePWAInstall';
 import { PWAInstallModal } from './components/PWAInstallModal';
 import { PWAInstallBanner } from './components/PWAInstallBanner';
+import { MyMedicineCabinetModal } from './components/MyMedicineCabinetModal';
+import { generateAiMedicationSchedule, calculateRefillSchedule } from './utils/medicationHelper';
 import { 
   initializeOrderTracking, 
   stepOrderToShipping, 
@@ -618,6 +620,49 @@ export default function App() {
   const [verifierInitialReg, setVerifierInitialReg] = useState('');
   const [activeProductDetail, setActiveProductDetail] = useState(null);
 
+  // Tủ Thuốc AI & Lịch Nhắc Uống Thuốc & Nhắc Tái Đặt Hàng Trước 2 - 3 Ngày
+  const [isMedicineCabinetOpen, setIsMedicineCabinetOpen] = useState(false);
+  const [medicationsList, setMedicationsList] = useState(() => {
+    try {
+      const saved = localStorage.getItem('medxpress_medications_list');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [];
+  });
+  const [refillsList, setRefillsList] = useState(() => {
+    try {
+      const saved = localStorage.getItem('medxpress_refills_list');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [];
+  });
+
+  // Tự động tính số lượng sản phẩm sắp hết cần nhắc tái đặt hàng trước 2 - 3 ngày
+  const refillsNearRunoutCount = useMemo(() => {
+    const now = new Date();
+    return refillsList.filter(r => {
+      if (!r.enabled) return false;
+      if (r.runoutDateStr) {
+        const runout = new Date(r.runoutDateStr);
+        const diffDays = Math.ceil((runout.getTime() - now.getTime()) / (24 * 60 * 60 * 1000));
+        return diffDays <= 3 && diffDays >= 0;
+      }
+      return r.isNearRunout || (r.daysRemaining <= 3 && r.daysRemaining >= 0);
+    }).length;
+  }, [refillsList]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('medxpress_medications_list', JSON.stringify(medicationsList));
+    } catch {}
+  }, [medicationsList]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('medxpress_refills_list', JSON.stringify(refillsList));
+    } catch {}
+  }, [refillsList]);
+
   // PWA (Progressive Web App) State & Installation Hook
   const {
     deferredPrompt,
@@ -1031,6 +1076,84 @@ export default function App() {
 
     // Gửi tức thì lên Cloudflare D1
     apiClient.saveNewOrder(newOrder);
+
+    // Dược sĩ AI tự động lên lịch uống thuốc thông minh & hẹn ngày nhắc tái đặt hàng trước 2 - 3 ngày
+    if (Array.isArray(newOrder.items) && newOrder.items.length > 0) {
+      const orderDate = newOrder.createdAt || new Date().toISOString();
+      const newMeds = [];
+      const newRefills = [];
+
+      newOrder.items.forEach(item => {
+        const product = productsList.find(p => p.id === item.id) || item;
+        // 1. Sinh lịch nhắc uống thuốc AI chuẩn y khoa (Sáng/Tối, trước/sau ăn)
+        const medSchedule = generateAiMedicationSchedule(product);
+        newMeds.push(medSchedule);
+
+        // 2. Tính toán ngày hết thuốc và thời điểm nhắc tái đặt hàng trước 2 - 3 ngày
+        const refillSchedule = calculateRefillSchedule(product, item.quantity || 1, orderDate);
+        newRefills.push(refillSchedule);
+      });
+
+      // Cập nhật State Tủ thuốc
+      setMedicationsList(prev => {
+        const merged = [...prev];
+        newMeds.forEach(nm => {
+          const idx = merged.findIndex(m => m.productId === nm.productId);
+          if (idx >= 0) merged[idx] = { ...merged[idx], ...nm };
+          else merged.unshift(nm);
+        });
+        return merged;
+      });
+
+      // Cập nhật State Nhắc tái đặt hàng
+      setRefillsList(prev => {
+        const merged = [...prev];
+        newRefills.forEach(nr => {
+          const idx = merged.findIndex(r => r.productId === nr.productId);
+          if (idx >= 0) merged[idx] = { ...merged[idx], ...nr };
+          else merged.unshift(nr);
+        });
+        return merged;
+      });
+
+      // Đồng bộ background lên Cloudflare D1 API
+      try {
+        newMeds.forEach(med => {
+          fetch('/api/reminders/medications', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(med)
+          }).catch(() => {});
+        });
+        newRefills.forEach(refill => {
+          fetch('/api/reminders/refills', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(refill)
+          }).catch(() => {});
+        });
+      } catch (e) {
+        // Safe fallback
+      }
+    }
+  };
+
+  // Nhanh chóng đặt lại sản phẩm từ Tủ thuốc AI / Nhắc tái đặt hàng
+  const handleQuickReorder = (item) => {
+    const prod = productsList.find(p => p.id === (item.productId || item.id)) || {
+      id: item.productId || item.id,
+      name: item.name || item.productName,
+      price: item.price || 0,
+      image: item.image || item.productImage || 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&auto=format&fit=crop&q=80',
+      brand: item.brand || 'Chính hãng',
+      countryName: item.countryName || 'Chính hãng',
+      origin: item.origin || 'domestic',
+      inStock: true
+    };
+    handleAddToCart(prod, 1);
+    setIsMedicineCabinetOpen(false);
+    setIsCartOpen(true);
+    showToast(`Đã thêm "${prod.name}" vào giỏ hàng để bạn tái đặt hàng kịp thời!`);
   };
 
   // Customer Account & Loyalty Points Handlers
@@ -1901,6 +2024,8 @@ export default function App() {
         products={productsList}
         onOpenProductDetail={(p) => setActiveProductDetail(p)}
         onOpenPWAInstall={() => setIsPWAInstallModalOpen(true)}
+        onOpenMedicineCabinet={() => setIsMedicineCabinetOpen(true)}
+        refillsNearRunoutCount={refillsNearRunoutCount}
       />
 
       {/* Hiển thị Trang Chi Tiết Bài Viết (Full-Page View), Trang Chính Sách, Trang Tra Cứu Vận Đơn, Trang Sản Phẩm Chuyên Biệt, hoặc Trang Chủ */}
@@ -2387,6 +2512,7 @@ export default function App() {
         vouchers={vouchersList}
         onOpenVoucherModal={() => setIsVoucherModalOpen(true)}
         onNavigateToTracking={handleNavigateToTracking}
+        onOpenMedicineCabinet={() => setIsMedicineCabinetOpen(true)}
       />
 
       {/* 6. Customer Authentication Modal (Đăng Nhập / Đăng Ký) */}
@@ -2514,6 +2640,19 @@ export default function App() {
         isAndroid={isAndroid}
         isStandalone={isStandalone}
         hasDeferredPrompt={Boolean(deferredPrompt)}
+      />
+
+      {/* 13. Tủ Thuốc AI & Lịch Nhắc Uống Thuốc & Nhắc Tái Đặt Hàng Trước 2 - 3 Ngày */}
+      <MyMedicineCabinetModal
+        isOpen={isMedicineCabinetOpen}
+        onClose={() => setIsMedicineCabinetOpen(false)}
+        customer={currentCustomer}
+        medications={medicationsList}
+        onUpdateMedications={setMedicationsList}
+        refills={refillsList}
+        onUpdateRefills={setRefillsList}
+        products={productsList}
+        onQuickReorder={handleQuickReorder}
       />
 
     </div>

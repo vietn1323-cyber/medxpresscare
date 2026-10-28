@@ -1800,9 +1800,10 @@ export const AdminPanel = ({
       const elapsedDays = Math.max(0, Math.floor((Date.now() - orderDate.getTime()) / (1000 * 60 * 60 * 24)));
       const remainingDays = treatmentDays - elapsedDays;
 
-      let urgency = 'safe'; // safe (>7) | due_soon (<=7) | overdue (<=0)
+      // Nhắc tái đặt hàng trước 2 - 3 ngày theo tính toán chuẩn
+      let urgency = 'safe'; // safe (>3) | due_soon (<=3 & >0) | overdue (<=0)
       if (remainingDays <= 0) urgency = 'overdue';
-      else if (remainingDays <= 7) urgency = 'due_soon';
+      else if (remainingDays <= 3) urgency = 'due_soon';
 
       return {
         orderId: order.id,
@@ -1820,6 +1821,24 @@ export const AdminPanel = ({
     .sort((a, b) => a.remainingDays - b.remainingDays);
 
   const dueSoonCount = reorderAlerts.filter(a => a.urgency === 'due_soon' || a.urgency === 'overdue').length;
+
+  const handleSendWebPushRefill = async (alertItem) => {
+    try {
+      const res = await fetch('/api/push/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: `📦 Lọ ${alertItem.itemsSummary || 'thuốc'} của bạn còn khoảng 2-3 ngày!`,
+          body: `Dược sĩ MedXpress nhắc ${alertItem.customerName} đặt tiếp liệu trình hôm nay để hàng giao tới vừa lúc hộp cũ hết nhé!`,
+          url: '/'
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      alert(`🎉 Đã kích hoạt gửi Web Push nhắc tái đặt hàng cho ${alertItem.customerName}!`);
+    } catch (err) {
+      alert('Lỗi gửi Web Push: ' + err.message);
+    }
+  };
 
   const handleSaveConfig = (e) => {
     e.preventDefault();
@@ -6428,11 +6447,11 @@ export const AdminPanel = ({
                 </div>
 
                 <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 shadow-xs">
-                  <div className="text-xs text-rose-800 font-semibold uppercase">Cần Chăm Sóc Gấp (≤ 7 ngày)</div>
+                  <div className="text-xs text-rose-800 font-semibold uppercase">Cần Nhắc Tái Đặt (Trước 2 - 3 ngày)</div>
                   <div className="text-2xl font-black text-rose-600 mt-1">
                     {dueSoonCount} khách hàng
                   </div>
-                  <div className="text-[11px] text-rose-700/80 mt-0.5">Cần Dược sĩ gọi hoặc nhắn Zalo ngay</div>
+                  <div className="text-[11px] text-rose-700/80 mt-0.5">Đặt hôm nay để kịp giao khi hộp cũ hết</div>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 shadow-xs">
@@ -6524,7 +6543,17 @@ export const AdminPanel = ({
                               </td>
 
                               <td className="p-3.5 text-right">
-                                <div className="flex items-center justify-end gap-1.5">
+                                <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSendWebPushRefill(alert)}
+                                    className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-bold transition-colors inline-flex items-center gap-1 border border-rose-200 cursor-pointer"
+                                    title="Gửi thông báo đẩy Web Push nhắc tái đặt hàng trước 2-3 ngày"
+                                  >
+                                    <Bell className="w-3 h-3 text-rose-600" />
+                                    <span>Bắn Web Push 📦</span>
+                                  </button>
+
                                   <a
                                     href={`https://zalo.me/${alert.phone?.replace(/\s+/g, '')}?text=${zaloMsg}`}
                                     target="_blank"

@@ -109,3 +109,76 @@ self.addEventListener('message', (event) => {
     self.skipWaiting();
   }
 });
+
+// ===================================================================
+// CLOUDFLARE WEB PUSH NOTIFICATION HANDLERS (RFC 8030 / RFC 8292)
+// Hỗ trợ Nhắc uống thuốc, Nhắc tái đặt hàng trước 2-3 ngày, Đơn hàng & Ưu đãi
+// ===================================================================
+
+self.addEventListener('push', (event) => {
+  console.log('[PWA SW] Received push event from Cloudflare Workers');
+
+  let payload = {
+    title: 'MedXpressCare - Dược Sĩ Trực Tuyến',
+    body: 'Bạn có thông báo mới về sức khỏe và đơn hàng.',
+    icon: '/pwa-192x192.png',
+    badge: '/favicon.png',
+    data: { url: '/' }
+  };
+
+  if (event.data) {
+    try {
+      const parsed = event.data.json();
+      payload = { ...payload, ...parsed };
+    } catch (e) {
+      const text = event.data.text();
+      if (text) payload.body = text;
+    }
+  }
+
+  const options = {
+    body: payload.body,
+    icon: payload.icon || '/pwa-192x192.png',
+    badge: payload.badge || '/favicon.png',
+    image: payload.image || null,
+    vibrate: [150, 80, 150],
+    tag: payload.tag || ('medxpress-' + Date.now()),
+    renotify: true,
+    data: payload.data || { url: payload.url || '/' },
+    actions: payload.actions || [
+      { action: 'open', title: 'Xem Chi Tiết 🔍' },
+      { action: 'close', title: 'Đóng' }
+    ]
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(payload.title, options)
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  const action = event.action;
+  if (action === 'close') return;
+
+  const targetUrl = event.notification.data?.url || '/';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      // Nếu app đang mở, focus vào và chuyển hướng
+      for (const client of windowClients) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          if ('navigate' in client) {
+            client.navigate(targetUrl);
+          }
+          return client.focus();
+        }
+      }
+      // Nếu app chưa mở, mở cửa sổ mới
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
+    })
+  );
+});
