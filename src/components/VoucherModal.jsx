@@ -11,7 +11,10 @@ export const VoucherModal = ({
   vouchers = DEFAULT_VOUCHERS, 
   subtotal = 0, 
   onApplyVoucher, 
-  appliedVoucherCode = '' 
+  appliedVoucherCode = '',
+  customer = null,
+  cartItems = [],
+  onOpenAuthModal
 }) => {
   const [copiedCode, setCopiedCode] = useState('');
   const [filterType, setFilterType] = useState('all'); // 'all' | 'shipping' | 'fixed' | 'percent'
@@ -132,9 +135,10 @@ export const VoucherModal = ({
             </div>
           ) : (
             filteredVouchers.map((voucher) => {
-              const check = calculateVoucherDiscount(voucher, subtotal, 25000);
-              const isEligible = subtotal >= (voucher.minOrderValue || 0);
+              const check = calculateVoucherDiscount(voucher, subtotal, 25000, cartItems, customer);
+              const isEligible = check.isValid;
               const isApplied = appliedVoucherCode === voucher.code;
+              const requiresAuth = Boolean(check.requiresAuth);
 
               return (
                 <div 
@@ -149,13 +153,23 @@ export const VoucherModal = ({
                 >
                   {/* Left coupon ticket styling */}
                   <div className="space-y-1.5 flex-1 pr-2">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-mono font-black text-xs sm:text-sm px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-300">
                         {voucher.code}
                       </span>
                       <span className="text-xs font-black px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
                         {voucher.badgeText}
                       </span>
+                      {(voucher.target_customer === 'new' || voucher.targetCustomer === 'new') && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-100 text-teal-800 border border-teal-200">
+                          👶 Khách mới
+                        </span>
+                      )}
+                      {(voucher.target_customer === 'vip' || voucher.targetCustomer === 'vip') && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
+                          👑 Khách VIP
+                        </span>
+                      )}
                       {isApplied && (
                         <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-600 text-white flex items-center gap-1">
                           <CheckCircle2 className="w-3 h-3" /> Đang áp dụng
@@ -207,7 +221,7 @@ export const VoucherModal = ({
 
                     {!isEligible && (
                       <p className="text-[11px] text-rose-600 font-semibold pt-0.5">
-                        ⚠️ Mua thêm {((voucher.minOrderValue || 0) - subtotal).toLocaleString('vi-VN')}₫ để kích hoạt mã này
+                        ⚠️ {check.reason}
                       </p>
                     )}
                   </div>
@@ -232,24 +246,37 @@ export const VoucherModal = ({
                       )}
                     </button>
 
-                    <button
-                      onClick={() => {
-                        if (onApplyVoucher && isEligible) {
-                          onApplyVoucher(voucher.code);
+                    {requiresAuth && onOpenAuthModal ? (
+                      <button
+                        onClick={() => {
                           onClose();
-                        }
-                      }}
-                      disabled={!isEligible || isApplied}
-                      className={`px-4 py-2 rounded-xl text-xs font-black transition-all shadow-xs ${
-                        isApplied 
-                          ? 'bg-emerald-700 text-white cursor-default'
-                          : isEligible 
-                            ? 'bg-emerald-600 hover:bg-emerald-700 text-white active:scale-95' 
-                            : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                      }`}
-                    >
-                      {isApplied ? (voucher.discountType === 'gift' ? 'Đã Nhận Quà' : 'Đang Dùng') : isEligible ? (voucher.discountType === 'gift' ? 'Nhận Quà Ngay' : 'Áp Dụng Ngay') : 'Chưa Đủ Đk'}
-                    </button>
+                          onOpenAuthModal();
+                        }}
+                        className="px-3.5 py-2 rounded-xl text-xs font-black bg-teal-600 hover:bg-teal-700 text-white transition-all shadow-xs cursor-pointer inline-flex items-center gap-1 shrink-0"
+                      >
+                        <span>Đăng nhập ngay</span>
+                        <span>→</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          if (onApplyVoucher && isEligible) {
+                            onApplyVoucher(voucher.code);
+                            onClose();
+                          }
+                        }}
+                        disabled={!isEligible || isApplied}
+                        className={`px-4 py-2 rounded-xl text-xs font-black transition-all shadow-xs ${
+                          isApplied 
+                            ? 'bg-emerald-700 text-white cursor-default'
+                            : isEligible 
+                              ? 'bg-emerald-600 hover:bg-emerald-700 text-white active:scale-95' 
+                              : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                        }`}
+                      >
+                        {isApplied ? (voucher.discountType === 'gift' ? 'Đã Nhận Quà' : 'Đang Dùng') : isEligible ? (voucher.discountType === 'gift' ? 'Nhận Quà Ngay' : 'Áp Dụng Ngay') : 'Chưa Đủ Đk'}
+                      </button>
+                    )}
                   </div>
                 </div>
               );

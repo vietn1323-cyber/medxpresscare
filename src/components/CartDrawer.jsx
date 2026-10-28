@@ -22,11 +22,13 @@ export const CartDrawer = ({
   customer,
   vouchers = DEFAULT_VOUCHERS,
   onOpenVoucherModal,
+  onOpenAuthModal,
   onAddToCart
 }) => {
   const [couponCode, setCouponCode] = useState('');
   const [couponError, setCouponError] = useState('');
   const [couponSuccess, setCouponSuccess] = useState('');
+  const [couponRequiresAuth, setCouponRequiresAuth] = useState(false);
 
   if (!isOpen) return null;
 
@@ -43,7 +45,7 @@ export const CartDrawer = ({
   let giftItem = null;
 
   if (currentVoucherObj) {
-    const res = calculateVoucherDiscount(currentVoucherObj, subtotal, 25000, cartItems);
+    const res = calculateVoucherDiscount(currentVoucherObj, subtotal, 25000, cartItems, customer);
     if (res.isValid) {
       discountAmount = res.discountAmount;
       shippingDiscount = res.shippingDiscount;
@@ -51,14 +53,10 @@ export const CartDrawer = ({
         giftItem = res.giftItem;
       }
     }
-  } else if (appliedVoucher === 'MEDXPRESS20') {
-    discountAmount = 20000;
-  } else if (appliedVoucher === 'NOIDIA10') {
-    discountAmount = Math.round(subtotal * 0.1);
   }
 
   const baseShippingFee = 25000;
-  const isFreeShip = subtotal >= FREESHIP_THRESHOLD || appliedVoucher === 'FREESHIP' || shippingDiscount > 0;
+  const isFreeShip = subtotal >= FREESHIP_THRESHOLD || shippingDiscount > 0;
   const actualShippingFee = isFreeShip ? 0 : baseShippingFee;
   const grandTotal = Math.max(0, subtotal - discountAmount + actualShippingFee);
 
@@ -69,21 +67,20 @@ export const CartDrawer = ({
 
     const matched = vouchers.find(v => v.code === clean);
     if (matched) {
-      const check = calculateVoucherDiscount(matched, subtotal, baseShippingFee);
+      const check = calculateVoucherDiscount(matched, subtotal, baseShippingFee, cartItems, customer);
       if (check.isValid) {
         setAppliedVoucher(clean);
         setCouponError('');
+        setCouponRequiresAuth(false);
         setCouponSuccess(check.reason);
       } else {
         setCouponError(check.reason);
+        setCouponRequiresAuth(Boolean(check.requiresAuth));
         setCouponSuccess('');
       }
-    } else if (clean === 'MEDXPRESS20' || clean === 'NOIDIA10' || clean === 'FREESHIP') {
-      setAppliedVoucher(clean);
-      setCouponError('');
-      setCouponSuccess('Áp dụng mã thành công!');
     } else {
       setCouponError('Mã ưu đãi không hợp lệ hoặc đã hết hạn.');
+      setCouponRequiresAuth(false);
       setCouponSuccess('');
     }
   };
@@ -92,6 +89,7 @@ export const CartDrawer = ({
     setAppliedVoucher(null);
     setCouponSuccess('');
     setCouponError('');
+    setCouponRequiresAuth(false);
   };
 
   // Các sản phẩm gợi ý thêm vào giỏ nhanh để đạt Freeship
@@ -359,7 +357,26 @@ export const CartDrawer = ({
                       Áp Dụng
                     </button>
                   </div>
-                  {couponError && <p className="text-[11px] text-rose-600 font-semibold">{couponError}</p>}
+                  {couponError && (
+                    <div className="p-2 bg-rose-50 border border-rose-200 rounded-xl text-[11px] text-rose-800 space-y-1">
+                      <div className="flex items-start justify-between gap-1.5 flex-wrap">
+                        <span>⚠️ {couponError}</span>
+                        {couponRequiresAuth && onOpenAuthModal && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onClose();
+                              onOpenAuthModal();
+                            }}
+                            className="font-extrabold text-emerald-700 hover:text-emerald-900 bg-white hover:bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-300 shadow-2xs transition-colors shrink-0 cursor-pointer text-[10px] inline-flex items-center gap-1"
+                          >
+                            <span>Đăng ký / Đăng nhập ngay</span>
+                            <span>→</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   {couponSuccess && <p className="text-[11px] text-emerald-700 font-semibold">{couponSuccess}</p>}
                 </form>
               )}

@@ -659,6 +659,7 @@ export const AdminPanel = ({
     applicableScope: 'all', // 'all' | 'category' | 'specific'
     applicableCategories: [],
     applicableProducts: [],
+    target_customer: 'all', // 'all' | 'new' | 'vip'
     enabled: true,
     badgeText: 'Giảm 50.000₫',
     description: ''
@@ -4615,6 +4616,7 @@ export const AdminPanel = ({
                       applicableScope: 'all',
                       applicableCategories: [],
                       applicableProducts: [],
+                      target_customer: 'all',
                       enabled: true,
                       badgeText: '',
                       description: ''
@@ -4641,6 +4643,7 @@ export const AdminPanel = ({
                         <th className="p-3.5">Mức Giảm</th>
                         <th className="p-3.5">Đơn / SL Tối Thiểu</th>
                         <th className="p-3.5">Phạm Vi Sản Phẩm</th>
+                        <th className="p-3.5">Đối Tượng Áp Dụng</th>
                         <th className="p-3.5">Thời Gian Áp Dụng</th>
                         <th className="p-3.5">Đã Dùng / Giới Hạn</th>
                         <th className="p-3.5 text-center">Trạng Thái</th>
@@ -4733,6 +4736,25 @@ export const AdminPanel = ({
                                 )}
                               </td>
 
+                              {/* Đối Tượng Khách Hàng Áp Dụng */}
+                              <td className="p-3.5 whitespace-nowrap">
+                                {(v.target_customer === 'new' || v.targetCustomer === 'new') && (
+                                  <span className="px-2 py-0.5 rounded-md bg-teal-50 text-teal-800 font-bold border border-teal-200 text-[10px] flex items-center gap-1 w-fit">
+                                    <span>👶 Khách mới (0 đơn)</span>
+                                  </span>
+                                )}
+                                {(v.target_customer === 'vip' || v.targetCustomer === 'vip') && (
+                                  <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 font-bold border border-amber-300 text-[10px] flex items-center gap-1 w-fit">
+                                    <span>👑 Thành viên VIP</span>
+                                  </span>
+                                )}
+                                {(!v.target_customer || v.target_customer === 'all') && (!v.targetCustomer || v.targetCustomer === 'all') && (
+                                  <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-medium border border-slate-200 text-[10px] flex items-center gap-1 w-fit">
+                                    <span>👥 Tất cả khách</span>
+                                  </span>
+                                )}
+                              </td>
+
                               {/* Thời Gian Áp Dụng */}
                               <td className="p-3.5 whitespace-nowrap">
                                 <div className="text-[11px] font-medium text-slate-700">
@@ -4798,8 +4820,9 @@ export const AdminPanel = ({
                                         startDate: v.startDate || '',
                                         expiryDate: v.expiryDate || '',
                                         applicableScope: v.applicableScope || 'all',
-                                        applicableCategories: Array.isArray(v.applicableCategories) ? v.applicableCategories : [],
-                                        applicableProducts: Array.isArray(v.applicableProducts) ? v.applicableProducts : [],
+                                        applicableCategories: Array.isArray(v.applicableCategories) ? v.applicableCategories : (Array.isArray(v.category_ids) ? v.category_ids : []),
+                                        applicableProducts: Array.isArray(v.applicableProducts) ? v.applicableProducts : (Array.isArray(v.product_ids) ? v.product_ids : []),
+                                        target_customer: v.target_customer || v.targetCustomer || 'all',
                                         minQuantity: v.minQuantity || 1,
                                         comboTier: v.comboTier || null,
                                         giftProductId: v.giftProductId || '',
@@ -4900,6 +4923,9 @@ export const AdminPanel = ({
                         }
 
                         const cleanedCode = voucherFormData.code.trim().toUpperCase();
+                        const targetCust = voucherFormData.target_customer || 'all';
+                        const cats = Array.isArray(voucherFormData.applicableCategories) ? voucherFormData.applicableCategories : [];
+                        const prods = Array.isArray(voucherFormData.applicableProducts) ? voucherFormData.applicableProducts : [];
                         const payload = {
                           ...voucherFormData,
                           code: cleanedCode,
@@ -4913,8 +4939,14 @@ export const AdminPanel = ({
                           giftName: resolvedGiftName,
                           giftValue: resolvedGiftValue,
                           giftImage: resolvedGiftImage,
-                          applicableCategories: Array.isArray(voucherFormData.applicableCategories) ? voucherFormData.applicableCategories : [],
-                          applicableProducts: Array.isArray(voucherFormData.applicableProducts) ? voucherFormData.applicableProducts : []
+                          applicableScope: voucherFormData.applicableScope || 'all',
+                          scope: voucherFormData.applicableScope || 'all',
+                          applicableCategories: cats,
+                          category_ids: cats,
+                          applicableProducts: prods,
+                          product_ids: prods,
+                          target_customer: targetCust,
+                          targetCustomer: targetCust
                         };
 
                         if (editingVoucher) {
@@ -5514,7 +5546,62 @@ export const AdminPanel = ({
                         )}
                       </div>
 
-                      {/* 5. MÔ TẢ & LƯỢT DÙNG */}
+                      {/* 5. CÀI ĐẶT ĐỐI TƯỢNG KHÁCH HÀNG ÁP DỤNG */}
+                      <div className="p-3.5 bg-indigo-50/60 rounded-2xl border border-indigo-200/80 space-y-3">
+                        <div className="font-bold text-indigo-950 flex items-center justify-between text-[11px] uppercase tracking-wider">
+                          <span>👤 5. Đối Tượng Khách Hàng Áp Dụng (target_customer)</span>
+                          <span className="text-[10px] font-bold text-indigo-800">
+                            {(!voucherFormData.target_customer || voucherFormData.target_customer === 'all') && 'Tất cả khách hàng'}
+                            {voucherFormData.target_customer === 'new' && 'Khách hàng mới (0 đơn)'}
+                            {voucherFormData.target_customer === 'vip' && 'Khách VIP / Thân thiết'}
+                          </span>
+                        </div>
+
+                        <div>
+                          <label className="block text-slate-700 font-bold mb-1">
+                            Chọn Nhóm Đối Tượng Khách Hàng Áp Dụng: *
+                          </label>
+                          <select
+                            value={voucherFormData.target_customer || 'all'}
+                            onChange={(e) => setVoucherFormData({ ...voucherFormData, target_customer: e.target.value })}
+                            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                          >
+                            <option value="all">👥 Tất cả khách hàng (Mặc định - Khách vãng lai & thành viên)</option>
+                            <option value="new">👶 Khách hàng mới (Điều kiện: Tài khoản có số đơn hàng thành công = 0)</option>
+                            <option value="vip">👑 Khách hàng thân thiết / VIP (Điều kiện: Đã gắn tag VIP hoặc dựa trên lịch sử mua hàng)</option>
+                          </select>
+                        </div>
+
+                        {voucherFormData.target_customer === 'new' && (
+                          <div className="p-2.5 rounded-xl bg-teal-50 border border-teal-200 text-teal-900 text-[11px] space-y-1">
+                            <div className="font-bold flex items-center gap-1 text-teal-800">
+                              <span>ℹ️ Cơ chế kiểm soát chặt chẽ cho Khách hàng mới:</span>
+                            </div>
+                            <p>
+                              • Khách mua ẩn danh (chưa đăng nhập) sẽ bị chặn ngay và hiển thị thông báo: <em>"Ưu đãi này chỉ dành cho thành viên. Vui lòng đăng nhập hoặc đăng ký tài khoản để áp dụng."</em> kèm nút chuyển nhanh tới trang Đăng ký/Đăng nhập.
+                            </p>
+                            <p>
+                              • Khi đã đăng nhập, hệ thống sẽ xác minh số đơn hàng thành công = 0 trước khi cho phép áp dụng mã.
+                            </p>
+                          </div>
+                        )}
+
+                        {voucherFormData.target_customer === 'vip' && (
+                          <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-300 text-amber-950 text-[11px] space-y-1">
+                            <div className="font-bold flex items-center gap-1 text-amber-800">
+                              <span>👑 Cơ chế kiểm soát chặt chẽ cho Khách hàng VIP:</span>
+                            </div>
+                            <p>
+                              • Khách mua ẩn danh (chưa đăng nhập) sẽ bị chặn ngay và nhận thông báo yêu cầu đăng nhập/đăng ký thành viên.
+                            </p>
+                            <p>
+                              • Yêu cầu tài khoản có gắn thẻ VIP, hạng Thân thiết/VIP hoặc tổng chi tiêu tích lũy từ 2.000.000₫ / 50 điểm thưởng trở lên.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 6. MÔ TẢ & LƯỢT DÙNG */}
                       <div className="space-y-3">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div>

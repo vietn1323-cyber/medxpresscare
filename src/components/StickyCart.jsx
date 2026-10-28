@@ -20,7 +20,7 @@ export const StickyCart = ({
 
   const totalQuantity = cartItems.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0);
   const subtotal = cartItems.reduce((sum, item) => sum + ((Number(item.price) || 0) * (Number(item.quantity) || 1)), 0);
-  const freeShippingThreshold = Number(storeConfig?.freeShippingThreshold) || 300000;
+  const freeShippingThreshold = Number(storeConfig?.freeShipThreshold || storeConfig?.freeShippingThreshold || 500000);
   const isFreeShip = subtotal >= freeShippingThreshold;
   const amountNeededForFreeShip = Math.max(0, freeShippingThreshold - subtotal);
 

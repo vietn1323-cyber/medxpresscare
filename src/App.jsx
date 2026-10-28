@@ -245,7 +245,7 @@ export default function App() {
     }
   });
 
-  const [appliedVoucher, setAppliedVoucher] = useState('FREESHIP');
+  const [appliedVoucher, setAppliedVoucher] = useState('');
 
   // Customer Loyalty & Account States
   const [customersList, setCustomersList] = useState(() => {
@@ -2496,6 +2496,7 @@ export default function App() {
         appliedVoucher={appliedVoucher}
         setAppliedVoucher={setAppliedVoucher}
         customer={currentCustomer}
+        onOpenAuthModal={() => { setCustomerAuthInitialTab('login'); setIsCustomerAuthOpen(true); }}
         vouchers={vouchersList}
         onOpenVoucherModal={() => setIsVoucherModalOpen(true)}
         onAddToCart={handleAddToCart}
@@ -2619,6 +2620,13 @@ export default function App() {
           onClose={() => setIsVoucherModalOpen(false)}
           vouchers={vouchersList}
           subtotal={cart.reduce((a, b) => a + (b.price * b.quantity), 0)}
+          cartItems={cart}
+          customer={currentCustomer}
+          onOpenAuthModal={() => {
+            setIsVoucherModalOpen(false);
+            setCustomerAuthInitialTab('login');
+            setIsCustomerAuthOpen(true);
+          }}
           onApplyVoucher={(code) => {
             setAppliedVoucher(code);
             showToast(`Đã áp dụng mã voucher "${code}"!`);

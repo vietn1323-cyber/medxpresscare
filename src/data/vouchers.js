@@ -18,6 +18,7 @@ export const DEFAULT_VOUCHERS = [
     applicableScope: 'all', // 'all' | 'category' | 'specific'
     applicableCategories: [],
     applicableProducts: [],
+    target_customer: 'all', // 'all' | 'new' | 'vip'
     enabled: true,
     badgeText: 'Giảm 50.000₫',
     description: 'Giảm ngay 50.000₫ cho đơn hàng Thực phẩm chức năng từ 400.000₫ trở lên.'
@@ -28,7 +29,7 @@ export const DEFAULT_VOUCHERS = [
     title: 'Miễn Phí Giao Hàng Nhanh Toàn Quốc',
     discountType: 'shipping',
     discountValue: 35000,
-    minOrderValue: 200000,
+    minOrderValue: 500000,
     maxDiscount: 35000,
     minQuantity: 1,
     usageLimit: 1000,
@@ -38,9 +39,10 @@ export const DEFAULT_VOUCHERS = [
     applicableScope: 'all',
     applicableCategories: [],
     applicableProducts: [],
+    target_customer: 'all',
     enabled: true,
     badgeText: 'Freeship 100%',
-    description: 'Miễn 100% cước Giao hàng nhanh toàn quốc cho đơn từ 200.000₫.'
+    description: 'Miễn 100% cước Giao hàng nhanh toàn quốc cho đơn từ 500.000₫.'
   },
   {
     id: 'vouch-03',
@@ -58,6 +60,7 @@ export const DEFAULT_VOUCHERS = [
     applicableScope: 'all',
     applicableCategories: [],
     applicableProducts: [],
+    target_customer: 'all',
     enabled: true,
     badgeText: 'Giảm 10%',
     description: 'Giảm 10% (tối đa 100.000₫) cho đơn hàng từ 600.000₫.'
@@ -78,6 +81,7 @@ export const DEFAULT_VOUCHERS = [
     applicableScope: 'all',
     applicableCategories: [],
     applicableProducts: [],
+    target_customer: 'all',
     enabled: true,
     badgeText: 'Giảm 30.000₫',
     description: 'Quà tặng khi khách hàng hoàn tất tư vấn thể trạng cùng Dược sĩ AI.'
@@ -98,6 +102,7 @@ export const DEFAULT_VOUCHERS = [
     applicableScope: 'all',
     applicableCategories: [],
     applicableProducts: [],
+    target_customer: 'all',
     enabled: true,
     badgeText: 'Giảm 15%',
     description: 'Giảm 15% tối đa 200.000₫ khi mua liệu trình 2-3 hộp chăm sóc sức khỏe.'
@@ -119,6 +124,7 @@ export const DEFAULT_VOUCHERS = [
     applicableScope: 'all',
     applicableCategories: [],
     applicableProducts: [],
+    target_customer: 'all',
     enabled: true,
     badgeText: 'Combo 3 Hộp -10%',
     description: 'Ưu đãi Combo 3 Hộp: Giảm ngay 10% đơn giá sản phẩm và Miễn 100% cước Giao hàng nhanh toàn quốc.'
@@ -140,6 +146,7 @@ export const DEFAULT_VOUCHERS = [
     applicableScope: 'all',
     applicableCategories: [],
     applicableProducts: [],
+    target_customer: 'all',
     enabled: true,
     badgeText: 'Combo 6 Hộp -20%',
     description: 'Ưu đãi Combo 6 Hộp: Giảm sâu 20% tổng đơn, Miễn phí vận chuyển toàn quốc và Nhân đôi (X2) điểm tích lũy thành viên.'
@@ -195,14 +202,18 @@ export const getVoucherTimeStatus = (voucher, checkDate = new Date()) => {
  */
 export const isVoucherApplicableToProduct = (voucher, product) => {
   if (!voucher || !product) return false;
-  if (!voucher.applicableScope || voucher.applicableScope === 'all') return true;
+  const scope = voucher.applicableScope || voucher.scope || 'all';
+  if (scope === 'all') return true;
 
-  if (voucher.applicableScope === 'category') {
-    return Array.isArray(voucher.applicableCategories) && voucher.applicableCategories.includes(product.category);
+  if (scope === 'category') {
+    const categories = voucher.applicableCategories || voucher.category_ids || [];
+    return Array.isArray(categories) && categories.includes(product.category);
   }
 
-  if (voucher.applicableScope === 'specific') {
-    return Array.isArray(voucher.applicableProducts) && voucher.applicableProducts.includes(product.id);
+  if (scope === 'specific') {
+    const products = voucher.applicableProducts || voucher.product_ids || [];
+    const prodId = product.id || product.productId;
+    return Array.isArray(products) && products.includes(prodId);
   }
 
   return true;
@@ -271,22 +282,100 @@ export const getProductGiftPromotions = (product, vouchers = DEFAULT_VOUCHERS) =
 };
 
 /**
- * Tính số tiền giảm giá từ voucher cho đơn hàng
+ * Tính số tiền giảm giá từ voucher cho đơn hàng (Voucher Validator)
+ * Hỗ trợ xác thực:
+ * 1. Authentication Check nghiêm ngặt cho target_customer ('new' | 'vip')
+ * 2. Phạm vi sản phẩm áp dụng ('all' | 'category' | 'specific')
+ * 3. Hạn mức đơn tối thiểu, thời gian, lượt sử dụng
  */
-export const calculateVoucherDiscount = (voucher, subtotal = 0, currentShippingFee = 25000, cartItems = []) => {
-  if (!voucher || !voucher.enabled) return { discountAmount: 0, shippingDiscount: 0, isValid: false, reason: 'Mã không tồn tại hoặc đã bị khóa' };
+export const calculateVoucherDiscount = (
+  voucher, 
+  subtotal = 0, 
+  currentShippingFee = 25000, 
+  cartItems = [], 
+  currentUser = null, 
+  options = {}
+) => {
+  if (!voucher || !voucher.enabled) {
+    return { discountAmount: 0, shippingDiscount: 0, isValid: false, reason: 'Mã không tồn tại hoặc đã bị khóa' };
+  }
 
+  // 1. KIỂM TRA ĐỐI TƯỢNG KHÁCH HÀNG (target_customer) & TRẠNG THÁI ĐĂNG NHẬP (AUTHENTICATION CHECK)
+  const targetCustomer = voucher.target_customer || voucher.targetCustomer || 'all';
+
+  if (targetCustomer === 'new' || targetCustomer === 'Khách hàng mới') {
+    if (!currentUser) {
+      return {
+        discountAmount: 0,
+        shippingDiscount: 0,
+        isValid: false,
+        requiresAuth: true,
+        targetCustomer: 'new',
+        reason: 'Ưu đãi này chỉ dành cho thành viên. Vui lòng đăng nhập hoặc đăng ký tài khoản để áp dụng.'
+      };
+    }
+
+    // Đã đăng nhập: Kiểm tra tài khoản có số đơn hàng thành công = 0 trên hệ thống
+    const orderCount = Number(currentUser.orderCount) || 0;
+    const historyCount = Array.isArray(currentUser.ordersHistory) ? currentUser.ordersHistory.length : 0;
+    const hasSuccessfulOrders = orderCount > 0 || historyCount > 0 || Boolean(currentUser.hasOrdered);
+
+    if (hasSuccessfulOrders) {
+      return {
+        discountAmount: 0,
+        shippingDiscount: 0,
+        isValid: false,
+        requiresAuth: false,
+        targetCustomer: 'new',
+        reason: 'Ưu đãi này chỉ áp dụng cho đơn hàng đầu tiên của khách hàng mới.'
+      };
+    }
+  } else if (targetCustomer === 'vip' || targetCustomer === 'Khách hàng thân thiết / VIP') {
+    if (!currentUser) {
+      return {
+        discountAmount: 0,
+        shippingDiscount: 0,
+        isValid: false,
+        requiresAuth: true,
+        targetCustomer: 'vip',
+        reason: 'Ưu đãi này chỉ dành cho thành viên. Vui lòng đăng nhập hoặc đăng ký tài khoản để áp dụng.'
+      };
+    }
+
+    // Đã đăng nhập: Kiểm tra tài khoản đã được gắn tag VIP hoặc dựa trên lịch sử mua hàng
+    const isVip = Boolean(
+      currentUser.isVip || 
+      currentUser.tier === 'vip' || 
+      (typeof currentUser.tier === 'string' && currentUser.tier.toLowerCase().includes('vip')) ||
+      (Number(currentUser.totalSpent) >= 2000000) ||
+      (Number(currentUser.points) >= 50) ||
+      (Number(currentUser.orderCount) >= 3)
+    );
+
+    if (!isVip) {
+      return {
+        discountAmount: 0,
+        shippingDiscount: 0,
+        isValid: false,
+        requiresAuth: false,
+        targetCustomer: 'vip',
+        reason: 'Ưu đãi này chỉ dành cho khách hàng thân thiết / VIP.'
+      };
+    }
+  }
+
+  // 2. KIỂM TRA ĐIỀU KIỆN GIÁ TRỊ ĐƠN HÀNG TỐI THIỂU
   if (subtotal < (voucher.minOrderValue || 0)) {
-    const missing = voucher.minOrderValue - subtotal;
+    const missing = (voucher.minOrderValue || 0) - subtotal;
     return {
       discountAmount: 0,
       shippingDiscount: 0,
       isValid: false,
-      reason: `Đơn hàng cần tối thiểu ${voucher.minOrderValue.toLocaleString('vi-VN')}₫ (còn thiếu ${missing.toLocaleString('vi-VN')}₫)`
+      reason: `Đơn hàng cần tối thiểu ${(voucher.minOrderValue || 0).toLocaleString('vi-VN')}₫ (còn thiếu ${missing.toLocaleString('vi-VN')}₫)`
     };
   }
 
-  // Kiểm tra phạm vi thời gian (startDate & expiryDate)
+  // 3. KIỂM TRA PHẠM VI THỜI GIAN
   const timeStatus = getVoucherTimeStatus(voucher);
   if (timeStatus === 'upcoming') {
     return { discountAmount: 0, shippingDiscount: 0, isValid: false, reason: `Chương trình khuyến mại chưa bắt đầu (bắt đầu từ ${voucher.startDate})` };
@@ -295,25 +384,34 @@ export const calculateVoucherDiscount = (voucher, subtotal = 0, currentShippingF
     return { discountAmount: 0, shippingDiscount: 0, isValid: false, reason: 'Mã giảm giá đã hết hạn sử dụng' };
   }
 
-  // Kiểm tra giới hạn lượt dùng
+  // 4. KIỂM TRA GIỚI HẠN LƯỢT DÙNG
   if (voucher.usageLimit && voucher.usedCount >= voucher.usageLimit) {
     return { discountAmount: 0, shippingDiscount: 0, isValid: false, reason: 'Mã giảm giá đã hết lượt sử dụng' };
   }
 
-  // Kiểm tra phạm vi sản phẩm áp dụng nếu có danh sách giỏ hàng
-  if (Array.isArray(cartItems) && cartItems.length > 0 && voucher.applicableScope && voucher.applicableScope !== 'all') {
+  // 5. KIỂM TRA PHẠM VI SẢN PHẨM ÁP DỤNG (PRODUCT SCOPE CHECK)
+  const scope = voucher.applicableScope || voucher.scope || 'all';
+  if (Array.isArray(cartItems) && cartItems.length > 0 && scope !== 'all') {
     const eligibleItems = cartItems.filter(item => isVoucherApplicableToProduct(voucher, item));
     if (eligibleItems.length === 0) {
+      if (scope === 'category') {
+        return { 
+          discountAmount: 0, 
+          shippingDiscount: 0, 
+          isValid: false, 
+          reason: 'Mã giảm giá này chỉ áp dụng cho sản phẩm thuộc danh mục quy định.' 
+        };
+      }
       return { 
         discountAmount: 0, 
         shippingDiscount: 0, 
         isValid: false, 
-        reason: 'Mã khuyến mại này không áp dụng cho các sản phẩm trong giỏ hàng hiện tại' 
+        reason: 'Mã giảm giá này chỉ áp dụng cho một số sản phẩm chỉ định trong chương trình.' 
       };
     }
   }
 
-  // Khuyến mại Tặng Quà (Gift Promotion)
+  // 6. KHUYẾN MẠI TẶNG QUÀ
   if (voucher.discountType === 'gift') {
     return {
       discountAmount: 0,
@@ -334,6 +432,7 @@ export const calculateVoucherDiscount = (voucher, subtotal = 0, currentShippingF
     };
   }
 
+  // 7. KHUYẾN MẠI MIỄN PHÍ VẬN CHUYỂN
   if (voucher.discountType === 'shipping') {
     return {
       discountAmount: 0,
@@ -343,6 +442,7 @@ export const calculateVoucherDiscount = (voucher, subtotal = 0, currentShippingF
     };
   }
 
+  // 8. KHUYẾN MẠI GIẢM THEO PHẦN TRĂM (%)
   if (voucher.discountType === 'percent') {
     const calc = Math.round(subtotal * (voucher.discountValue / 100));
     const capped = voucher.maxDiscount ? Math.min(calc, voucher.maxDiscount) : calc;
@@ -354,7 +454,7 @@ export const calculateVoucherDiscount = (voucher, subtotal = 0, currentShippingF
     };
   }
 
-  // Fixed amount
+  // 9. KHUYẾN MẠI SỐ TIỀN CỐ ĐỊNH
   const finalDiscount = Math.min(voucher.discountValue, subtotal);
   return {
     discountAmount: finalDiscount,

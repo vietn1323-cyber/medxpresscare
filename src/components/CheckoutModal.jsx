@@ -129,6 +129,12 @@ export const CheckoutModal = ({
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
 
+  // State nhập mã voucher tại trang Checkout
+  const [checkoutCouponInput, setCheckoutCouponInput] = useState('');
+  const [checkoutCouponError, setCheckoutCouponError] = useState('');
+  const [checkoutCouponSuccess, setCheckoutCouponSuccess] = useState('');
+  const [checkoutCouponRequiresAuth, setCheckoutCouponRequiresAuth] = useState(false);
+
   // Auto fill form when customer logs in
   useEffect(() => {
     if (customer) {
@@ -178,25 +184,22 @@ export const CheckoutModal = ({
 
   const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
   
-  // Tính discount theo voucher động
+  // Tính discount theo voucher động kèm xác thực điều kiện đối tượng & khách ẩn danh
   const currentVoucherObj = vouchers.find(v => v.code === (appliedVoucher?.code || appliedVoucher));
   let discountAmount = 0;
   let voucherShippingDiscount = 0;
   let giftItem = null;
+  let currentVoucherCheck = null;
 
   if (currentVoucherObj) {
-    const res = calculateVoucherDiscount(currentVoucherObj, subtotal, 35000, cartItems);
-    if (res.isValid) {
-      discountAmount = res.discountAmount;
-      voucherShippingDiscount = res.shippingDiscount;
-      if (res.isGift && res.giftItem) {
-        giftItem = res.giftItem;
+    currentVoucherCheck = calculateVoucherDiscount(currentVoucherObj, subtotal, 35000, cartItems, customer);
+    if (currentVoucherCheck.isValid) {
+      discountAmount = currentVoucherCheck.discountAmount;
+      voucherShippingDiscount = currentVoucherCheck.shippingDiscount;
+      if (currentVoucherCheck.isGift && currentVoucherCheck.giftItem) {
+        giftItem = currentVoucherCheck.giftItem;
       }
     }
-  } else if (appliedVoucher === 'MEDXPRESS20') {
-    discountAmount = 20000;
-  } else if (appliedVoucher === 'NOIDIA10') {
-    discountAmount = Math.round(subtotal * 0.1);
   }
 
   // Tính điểm thưởng được tích từ đơn hàng này: 100k = 1 điểm
@@ -211,8 +214,9 @@ export const CheckoutModal = ({
   const selectedCarrier = activeCarriers.find(c => c.id === formData.shippingMethod) || activeCarriers[0] || { baseFee: 35000, name: 'Giao hàng' };
   const hasComboItem = cartItems.some(item => item.comboType && item.comboType !== 'single');
   const isExpress = formData.shippingMethod === 'express';
-  // Đơn hỏa tốc không áp dụng freeship; Giao hàng nhanh áp dụng freeship khi >= 500k hoặc có voucher FREESHIP hoặc combo
-  const isStandardFreeShip = !isExpress && (subtotal >= 500000 || appliedVoucher === 'FREESHIP' || voucherShippingDiscount > 0 || hasComboItem);
+  // Đơn hỏa tốc không áp dụng freeship; Giao hàng nhanh áp dụng freeship khi >= ngưỡng cửa hàng cài đặt hoặc có voucher freeship hợp lệ hoặc combo
+  const freeShipThreshold = Number(storeConfig?.freeShipThreshold || storeConfig?.freeShippingThreshold || 500000);
+  const isStandardFreeShip = !isExpress && (subtotal >= freeShipThreshold || voucherShippingDiscount > 0 || hasComboItem);
   const isFreeShip = isStandardFreeShip;
   // Mặc định phí giao hàng 35.000đ nếu không được freeship
   const shippingFee = isExpress ? 0 : (isFreeShip ? 0 : (selectedCarrier.baseFee ?? 35000));
@@ -1151,28 +1155,121 @@ export const CheckoutModal = ({
                 </div>
               </div>
 
-              {/* Khối áp dụng Voucher & Khuyến mãi */}
-              <div className="p-3 bg-white rounded-2xl border border-slate-200 flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <Tag className="w-4 h-4 text-emerald-600" />
-                  <div>
-                    <span className="font-extrabold text-slate-900">
-                      {appliedVoucher ? `Mã ưu đãi: ${appliedVoucher}` : 'Mã giảm giá & Khuyến mãi'}
-                    </span>
-                    <p className="text-[10px] text-slate-500">
-                      {currentVoucherObj ? currentVoucherObj.title : 'Chưa áp dụng mã ưu đãi'}
-                    </p>
+              {/* Khối áp dụng Voucher & Khuyến mãi (Bảo vệ khách ẩn danh & kiểm tra đối tượng) */}
+              <div className="p-3 bg-white rounded-2xl border border-slate-200 text-xs space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Tag className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <div>
+                      <span className="font-extrabold text-slate-900">
+                        {appliedVoucher ? `Mã ưu đãi: ${appliedVoucher}` : 'Mã giảm giá & Khuyến mãi'}
+                      </span>
+                      <p className="text-[10px] text-slate-500">
+                        {currentVoucherObj ? currentVoucherObj.title : 'Nhập mã hoặc chọn ưu đãi trong danh sách'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    {appliedVoucher && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAppliedVoucher('');
+                          setCheckoutCouponError('');
+                          setCheckoutCouponSuccess('');
+                          setCheckoutCouponRequiresAuth(false);
+                        }}
+                        className="text-[11px] font-bold text-rose-600 hover:text-rose-800 px-2 py-1 rounded-lg hover:bg-rose-50 cursor-pointer"
+                      >
+                        Gỡ bỏ
+                      </button>
+                    )}
+                    {onOpenVoucherModal && (
+                      <button
+                        type="button"
+                        onClick={onOpenVoucherModal}
+                        className="text-xs font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1.5 rounded-xl border border-emerald-200 transition-colors cursor-pointer"
+                      >
+                        {appliedVoucher ? 'Đổi mã' : 'Chọn Voucher'}
+                      </button>
+                    )}
                   </div>
                 </div>
-                {onOpenVoucherModal && (
-                  <button
-                    type="button"
-                    onClick={onOpenVoucherModal}
-                    className="text-xs font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-xl border border-emerald-200 transition-colors"
-                  >
-                    {appliedVoucher ? 'Đổi mã' : 'Chọn Voucher'}
-                  </button>
-                )}
+
+                {/* Form nhập mã voucher trực tiếp */}
+                <form 
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const clean = checkoutCouponInput.trim().toUpperCase();
+                    if (!clean) return;
+
+                    const matched = vouchers.find(v => v.code === clean);
+                    if (matched) {
+                      const check = calculateVoucherDiscount(matched, subtotal, selectedCarrier.baseFee ?? 35000, cartItems, customer);
+                      if (check.isValid) {
+                        setAppliedVoucher(clean);
+                        setCheckoutCouponError('');
+                        setCheckoutCouponRequiresAuth(false);
+                        setCheckoutCouponSuccess(check.reason);
+                      } else {
+                        setCheckoutCouponError(check.reason);
+                        setCheckoutCouponRequiresAuth(Boolean(check.requiresAuth));
+                        setCheckoutCouponSuccess('');
+                      }
+                    } else {
+                      setCheckoutCouponError('Mã ưu đãi không hợp lệ hoặc đã hết hạn.');
+                      setCheckoutCouponRequiresAuth(false);
+                      setCheckoutCouponSuccess('');
+                    }
+                  }}
+                  className="space-y-1.5 pt-1 border-t border-slate-100"
+                >
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Nhập mã voucher (VD: MEDXPRESS50, FREESHIP)..."
+                      value={checkoutCouponInput}
+                      onChange={(e) => setCheckoutCouponInput(e.target.value)}
+                      className="flex-1 px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-xl text-xs uppercase font-mono font-bold focus:outline-none focus:border-emerald-500 focus:bg-white"
+                    />
+                    <button
+                      type="submit"
+                      disabled={!checkoutCouponInput.trim()}
+                      className="px-3.5 py-1.5 bg-slate-900 hover:bg-emerald-700 disabled:bg-slate-300 text-white font-bold text-xs rounded-xl transition-all shrink-0 cursor-pointer"
+                    >
+                      Áp Dụng
+                    </button>
+                  </div>
+
+                  {/* Thông báo lỗi & liên kết Đăng ký / Đăng nhập ngay cho khách ẩn danh */}
+                  {(checkoutCouponError || (currentVoucherCheck && !currentVoucherCheck.isValid && currentVoucherObj)) && (
+                    <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 space-y-1">
+                      <div className="flex items-start justify-between gap-2 flex-wrap">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold text-rose-900">⚠️</span>
+                          <span>{checkoutCouponError || currentVoucherCheck?.reason}</span>
+                        </div>
+                        {(checkoutCouponRequiresAuth || currentVoucherCheck?.requiresAuth) && onOpenAuthModal && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onClose();
+                              onOpenAuthModal();
+                            }}
+                            className="font-extrabold text-emerald-700 hover:text-emerald-900 bg-white hover:bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-300 shadow-2xs transition-colors shrink-0 cursor-pointer text-[11px] inline-flex items-center gap-1"
+                          >
+                            <span>Đăng ký / Đăng nhập ngay</span>
+                            <span>→</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {checkoutCouponSuccess && (
+                    <p className="text-[11px] text-emerald-700 font-bold">✓ {checkoutCouponSuccess}</p>
+                  )}
+                </form>
               </div>
 
               {/* Chi tiết tính tiền & Điểm thưởng */}

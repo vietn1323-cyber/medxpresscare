@@ -211,7 +211,7 @@ const inspected = stepOrderToReturnConfirmed(returnedAtWh, {
   restoreStock: true,
   note: 'Tem mác nguyên vẹn'
 });
-assert(inspected.status === 'returned' && inspected.returnInspection.restoreStock === true, 'Xác nhận kiểm nhận thủ công & tái nhập kho chuẩn GSP thành công');
+assert(inspected.status === 'returned' && inspected.returnInspection.restoreStock === true, 'Xác nhận kiểm nhận thủ công & tái nhập kho thành công');
 
 // -------------------------------------------------------------
 // 7. KIỂM THỬ BÀI VIẾT Y KHOA & ĐIỂM SEO ON-PAGE

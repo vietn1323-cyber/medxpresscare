@@ -47,8 +47,8 @@ const targetPolicy = mockPoliciesDb.find(p => p.slug === 'chinh-sach-giao-hang')
 assert(targetPolicy, 'Tìm thấy chính sách giao hàng');
 
 // Sửa tiêu đề và thêm điều khoản mới
-targetPolicy.title = 'Chính Sách Vận Chuyển Hỏa Tốc & Bảo Quản Chuẩn GSP Toàn Quốc (Đã sửa)';
-targetPolicy.badge = 'GSP & Freeship 100%';
+targetPolicy.title = 'Chính Sách Vận Chuyển Hỏa Tốc & Bảo Quản Chuẩn Y Khoa Toàn Quốc (Đã sửa)';
+targetPolicy.badge = 'Chính Hãng & Freeship 100%';
 targetPolicy.sections.push({
   heading: '5. Quy Định Đặc Biệt Mùa Dịch & Thiên Tai',
   content: 'Cam kết duy trì chuỗi cung ứng dược phẩm liên tục 24/7 không gián đoạn.'
@@ -60,8 +60,8 @@ targetPolicy.faqs.push({
 
 // Kiểm tra getPolicyBySlug hoạt động mượt mà với danh sách chính sách đã chỉnh sửa
 const resolvedPolicy = getPolicyBySlug('chinh-sach-giao-hang', mockPoliciesDb);
-assert.strictEqual(resolvedPolicy.title, 'Chính Sách Vận Chuyển Hỏa Tốc & Bảo Quản Chuẩn GSP Toàn Quốc (Đã sửa)');
-assert.strictEqual(resolvedPolicy.badge, 'GSP & Freeship 100%');
+assert.strictEqual(resolvedPolicy.title, 'Chính Sách Vận Chuyển Hỏa Tốc & Bảo Quản Chuẩn Y Khoa Toàn Quốc (Đã sửa)');
+assert.strictEqual(resolvedPolicy.badge, 'Chính Hãng & Freeship 100%');
 assert.strictEqual(resolvedPolicy.sections.length, 5, 'Chính sách đã cập nhật đủ 5 điều khoản');
 assert.strictEqual(resolvedPolicy.faqs.length, 3, 'Chính sách đã cập nhật đủ 3 FAQs');
 console.log('  ✅ PASSED: Trình quản lý Admin chỉnh sửa tiêu đề, badge, điều khoản và FAQ hoạt động chính xác');

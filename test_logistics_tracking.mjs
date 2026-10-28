@@ -85,12 +85,12 @@ assert.ok(arrivedOrder.arrivedWarehouseAt);
 assert.ok(arrivedOrder.trackingTimeline[arrivedOrder.trackingTimeline.length - 1].title.includes('Chờ Dược sĩ kiểm nhận'));
 console.log('  ✅ PASSED: Kiện hàng về kho (status = returned_pending_check, yêu cầu kiểm nhận thủ công)');
 
-// 8. Test Dược sĩ xác nhận THỦ CÔNG đã nhận hàng hoàn & Tái nhập kho GSP (stepOrderToReturnConfirmed)
+// 8. Test Dược sĩ xác nhận THỦ CÔNG đã nhận hàng hoàn & Tái nhập kho (stepOrderToReturnConfirmed)
 const inspectionData = {
   pharmacistName: 'DS. CKI Nguyễn Thu Trang',
   sealCondition: 'intact',
   restoreStock: true,
-  note: 'Tem niêm phong nguyên vẹn 100%, nhiệt độ mát chuẩn GSP.'
+  note: 'Tem niêm phong nguyên vẹn 100%, bảo quản đạt chuẩn.'
 };
 const confirmedReturnOrder = stepOrderToReturnConfirmed(arrivedOrder, inspectionData);
 assert.strictEqual(confirmedReturnOrder.status, 'returned');
@@ -99,7 +99,7 @@ assert.strictEqual(confirmedReturnOrder.returnInspection.pharmacistName, 'DS. CK
 assert.strictEqual(confirmedReturnOrder.returnInspection.sealCondition, 'intact');
 assert.strictEqual(confirmedReturnOrder.returnInspection.restoreStock, true);
 assert.ok(confirmedReturnOrder.trackingTimeline[confirmedReturnOrder.trackingTimeline.length - 1].title.includes('Dược sĩ đã kiểm nhận hàng hoàn'));
-console.log('  ✅ PASSED: Xác nhận thủ công nhận hàng hoàn & ghi nhận đầy đủ biên bản kiểm định GSP');
+console.log('  ✅ PASSED: Xác nhận thủ công nhận hàng hoàn & ghi nhận đầy đủ biên bản kiểm định');
 
 // 9. Test syncCarrierLogisticsStatus chuyển returning -> returned_pending_check và KHÔNG tự hoàn tất
 let returnSync = { ...returningOrder };

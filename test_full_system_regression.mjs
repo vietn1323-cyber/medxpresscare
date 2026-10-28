@@ -223,10 +223,10 @@ runTest('Articles & SEO', 'Tạo slug chuẩn tiếng Việt và tính điểm O
   const testArticle = {
     title,
     metaTitle: title,
-    metaDescription: 'Hướng dẫn chi tiết từ Dược sĩ CKI về cách giảm đau khớp gối an toàn tại nhà cho người cao tuổi đạt chuẩn GSP.',
+    metaDescription: 'Hướng dẫn chi tiết từ Dược sĩ CKI về cách giảm đau khớp gối an toàn tại nhà cho người cao tuổi chuẩn y khoa.',
     focusKeyword: 'giảm đau khớp gối',
     slug,
-    content: 'Nội dung bài viết y khoa hướng dẫn bảo vệ sụn khớp chuẩn GSP và chế độ vận động nhẹ nhàng...',
+    content: 'Nội dung bài viết y khoa hướng dẫn bảo vệ sụn khớp chuẩn y khoa và chế độ vận động nhẹ nhàng...',
     image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae',
     imageAlt: 'Hình ảnh hướng dẫn giảm đau khớp gối',
     author: 'DS. CKI Nguyễn Thu Trang'
@@ -310,7 +310,7 @@ runTest('Returns Workflow', 'Kiện hàng về tới kho (returned_pending_check
   assert.strictEqual(syncedAgain.status, 'returned_pending_check', 'Không được tự động hoàn tất nếu chưa có xác nhận thủ công');
 });
 
-runTest('Returns Workflow', 'Dược sĩ xác nhận THỦ CÔNG nhận hàng hoàn & Tái nhập kho GSP thành công', () => {
+runTest('Returns Workflow', 'Dược sĩ xác nhận THỦ CÔNG nhận hàng hoàn & Tái nhập kho thành công', () => {
   const pendingOrder = {
     id: 'MXC-445566',
     shippingMethod: 'ghn',
@@ -322,9 +322,8 @@ runTest('Returns Workflow', 'Dược sĩ xác nhận THỦ CÔNG nhận hàng ho
   const inspectionData = {
     pharmacistName: 'DS. CKI Nguyễn Thu Trang',
     sealCondition: 'intact',
-    gspCompliant: true,
     restoreStock: true,
-    note: 'Tem niêm phong nguyên vẹn 100%, nhiệt độ mát chuẩn GSP, đã nhập lại giá kệ.'
+    note: 'Tem niêm phong nguyên vẹn 100%, bảo quản đạt chuẩn, đã nhập lại giá kệ.'
   };
 
   const confirmed = stepOrderToReturnConfirmed(pendingOrder, inspectionData);
