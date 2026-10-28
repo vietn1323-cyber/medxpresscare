@@ -64,7 +64,7 @@ export const HeroBanner = ({
   };
 
   return (
-    <div className="relative overflow-hidden bg-gradient-to-b from-emerald-900 via-teal-900 to-slate-900 text-white py-10 lg:py-14 px-4">
+    <div className="relative overflow-hidden bg-gradient-to-b from-emerald-900 via-teal-900 to-slate-900 text-white py-10 lg:py-14 px-4 w-full max-w-full">
       {/* Background ambient medical glows */}
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />

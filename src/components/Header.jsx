@@ -3,7 +3,7 @@ import {
   Search, ShoppingBag, Heart, ShieldCheck, Stethoscope, 
   PhoneCall, Zap, Sparkles, X, ChevronDown, CheckCircle2,
   FileCheck2, Globe2, Truck, RefreshCw, User, Award, BookOpen, Tag,
-  Smartphone
+  Smartphone, Menu, ChevronRight
 } from 'lucide-react';
 import { CATEGORIES } from '../data/products';
 
@@ -50,13 +50,18 @@ export const Header = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Gợi ý sản phẩm nhanh khi nhập từ khóa
+  // Đóng Mobile Drawer khi đổi route/view
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [currentView, originFilter]);
+
+  // Gợi ý thông minh khi tìm kiếm
   const suggestedProducts = useMemo(() => {
-    if (!searchQuery || !searchQuery.trim() || !Array.isArray(products)) return [];
+    if (!searchQuery || searchQuery.trim().length < 2) return [];
     const q = searchQuery.toLowerCase().trim();
     return products
       .filter(p => 
-        p.name?.toLowerCase().includes(q) ||
+        p.name?.toLowerCase().includes(q) || 
         p.brand?.toLowerCase().includes(q) ||
         p.category?.toLowerCase().includes(q) ||
         p.countryName?.toLowerCase().includes(q)
@@ -65,111 +70,113 @@ export const Header = ({
   }, [searchQuery, products]);
 
   return (
-    <header className="sticky top-0 z-40 bg-white shadow-sm border-b border-slate-100">
-      {/* 1. Top Banner Cam Kết Y Khoa */}
-      <div className="bg-gradient-to-r from-emerald-700 via-teal-700 to-emerald-800 text-white text-xs py-2 px-4">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-4 flex-wrap">
-            <span className="flex items-center gap-1 font-medium bg-emerald-600/60 px-2 py-0.5 rounded-full">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
-              100% Chính Hãng - Bồi hoàn 300% nếu phát hiện giả
+    <header className="sticky top-0 z-40 bg-white shadow-xs border-b border-slate-100 w-full overflow-x-clip">
+      {/* 1. Top Banner Cam Kết Y Khoa (Tối ưu hiển thị gọn gàng, không bị kéo dài hoặc vỡ dòng) */}
+      <div className="bg-gradient-to-r from-emerald-800 via-teal-700 to-emerald-800 text-white text-xs py-1.5 px-3 sm:px-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
+          {/* Bên trái: Huy hiệu cam kết */}
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <span className="flex items-center gap-1 font-semibold text-[11px] sm:text-xs truncate bg-emerald-600/50 sm:bg-emerald-600/60 px-2 py-0.5 rounded-full">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-300 shrink-0" />
+              <span className="sm:hidden">100% Chính Hãng (Bồi hoàn 300%)</span>
+              <span className="hidden sm:inline">100% Chính Hãng - Bồi hoàn 300% nếu phát hiện giả</span>
             </span>
+
             <button 
-              onClick={() => onNavigateToPolicy ? onNavigateToPolicy('chinh-sach-giao-hang') : window.location.hash = '#rules'}
-              className="hidden md:flex items-center gap-1 text-emerald-100 hover:text-white transition-colors cursor-pointer"
+              onClick={() => onNavigateToPolicy ? onNavigateToPolicy('chinh-sach-giao-hang') : (window.location.hash = '#rules')}
+              className="hidden md:flex items-center gap-1 text-emerald-100 hover:text-white transition-colors cursor-pointer text-[11px]"
             >
-              <Truck className="w-3.5 h-3.5" />
-              <span>Giao hỏa tốc Hà Nội • Giao nhanh toàn quốc</span>
+              <Truck className="w-3.5 h-3.5 text-emerald-300" />
+              <span>Giao hỏa tốc Hà Nội</span>
             </button>
+
             <button 
-              onClick={() => onNavigateToPolicy ? onNavigateToPolicy('chinh-sach-doi-tra') : window.location.hash = '#return'}
-              className="hidden lg:flex items-center gap-1 text-emerald-100 hover:text-white transition-colors cursor-pointer"
+              onClick={() => onNavigateToPolicy ? onNavigateToPolicy('chinh-sach-doi-tra') : (window.location.hash = '#return')}
+              className="hidden xl:flex items-center gap-1 text-emerald-100 hover:text-white transition-colors cursor-pointer text-[11px]"
             >
-              <RefreshCw className="w-3.5 h-3.5" />
-              <span>Đổi trả 30 ngày • Bồi hoàn 300%</span>
+              <RefreshCw className="w-3.5 h-3.5 text-emerald-300" />
+              <span>Đổi trả 30 ngày</span>
             </button>
           </div>
-          <div className="flex items-center gap-3 sm:gap-4 ml-auto">
-            {/* Customer Account & Points Top Bar Badge */}
+
+          {/* Bên phải: Phím tắt & Hotline */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0 text-[11px]">
+            {/* Khách hàng & Điểm thưởng */}
             {customer ? (
               <button 
                 onClick={onOpenProfileModal}
-                className="flex items-center gap-1.5 font-bold text-xs bg-amber-400 hover:bg-amber-300 text-slate-950 px-2.5 py-0.5 rounded-full shadow-xs transition-colors"
+                className="flex items-center gap-1 font-bold text-[11px] bg-amber-400 hover:bg-amber-300 text-slate-950 px-2 py-0.5 rounded-full shadow-2xs transition-colors cursor-pointer"
               >
-                <span>🌟 {customer.points || 0} điểm</span>
-                <span className="text-amber-800">|</span>
-                <span className="truncate max-w-[120px]">{customer.fullName}</span>
+                <span>🌟 {customer.points || 0}đ</span>
+                <span className="hidden sm:inline">| {customer.fullName}</span>
               </button>
             ) : (
               <button 
                 onClick={onOpenAuthModal}
-                className="hover:text-emerald-200 transition-colors flex items-center gap-1 font-semibold"
+                className="hover:text-emerald-200 transition-colors hidden sm:flex items-center gap-1 font-semibold cursor-pointer"
               >
                 <User className="w-3.5 h-3.5 text-amber-300" />
-                <span>Đăng Nhập / Tích Điểm (100k = 1đ)</span>
+                <span>Đăng Nhập</span>
               </button>
             )}
 
-            <span className="text-emerald-500 hidden sm:inline">|</span>
-
+            {/* Nút Cài App PWA */}
             {onOpenPWAInstall && (
-              <>
-                <button 
-                  onClick={onOpenPWAInstall}
-                  className="bg-emerald-600/90 hover:bg-emerald-500 text-white transition-all flex items-center gap-1 font-bold text-[11px] px-2.5 py-0.5 rounded-full shadow-xs hover:shadow cursor-pointer"
-                  title="Thêm ứng dụng MedXpressCare vào điện thoại"
-                >
-                  <Smartphone className="w-3.5 h-3.5 text-amber-300" />
-                  <span>Cài App</span>
-                </button>
-                <span className="text-emerald-500 hidden sm:inline">|</span>
-              </>
+              <button 
+                onClick={onOpenPWAInstall}
+                className="bg-emerald-600/90 hover:bg-emerald-500 text-white transition-all flex items-center gap-1 font-bold text-[10px] sm:text-[11px] px-2 py-0.5 rounded-full shadow-2xs cursor-pointer shrink-0"
+                title="Thêm ứng dụng MedXpressCare vào điện thoại"
+              >
+                <Smartphone className="w-3 h-3 text-amber-300" />
+                <span>Cài App</span>
+              </button>
             )}
 
+            {/* Tra cứu vận đơn link */}
             <button 
               onClick={() => {
-                if (onNavigateToTracking) {
-                  onNavigateToTracking();
-                } else if (onOpenOrderTracking) {
-                  onOpenOrderTracking();
-                }
+                if (onNavigateToTracking) onNavigateToTracking();
+                else if (onOpenOrderTracking) onOpenOrderTracking();
               }}
-              className="hover:text-emerald-200 transition-colors flex items-center gap-1 font-medium underline underline-offset-2 cursor-pointer"
+              className="hover:text-emerald-200 transition-colors hidden sm:flex items-center gap-1 font-medium underline underline-offset-2 cursor-pointer"
             >
               <Truck className="w-3.5 h-3.5 text-emerald-300" />
-              Tra cứu Vận đơn
+              <span className="hidden md:inline">Tra cứu Vận đơn</span>
+              <span className="md:hidden">Tra cứu</span>
             </button>
-            <span className="text-emerald-500 hidden sm:inline">|</span>
 
+            {/* Tra cứu giấy phép */}
             <button 
               onClick={onOpenVerifier}
-              className="hover:text-emerald-200 transition-colors hidden md:flex items-center gap-1 font-medium underline underline-offset-2"
+              className="hover:text-emerald-200 transition-colors hidden lg:flex items-center gap-1 font-medium underline underline-offset-2 cursor-pointer"
             >
               <FileCheck2 className="w-3.5 h-3.5 text-emerald-300" />
-              Tra cứu Giấy phép
+              <span>Tra Giấy phép</span>
             </button>
-            <span className="text-emerald-500 hidden md:inline">|</span>
+
+            {/* Cẩm nang */}
             <a 
               href="#health-blog"
-              className="hover:text-emerald-200 transition-colors hidden lg:flex items-center gap-1 font-medium underline underline-offset-2"
+              className="hover:text-emerald-200 transition-colors hidden xl:flex items-center gap-1 font-medium underline underline-offset-2"
             >
               <BookOpen className="w-3.5 h-3.5 text-amber-300" />
-              Cẩm Nang Y Khoa
+              <span>Cẩm Nang Y Khoa</span>
             </a>
-            <span className="text-emerald-500 hidden lg:inline">|</span>
+
+            {/* Hotline */}
             <a 
               href={`tel:${(hotline || '1800 6868').replace(/\s+/g, '')}`} 
-              className="flex items-center gap-1 font-bold text-amber-300 hover:text-white transition-colors"
+              className="flex items-center gap-1 font-bold text-amber-300 hover:text-white transition-colors shrink-0"
             >
-              <PhoneCall className="w-3.5 h-3.5 animate-pulse" />
-              Tổng đài: {hotline || '1800 6868'}
+              <PhoneCall className="w-3 h-3 animate-pulse" />
+              <span>{hotline || '1800 6868'}</span>
             </a>
           </div>
         </div>
       </div>
 
       {/* 2. Main Navigation Bar */}
-      <div className="max-w-7xl mx-auto px-4 py-3 sm:py-4">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3.5">
         <div className="flex items-center justify-between gap-2 sm:gap-4 lg:gap-6">
           {/* Logo & Brand Slogan */}
           <div 
@@ -179,28 +186,28 @@ export const Header = ({
             <img 
               src="/logo-icon.png" 
               alt="MedXpress Care Logo" 
-              className="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-2xl shadow-xs hover:scale-105 transition-transform" 
+              className="w-9 h-9 sm:w-11 sm:h-11 object-contain rounded-xl sm:rounded-2xl shadow-2xs hover:scale-105 transition-transform" 
             />
             <div>
               <div className="flex items-baseline gap-1">
-                <span className="text-xl sm:text-2xl font-black tracking-tight text-blue-900">
+                <span className="text-lg sm:text-2xl font-black tracking-tight text-blue-900 leading-none">
                   Med<span className="text-emerald-600">Xpress</span> <span className="text-blue-600">Care</span>
                 </span>
-                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">.COM</span>
+                <span className="text-[9px] sm:text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200 leading-none">.COM</span>
               </div>
-              <p className="text-[11px] text-emerald-800 font-bold tracking-tight hidden sm:block">
+              <p className="text-[10px] sm:text-[11px] text-emerald-800 font-bold tracking-tight hidden sm:block mt-0.5">
                 — Sức khỏe thật – Giá trị thật —
               </p>
             </div>
           </div>
 
-          {/* Ô Tìm Kiếm Thông Minh (Mở rộng theo phương ngang khi click/focus & thu nhỏ các nút bên phải) */}
+          {/* Ô Tìm Kiếm Mở Rộng Theo Phương Ngang Trên Desktop */}
           <div 
             ref={searchContainerRef}
             className={`relative transition-all duration-300 ease-in-out hidden md:block ${
               isSearchFocused 
-                ? 'flex-1 max-w-2xl lg:max-w-3xl mx-1 sm:mx-3' 
-                : 'flex-1 min-w-[200px] lg:min-w-[260px] max-w-md mx-2'
+                ? 'flex-1 max-w-2xl lg:max-w-3xl mx-1 sm:mx-2' 
+                : 'flex-1 min-w-[200px] max-w-sm lg:max-w-md mx-1 sm:mx-2'
             }`}
           >
             <div className="relative group">
@@ -217,19 +224,19 @@ export const Header = ({
                 onKeyDown={(e) => {
                   if (e.key === 'Escape') setIsSearchFocused(false);
                 }}
-                className={`w-full pl-10 pr-10 py-2.5 text-sm rounded-full border transition-all duration-300 focus:outline-none ${
+                className={`w-full pl-9 pr-9 py-2 text-xs sm:text-sm rounded-full border transition-all duration-300 focus:outline-none ${
                   isSearchFocused
-                    ? 'bg-white border-emerald-500 ring-4 ring-emerald-500/15 shadow-lg shadow-emerald-600/10 text-slate-800'
+                    ? 'bg-white border-emerald-500 ring-3 ring-emerald-500/15 shadow-md shadow-emerald-600/10 text-slate-800'
                     : 'bg-slate-100 hover:bg-slate-50 border-slate-200 text-slate-700 placeholder:text-slate-400'
                 }`}
               />
-              <Search className={`w-4 h-4 absolute left-3.5 top-3.5 transition-colors ${
+              <Search className={`w-4 h-4 absolute left-3 top-2.5 transition-colors ${
                 isSearchFocused ? 'text-emerald-600' : 'text-slate-400'
               }`} />
               {searchQuery && (
                 <button 
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3.5 top-2.5 p-1 text-slate-400 hover:text-slate-700 rounded-full hover:bg-slate-200 transition-colors cursor-pointer"
+                  className="absolute right-3 top-2 text-slate-400 hover:text-slate-700 rounded-full hover:bg-slate-200 transition-colors cursor-pointer"
                   title="Xóa tìm kiếm"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -239,7 +246,7 @@ export const Header = ({
 
             {/* Smart Suggestions Dropdown */}
             {isSearchFocused && (
-              <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-slate-200/90 p-3 z-50 animate-fadeIn">
+              <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-2xl shadow-xl border border-slate-200/80 p-3 z-50 animate-scaleUp">
                 {searchQuery.trim() ? (
                   <div>
                     <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center justify-between">
@@ -247,60 +254,61 @@ export const Header = ({
                       <span className="text-emerald-600 font-bold lowercase">{suggestedProducts.length} kết quả</span>
                     </div>
                     {suggestedProducts.length > 0 ? (
-                      <div className="space-y-1.5 max-h-72 overflow-y-auto no-scrollbar">
-                        {suggestedProducts.map(prod => (
-                          <div
-                            key={prod.id}
-                            onMouseDown={() => {
-                              if (onOpenProductDetail) onOpenProductDetail(prod);
+                      <div className="space-y-1">
+                        {suggestedProducts.map((p) => (
+                          <div 
+                            key={p.id}
+                            onClick={() => {
                               setIsSearchFocused(false);
+                              if (onOpenProductDetail) {
+                                onOpenProductDetail(p);
+                              } else {
+                                setSearchQuery(p.name);
+                              }
                             }}
-                            className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors group"
+                            className="flex items-center gap-3 p-2 rounded-xl hover:bg-emerald-50/80 cursor-pointer transition-colors group"
                           >
-                            <div className="flex items-center gap-2.5 min-w-0">
-                              <img 
-                                src={prod.image || '/logo-icon.png'} 
-                                alt={prod.name} 
-                                className="w-10 h-10 object-contain rounded-lg border border-slate-100 bg-slate-50 shrink-0" 
-                              />
-                              <div className="min-w-0">
-                                <p className="text-xs font-bold text-slate-800 group-hover:text-emerald-700 truncate">
-                                  {prod.name}
-                                </p>
-                                <p className="text-[11px] text-slate-500 truncate">
-                                  {prod.category} • {prod.countryName || 'Chính hãng'}
-                                </p>
+                            <img 
+                              src={p.image} 
+                              alt={p.name} 
+                              className="w-10 h-10 object-contain rounded-lg bg-slate-50 p-1 border border-slate-100 shrink-0" 
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="text-xs font-bold text-slate-800 group-hover:text-emerald-700 truncate">
+                                {p.name}
+                              </div>
+                              <div className="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5">
+                                <span className="text-emerald-600 font-semibold">{p.brand}</span>
+                                <span>•</span>
+                                <span className="font-extrabold text-rose-600">
+                                  {Number(p.price || 0).toLocaleString('vi-VN')}₫
+                                </span>
                               </div>
                             </div>
-                            <div className="text-right shrink-0 ml-2">
-                              <span className="text-xs font-black text-rose-600">
-                                {typeof prod.price === 'number' ? prod.price.toLocaleString('vi-VN') + '₫' : prod.price}
-                              </span>
-                            </div>
+                            <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-emerald-600 shrink-0" />
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <p className="text-xs text-slate-500 py-3 text-center">
-                        Không tìm thấy sản phẩm khớp với &quot;{searchQuery}&quot;. Xem danh sách bên dưới hoặc thử từ khóa khác.
-                      </p>
+                      <div className="py-3 text-center text-xs text-slate-400">
+                        Không tìm thấy sản phẩm phù hợp với từ khóa "{searchQuery}"
+                      </div>
                     )}
                   </div>
                 ) : (
                   <div>
-                    <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1">
-                      <Sparkles className="w-3 h-3 text-amber-500" />
-                      <span>Tìm kiếm phổ biến</span>
+                    <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                      Tìm kiếm phổ biến
                     </div>
                     <div className="flex flex-wrap gap-1.5">
-                      {['Bách Niên Kiện', 'Bio Island Canxi', 'Nano Curcumin OIC', 'Hồng Sâm KGC', 'Glucosamine', 'DHC Lutein', 'Vitamin C'].map(tag => (
+                      {['Bách Niên Kiện', 'Bio Island Canxi', 'Nano Curcumin', 'Hồng Sâm', 'DHC Kẽm'].map((tag) => (
                         <button
                           key={tag}
-                          onMouseDown={(e) => {
-                            e.preventDefault();
+                          onMouseDown={() => {
                             setSearchQuery(tag);
+                            setIsSearchFocused(false);
                           }}
-                          className="text-xs px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 font-medium transition-colors cursor-pointer border border-transparent hover:border-emerald-200"
+                          className="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 text-xs font-medium transition-colors cursor-pointer"
                         >
                           {tag}
                         </button>
@@ -312,44 +320,38 @@ export const Header = ({
             )}
           </div>
 
-          {/* Action Tools: Dược sĩ AI, Tra cứu, Giỏ hàng (Tự động thu nhỏ khi tìm kiếm mở rộng) */}
-          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 transition-all duration-300">
-            {/* Dược sĩ AI Consult Button */}
+          {/* Các nút hành động bên phải */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* Dược sĩ AI Button (Desktop) */}
             <button
               onClick={onOpenAdvisor}
-              className={`flex items-center gap-2 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-bold transition-all shadow-2xs hover:shadow-xs cursor-pointer ${
-                isSearchFocused ? 'p-2 sm:p-2.5' : 'px-3.5 py-2 hidden lg:flex'
+              className={`flex items-center gap-2 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-bold transition-all shadow-2xs cursor-pointer ${
+                isSearchFocused ? 'p-2 sm:p-2.5' : 'px-3 py-1.5 hidden lg:flex'
               }`}
               title="Dược Sĩ AI Tư Vấn 24/7"
             >
-              <div className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0">
-                <Stethoscope className="w-3.5 h-3.5" />
+              <div className="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                <Stethoscope className="w-3 h-3" />
               </div>
               {!isSearchFocused && (
                 <>
-                  <span className="hidden xl:inline">Dược Sĩ AI Tư Vấn</span>
-                  <span className="xl:hidden">Dược Sĩ AI</span>
-                  <span className="bg-emerald-600 text-white text-[10px] px-1.5 py-0.2 rounded-full">24/7</span>
+                  <span className="hidden xl:inline">Dược Sĩ AI</span>
+                  <span className="bg-emerald-600 text-white text-[9px] px-1.5 py-0.2 rounded-full font-bold">24/7</span>
                 </>
               )}
             </button>
 
-            {/* Kho Voucher & Ưu Đãi button */}
+            {/* Kho Voucher (Desktop) */}
             {onOpenVouchers && (
               <button
                 onClick={onOpenVouchers}
                 className={`flex items-center gap-1.5 rounded-full bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-bold transition-all shadow-2xs cursor-pointer ${
-                  isSearchFocused ? 'p-2 sm:p-2.5' : 'px-3 py-2 hidden md:flex'
+                  isSearchFocused ? 'p-2 sm:p-2.5' : 'px-2.5 py-1.5 hidden md:flex'
                 }`}
                 title="Kho Voucher & Ưu Đãi"
               >
-                <Tag className="w-4 h-4 text-amber-600 shrink-0" />
-                {!isSearchFocused && (
-                  <>
-                    <span>Săn Voucher</span>
-                    <span className="bg-amber-500 text-slate-900 text-[9px] font-black px-1.5 py-0.5 rounded-full">Hot</span>
-                  </>
-                )}
+                <Tag className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                {!isSearchFocused && <span>Voucher</span>}
               </button>
             )}
 
@@ -370,43 +372,40 @@ export const Header = ({
             {/* Wishlist Button */}
             <button
               onClick={onOpenWishlist}
-              className="relative p-2.5 rounded-full hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer shrink-0"
+              className="relative p-2 rounded-full hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer shrink-0"
               title="Danh sách yêu thích"
             >
               <Heart className="w-5 h-5" />
               {wishlistCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 bg-rose-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow">
+                <span className="absolute -top-0.5 -right-0.5 bg-rose-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-xs">
                   {wishlistCount}
                 </span>
               )}
             </button>
 
-            {/* Customer Account Button (Đăng nhập / Xem điểm thưởng) */}
+            {/* Customer Account Button */}
             {customer ? (
               <button
                 onClick={onOpenProfileModal}
-                className={`flex items-center gap-2 rounded-full bg-amber-50 hover:bg-amber-100 border border-amber-300 text-slate-800 transition-all text-xs font-bold shadow-xs cursor-pointer ${
-                  isSearchFocused ? 'p-1.5' : 'px-3 py-1.5'
+                className={`flex items-center gap-1.5 rounded-full bg-amber-50 hover:bg-amber-100 border border-amber-300 text-slate-800 text-xs font-bold shadow-2xs cursor-pointer ${
+                  isSearchFocused ? 'p-1.5' : 'p-1.5 sm:px-2.5 sm:py-1'
                 }`}
                 title={`Tài khoản: ${customer.fullName} (${customer.points || 0} điểm)`}
               >
-                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 flex items-center justify-center text-xs font-black shadow-xs shrink-0">
+                <div className="w-5 h-5 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center text-[11px] font-black shrink-0">
                   ★
                 </div>
                 {!isSearchFocused && (
-                  <div className="text-left hidden md:block">
-                    <div className="text-[10px] text-amber-800 font-semibold leading-none">Điểm tích lũy</div>
-                    <div className="text-xs font-black text-slate-900 mt-0.5">{customer.points || 0} đ</div>
-                  </div>
+                  <span className="hidden md:inline text-xs">{customer.points || 0}đ</span>
                 )}
               </button>
             ) : (
               <button
                 onClick={onOpenAuthModal}
                 className={`flex items-center gap-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all cursor-pointer ${
-                  isSearchFocused ? 'p-2 sm:p-2.5' : 'px-3 py-2'
+                  isSearchFocused ? 'p-2 sm:p-2.5' : 'p-2 sm:px-2.5 sm:py-1.5'
                 }`}
-                title="Đăng nhập để tích điểm"
+                title="Đăng nhập / Tích điểm"
               >
                 <User className="w-4 h-4 text-emerald-600 shrink-0" />
                 {!isSearchFocused && (
@@ -418,35 +417,47 @@ export const Header = ({
             {/* Shopping Cart Button */}
             <button
               onClick={onOpenCart}
-              className={`relative flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full font-semibold text-xs sm:text-sm shadow-md shadow-emerald-600/30 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer shrink-0 ${
-                isSearchFocused ? 'p-2 px-2.5 sm:px-3' : 'px-3.5 py-2'
+              className={`relative flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full font-semibold text-xs sm:text-sm shadow-sm shadow-emerald-600/30 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer shrink-0 ${
+                isSearchFocused ? 'p-2 px-2.5 sm:px-3' : 'px-2.5 sm:px-3 py-1.5'
               }`}
               title={`Giỏ Hàng (${cartCount} sản phẩm)`}
             >
               <ShoppingBag className="w-4 h-4" />
               {!isSearchFocused && (
-                <span className="hidden sm:inline">Giỏ Hàng</span>
+                <span className="hidden sm:inline font-bold">Giỏ</span>
               )}
-              <span className="bg-white text-emerald-700 font-extrabold text-xs px-2 py-0.5 rounded-full shadow-inner">
+              <span className="bg-white text-emerald-700 font-extrabold text-[11px] px-1.5 py-0.2 rounded-full shadow-inner">
                 {cartCount}
               </span>
+            </button>
+
+            {/* Mobile Hamburger Menu Toggle Button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 rounded-xl text-slate-700 hover:bg-slate-100 transition-colors md:hidden cursor-pointer shrink-0"
+              aria-label="Mở Menu"
+            >
+              <Menu className="w-5 h-5" />
             </button>
           </div>
         </div>
 
-        {/* Mobile Search input */}
-        <div className="mt-2.5 md:hidden">
+        {/* Mobile Search Input (Hiển thị ngay dưới Logo trên Mobile) */}
+        <div className="mt-2 md:hidden">
           <div className="relative">
             <input
               type="text"
               placeholder="Tìm TPCN, thảo dược, thương hiệu..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-8 py-2 bg-slate-100 text-xs rounded-full border border-slate-200 focus:outline-none focus:border-emerald-500"
+              className="w-full pl-9 pr-8 py-2 bg-slate-100 text-xs rounded-full border border-slate-200 focus:outline-none focus:border-emerald-500 focus:bg-white transition-colors"
             />
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
             {searchQuery && (
-              <button onClick={() => setSearchQuery('')} className="absolute right-3 top-2 text-slate-400">
+              <button 
+                onClick={() => setSearchQuery('')} 
+                className="absolute right-3 top-2 text-slate-400 hover:text-slate-600"
+              >
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
@@ -454,92 +465,260 @@ export const Header = ({
         </div>
       </div>
 
-      {/* 3. Phân Loại Nhanh: Xuất Xứ (Nội Địa vs Nhập Ngoại) & Danh Mục */}
-      <div className="bg-slate-50 border-t border-slate-200/80 px-4 py-2">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 overflow-x-auto no-scrollbar">
-          {/* Quick Origin Filters Toggle */}
-          <div className="flex items-center gap-1.5 shrink-0 bg-white p-1 rounded-lg border border-slate-200 shadow-xs">
+      {/* 3. Phân Loại Nhanh: Xuất Xứ (Nội Địa vs Nhập Ngoại) - Tối ưu hoàn toàn, loại bỏ đoạn kéo dài */}
+      <div className="bg-slate-50 border-t border-slate-200/80 px-3 sm:px-4 py-1.5">
+        <div className="max-w-7xl mx-auto">
+          {/* GIAO DIỆN MOBILE: 3 Tab Phân Đoạn (Segmented Control) vừa khít 100% màn hình, không bị tràn hay kéo dài */}
+          <div className="md:hidden grid grid-cols-3 gap-1 bg-slate-200/80 p-0.5 rounded-xl text-center text-xs font-bold">
             <button
               onClick={() => onNavigateToProducts ? onNavigateToProducts('all') : setOriginFilter('all')}
-              className={`px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+              className={`py-1.5 px-1 rounded-lg transition-all cursor-pointer truncate ${
                 currentView === 'products' && originFilter === 'all'
-                  ? 'bg-emerald-600 text-white shadow-xs font-bold'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Tất Cả Sản Phẩm
+              Tất Cả
             </button>
 
             <button
               onClick={() => onNavigateToProducts ? onNavigateToProducts('domestic') : setOriginFilter('domestic')}
-              className={`flex items-center gap-1 px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
+              className={`py-1.5 px-1 rounded-lg transition-all cursor-pointer truncate ${
                 currentView === 'products' && originFilter === 'domestic'
                   ? 'bg-rose-600 text-white shadow-xs'
-                  : 'text-rose-700 bg-rose-50/70 hover:bg-rose-100/80'
+                  : 'text-rose-700 hover:text-rose-900'
               }`}
             >
-              <span>Hàng Nội Địa Uy Tín</span>
-              <span className="text-[10px] font-normal px-1 py-0.2 bg-white/20 rounded">GMP</span>
+              Nội Địa GMP
             </button>
 
             <button
               onClick={() => onNavigateToProducts ? onNavigateToProducts('imported') : setOriginFilter('imported')}
-              className={`flex items-center gap-1 px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
+              className={`py-1.5 px-1 rounded-lg transition-all cursor-pointer truncate ${
                 currentView === 'products' && originFilter === 'imported'
                   ? 'bg-blue-600 text-white shadow-xs'
-                  : 'text-blue-700 bg-blue-50/70 hover:bg-blue-100/80'
+                  : 'text-blue-700 hover:text-blue-900'
               }`}
             >
-              <span>Hàng Nhập Khẩu Chính Ngạch</span>
-              <span className="text-[10px] font-normal px-1 py-0.2 bg-white/20 rounded">Mỹ • Úc • Nhật • Hàn • Đức</span>
+              Nhập Ngoại
             </button>
           </div>
 
-          {/* Quick Action Badges */}
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={() => onNavigateToTracking ? onNavigateToTracking() : onOpenOrderTracking ? onOpenOrderTracking() : null}
-              className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
-                currentView === 'tracking'
-                  ? 'bg-teal-700 text-white shadow-xs'
-                  : 'text-teal-800 bg-teal-100/80 hover:bg-teal-200/90'
-              }`}
-            >
-              <Truck className="w-3.5 h-3.5" />
-              <span>Tra Vận Đơn</span>
-            </button>
-            {onOpenVouchers && (
+          {/* GIAO DIỆN DESKTOP (MD & TRỞ LÊN): Gọn gàng, vừa vặn hoàn hảo trong khung 1000px, không bị scroll ngang */}
+          <div className="hidden md:flex items-center justify-between gap-4">
+            {/* Origin Filters */}
+            <div className="flex items-center gap-1.5 bg-white p-1 rounded-lg border border-slate-200 shadow-2xs">
               <button
-                onClick={onOpenVouchers}
-                className="lg:hidden flex items-center gap-1 text-xs font-bold text-amber-800 bg-amber-100/70 px-2 py-1 rounded-md"
+                onClick={() => onNavigateToProducts ? onNavigateToProducts('all') : setOriginFilter('all')}
+                className={`px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                  currentView === 'products' && originFilter === 'all'
+                    ? 'bg-emerald-600 text-white shadow-xs font-bold'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
               >
-                <Tag className="w-3.5 h-3.5 text-amber-600" />
-                Voucher
+                Tất Cả Sản Phẩm
               </button>
-            )}
-            <button
-              onClick={onOpenAdvisor}
-              className="lg:hidden flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-100/70 px-2.5 py-1 rounded-md"
-            >
-              <Stethoscope className="w-3.5 h-3.5" />
-              Dược Sĩ AI
-            </button>
-            {onOpenPWAInstall && (
+
               <button
-                onClick={onOpenPWAInstall}
-                className="flex items-center gap-1 text-xs font-bold text-emerald-800 bg-emerald-100/90 hover:bg-emerald-200 px-2.5 py-1 rounded-md transition-colors cursor-pointer"
-                title="Cài đặt App vào điện thoại"
+                onClick={() => onNavigateToProducts ? onNavigateToProducts('domestic') : setOriginFilter('domestic')}
+                className={`flex items-center gap-1 px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                  currentView === 'products' && originFilter === 'domestic'
+                    ? 'bg-rose-600 text-white shadow-xs'
+                    : 'text-rose-700 bg-rose-50/70 hover:bg-rose-100/80'
+                }`}
               >
-                <Smartphone className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Cài App</span>
+                <span>Hàng Nội Địa Uy Tín</span>
+                <span className="text-[10px] font-normal px-1 py-0.2 bg-white/20 rounded">GMP</span>
               </button>
-            )}
-            <span className="text-xs text-slate-500 font-medium hidden md:inline">
-              ✨ Dược sĩ ĐH Dược tư vấn liệu trình miễn phí 24/7
-            </span>
+
+              <button
+                onClick={() => onNavigateToProducts ? onNavigateToProducts('imported') : setOriginFilter('imported')}
+                className={`flex items-center gap-1 px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                  currentView === 'products' && originFilter === 'imported'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'text-blue-700 bg-blue-50/70 hover:bg-blue-100/80'
+                }`}
+              >
+                <span>Hàng Nhập Khẩu Chính Ngạch</span>
+                <span className="text-[10px] font-normal px-1 py-0.2 bg-white/20 rounded hidden lg:inline">Mỹ • Úc • Nhật • Hàn • Đức</span>
+              </button>
+            </div>
+
+            {/* Thông điệp cam kết & Nút Tra Vận Đơn trên Desktop */}
+            <div className="flex items-center gap-3 text-xs text-slate-500 font-medium">
+              <span className="hidden xl:inline">✨ Dược sĩ ĐH Dược tư vấn 24/7 • Bồi hoàn 300% nếu phát hiện giả</span>
+              <button
+                onClick={() => onNavigateToTracking ? onNavigateToTracking() : onOpenOrderTracking ? onOpenOrderTracking() : null}
+                className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
+                  currentView === 'tracking'
+                    ? 'bg-teal-700 text-white shadow-xs'
+                    : 'text-teal-800 bg-teal-100/80 hover:bg-teal-200'
+                }`}
+              >
+                <Truck className="w-3.5 h-3.5" />
+                <span>Tra Vận Đơn</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* 4. Slide-in Mobile Navigation Drawer (Menu chuyên biệt cho Mobile) */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs md:hidden animate-fadeIn"
+          onClick={() => setIsMobileMenuOpen(false)}
+        >
+          <div 
+            className="fixed top-0 right-0 bottom-0 w-4/5 max-w-sm bg-white shadow-2xl flex flex-col z-50 animate-slideLeft"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Drawer Header */}
+            <div className="p-4 bg-emerald-800 text-white flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <img src="/logo-icon.png" alt="Logo" className="w-8 h-8 rounded-lg bg-white p-0.5" />
+                <span className="font-black text-sm tracking-tight">MedXpressCare</span>
+              </div>
+              <button 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="p-1 rounded-full hover:bg-white/10 text-white cursor-pointer"
+                aria-label="Đóng Menu"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Customer Account Strip in Drawer */}
+            <div className="p-3 bg-emerald-50 border-b border-emerald-100">
+              {customer ? (
+                <div 
+                  onClick={() => { setIsMobileMenuOpen(false); onOpenProfileModal(); }}
+                  className="flex items-center justify-between cursor-pointer"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-amber-400 text-slate-950 font-black flex items-center justify-center text-xs">
+                      ★
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-slate-800">{customer.fullName}</div>
+                      <div className="text-[11px] text-amber-700 font-semibold">{customer.points || 0} điểm tích lũy</div>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-emerald-600" />
+                </div>
+              ) : (
+                <button
+                  onClick={() => { setIsMobileMenuOpen(false); onOpenAuthModal(); }}
+                  className="w-full py-2 px-3 bg-emerald-600 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2"
+                >
+                  <User className="w-4 h-4 text-amber-300" />
+                  <span>Đăng Nhập / Đăng Ký Tài Khoản</span>
+                </button>
+              )}
+            </div>
+
+            {/* Drawer Menu List */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-2 text-xs font-semibold text-slate-700">
+              {/* Cài đặt App PWA */}
+              {onOpenPWAInstall && (
+                <button
+                  onClick={() => { setIsMobileMenuOpen(false); onOpenPWAInstall(); }}
+                  className="w-full flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold shadow-xs cursor-pointer"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Smartphone className="w-4 h-4 text-amber-300" />
+                    <span>Cài Đặt App Vào Điện Thoại</span>
+                  </div>
+                  <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded">PWA</span>
+                </button>
+              )}
+
+              {/* Dược sĩ AI */}
+              <button
+                onClick={() => { setIsMobileMenuOpen(false); onOpenAdvisor(); }}
+                className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-100 text-left cursor-pointer"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Stethoscope className="w-4 h-4 text-emerald-600" />
+                  <span>Dược Sĩ AI Tư Vấn Liệu Trình 24/7</span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-300" />
+              </button>
+
+              {/* Kho Voucher */}
+              {onOpenVouchers && (
+                <button
+                  onClick={() => { setIsMobileMenuOpen(false); onOpenVouchers(); }}
+                  className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-100 text-left cursor-pointer"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Tag className="w-4 h-4 text-amber-600" />
+                    <span>Săn Voucher & Mã Khuyến Mại</span>
+                  </div>
+                  <span className="text-[10px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded">Hot</span>
+                </button>
+              )}
+
+              {/* Tra Cứu Vận Đơn */}
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  if (onNavigateToTracking) onNavigateToTracking();
+                  else if (onOpenOrderTracking) onOpenOrderTracking();
+                }}
+                className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-100 text-left cursor-pointer"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Truck className="w-4 h-4 text-teal-600" />
+                  <span>Tra Cứu Vận Đơn Hàng Hóa</span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-300" />
+              </button>
+
+              {/* Tra Cứu Giấy Phép */}
+              <button
+                onClick={() => { setIsMobileMenuOpen(false); onOpenVerifier(); }}
+                className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-100 text-left cursor-pointer"
+              >
+                <div className="flex items-center gap-2.5">
+                  <FileCheck2 className="w-4 h-4 text-emerald-600" />
+                  <span>Tra Cứu Số ĐKSP Bộ Y Tế</span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-300" />
+              </button>
+
+              {/* Cẩm Nang Sức Khỏe */}
+              <a
+                href="#health-blog"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-100 text-left cursor-pointer"
+              >
+                <div className="flex items-center gap-2.5">
+                  <BookOpen className="w-4 h-4 text-indigo-600" />
+                  <span>Cẩm Nang Sức Khỏe & Blog Y Khoa</span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-300" />
+              </a>
+
+              {/* Hotline Dược Sĩ */}
+              <a
+                href={`tel:${(hotline || '1800 6868').replace(/\s+/g, '')}`}
+                className="w-full flex items-center justify-between p-2.5 rounded-xl bg-amber-50 text-amber-900 border border-amber-200 mt-2"
+              >
+                <div className="flex items-center gap-2.5 font-bold">
+                  <PhoneCall className="w-4 h-4 text-amber-600 animate-pulse" />
+                  <span>Tổng Đài Miễn Cước: {hotline || '1800 6868'}</span>
+                </div>
+              </a>
+            </div>
+
+            {/* Drawer Footer */}
+            <div className="p-3 bg-slate-50 border-t border-slate-100 text-[11px] text-slate-500 text-center">
+              100% Thực Phẩm Chức Năng Chính Hãng Chuẩn GMP
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 };

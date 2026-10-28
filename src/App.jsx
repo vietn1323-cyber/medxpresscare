@@ -1864,7 +1864,7 @@ export default function App() {
   }, [productsList]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800">
+    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800 w-full max-w-full overflow-x-hidden">
       
       {/* 1. Header Navigation */}
       <Header
