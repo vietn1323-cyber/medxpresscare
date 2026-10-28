@@ -4844,99 +4844,81 @@ export const AdminPanel = ({
                                   );
                                 })()
                               ) : (
-                                /* Chưa chọn: Cho phép chọn từ danh sách sản phẩm hoặc tìm kiếm nhanh */
-                                <div className="space-y-2.5 bg-white p-3 rounded-xl border border-rose-200">
+                                /* Chưa chọn: Cho phép tìm kiếm nhanh và chọn trực tiếp sản phẩm từ danh mục */
+                                <div className="space-y-2 bg-white p-3 rounded-xl border border-rose-200">
                                   <div>
                                     <label className="block text-slate-700 font-bold mb-1">
-                                      Chọn sản phẩm làm quà tặng: *
+                                      Tìm & Chọn sản phẩm làm quà tặng: *
                                     </label>
-                                    <select
-                                      value={voucherFormData.giftProductId || ''}
-                                      onChange={(e) => {
-                                        const prodId = e.target.value;
-                                        if (!prodId) return;
-                                        const prod = (products || []).find(p => p.id === prodId);
-                                        if (prod) {
-                                          setVoucherFormData(prev => ({
-                                            ...prev,
-                                            giftProductId: prod.id,
-                                            giftName: prod.name,
-                                            giftValue: prod.price || 0,
-                                            giftImage: prod.image || '',
-                                            badgeText: prev.badgeText ? prev.badgeText : `Tặng ${prod.name}`
-                                          }));
-                                        }
-                                      }}
-                                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs focus:ring-2 focus:ring-rose-500 focus:outline-none"
-                                    >
-                                      <option value="">-- Click để chọn sản phẩm quà tặng từ danh mục ({products?.length || 0} sản phẩm) --</option>
-                                      {(products || []).map(p => (
-                                        <option key={p.id} value={p.id}>
-                                          [{p.id}] {p.name} — {(p.price || 0).toLocaleString('vi-VN')}₫ {p.brand ? `(${p.brand})` : ''}
-                                        </option>
-                                      ))}
-                                    </select>
-                                  </div>
-
-                                  <div className="pt-1 border-t border-slate-100">
-                                    <div className="relative mb-2">
+                                    <div className="relative">
                                       <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
                                       <input
                                         type="text"
-                                        placeholder="Hoặc tìm nhanh theo tên / mã / thương hiệu..."
+                                        placeholder="Nhập tên sản phẩm, mã ID hoặc thương hiệu..."
                                         value={giftProductSearch}
                                         onChange={(e) => setGiftProductSearch(e.target.value)}
-                                        className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-rose-400"
+                                        className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-rose-400 focus:bg-white transition-colors"
                                       />
+                                      {giftProductSearch && (
+                                        <button
+                                          type="button"
+                                          onClick={() => setGiftProductSearch('')}
+                                          className="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 text-xs cursor-pointer"
+                                        >
+                                          ✕
+                                        </button>
+                                      )}
                                     </div>
+                                  </div>
 
-                                    <div className="max-h-44 overflow-y-auto space-y-1.5 no-scrollbar">
-                                      {(products || [])
-                                        .filter(p => {
-                                          if (!giftProductSearch.trim()) return true;
-                                          const term = giftProductSearch.toLowerCase();
-                                          return (p.name || '').toLowerCase().includes(term) ||
-                                                 (p.id || '').toLowerCase().includes(term) ||
-                                                 (p.brand || '').toLowerCase().includes(term);
-                                        })
-                                        .slice(0, 8)
-                                        .map(p => (
-                                          <div
-                                            key={p.id}
-                                            onClick={() => {
-                                              setVoucherFormData(prev => ({
-                                                ...prev,
-                                                giftProductId: p.id,
-                                                giftName: p.name,
-                                                giftValue: p.price || 0,
-                                                giftImage: p.image || '',
-                                                badgeText: prev.badgeText ? prev.badgeText : `Tặng ${p.name}`
-                                              }));
-                                              setGiftProductSearch('');
-                                            }}
-                                            className="flex items-center justify-between p-1.5 rounded-lg border border-slate-100 hover:border-rose-300 hover:bg-rose-50/50 transition-colors cursor-pointer group"
-                                          >
-                                            <div className="flex items-center gap-2 min-w-0 pr-2">
-                                              <img 
-                                                src={p.image || '/logo-icon.png'} 
-                                                alt={p.name} 
-                                                className="w-8 h-8 rounded object-contain bg-slate-50 border border-slate-200 shrink-0" 
-                                              />
-                                              <div className="min-w-0">
-                                                <div className="font-bold text-xs text-slate-800 group-hover:text-rose-900 truncate">
-                                                  {p.name}
-                                                </div>
-                                                <div className="text-[10px] text-slate-500">
-                                                  {p.id} • {p.brand} • <strong className="text-rose-600">{(p.price || 0).toLocaleString('vi-VN')}₫</strong>
-                                                </div>
+                                  <div className="max-h-56 overflow-y-auto space-y-1.5 no-scrollbar pr-0.5">
+                                    {(products || [])
+                                      .filter(p => {
+                                        if (!giftProductSearch.trim()) return true;
+                                        const term = giftProductSearch.toLowerCase();
+                                        return (p.name || '').toLowerCase().includes(term) ||
+                                               (p.id || '').toLowerCase().includes(term) ||
+                                               (p.brand || '').toLowerCase().includes(term);
+                                      })
+                                      .map(p => (
+                                        <div
+                                          key={p.id}
+                                          onClick={() => {
+                                            setVoucherFormData(prev => ({
+                                              ...prev,
+                                              giftProductId: p.id,
+                                              giftName: p.name,
+                                              giftValue: p.price || 0,
+                                              giftImage: p.image || '',
+                                              badgeText: prev.badgeText ? prev.badgeText : `Tặng ${p.name}`
+                                            }));
+                                            setGiftProductSearch('');
+                                          }}
+                                          className="flex items-center justify-between p-2 rounded-xl border border-slate-100 hover:border-rose-300 hover:bg-rose-50/60 transition-colors cursor-pointer group"
+                                        >
+                                          <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                                            <img 
+                                              src={p.image || '/logo-icon.png'} 
+                                              alt={p.name} 
+                                              className="w-9 h-9 rounded-lg object-contain bg-white border border-slate-200 p-0.5 shrink-0" 
+                                            />
+                                            <div className="min-w-0">
+                                              <div className="font-bold text-xs text-slate-800 group-hover:text-rose-900 truncate">
+                                                {p.name}
+                                              </div>
+                                              <div className="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5">
+                                                <span className="font-mono text-[10px] bg-slate-100 px-1 py-0.2 rounded text-slate-600 font-bold">{p.id}</span>
+                                                {p.brand && <span>{p.brand}</span>}
+                                                <span>•</span>
+                                                <strong className="text-rose-600">{(p.price || 0).toLocaleString('vi-VN')}₫</strong>
                                               </div>
                                             </div>
-                                            <span className="text-[10px] font-bold text-rose-700 bg-rose-100 group-hover:bg-rose-600 group-hover:text-white px-2 py-1 rounded-md transition-colors shrink-0">
-                                              Chọn quà 🎁
-                                            </span>
                                           </div>
-                                        ))}
-                                    </div>
+                                          <span className="text-[11px] font-bold text-rose-700 bg-rose-100 group-hover:bg-rose-600 group-hover:text-white px-2.5 py-1 rounded-lg transition-colors shrink-0">
+                                            Chọn quà 🎁
+                                          </span>
+                                        </div>
+                                      ))}
                                   </div>
                                 </div>
                               )}
