@@ -889,5 +889,44 @@ Viết bài y khoa chuẩn SEO On-Page. Trả về JSON: {"title": "...", "summa
     return new Response('MedXpress Care is online.', {
       headers: { 'Content-Type': 'text/plain; charset=utf-8' }
     });
+  },
+
+  // 4. Cloudflare Cron Trigger (Chạy tự động 08:00 và 19:00 hàng ngày)
+  async scheduled(event, env, ctx) {
+    const db = env.DB;
+    if (!db) return;
+    try {
+      console.log('[Cron] Running scheduled reminders check at', new Date().toISOString());
+      let refills = await getCollection(db, 'refill_schedules') || [];
+      const now = new Date();
+      let subs = await getCollection(db, 'push_subscriptions') || [];
+      const activeSubs = subs.filter(s => s.enabled);
+
+      // Quét các đơn thuốc sắp hết hàng trước 2 - 3 ngày
+      for (const item of refills) {
+        if (item.enabled && item.runoutDateStr && !item.reminderSent) {
+          const runout = new Date(item.runoutDateStr);
+          const diffDays = Math.ceil((runout.getTime() - now.getTime()) / (24 * 60 * 60 * 1000));
+          if (diffDays <= 3 && diffDays >= 0) {
+            const targets = item.customerId 
+              ? activeSubs.filter(s => s.customerId === item.customerId)
+              : activeSubs;
+
+            for (const sub of targets) {
+              await sendPushNotification(sub, {
+                title: '📦 MedXpressCare - Nhắc Tái Đặt Hàng',
+                body: `Sản phẩm "${item.productName}" của bạn chỉ còn đủ dùng trong ${diffDays} ngày nữa. Đặt ngay để kịp nhận trước khi hết nhé!`,
+                icon: '/pwa-192x192.png',
+                url: '/#tu-thuoc'
+              });
+            }
+            item.reminderSent = true;
+          }
+        }
+      }
+      await setCollection(db, 'refill_schedules', refills);
+    } catch (e) {
+      console.error('[Cron] Error running scheduled task:', e);
+    }
   }
 };

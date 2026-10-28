@@ -17,6 +17,9 @@ database_id = "5b89c664-cab0-49b3-b8f5-33df0e448862"
 [ai]
 binding = "AI"
 
+[triggers]
+crons = ["0 1 * * *", "0 12 * * *"]
+
 [observability]
 enabled = true
 [observability.logs]
