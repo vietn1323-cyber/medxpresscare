@@ -10,7 +10,7 @@ import {
   Tag, Globe, Eye, Share2, ThumbsUp, Star, MessageSquare, Copy, Gift,
   Camera, Stethoscope, Check, ArrowRight,
   Layers, Percent, Sliders, FolderPlus, Square, Filter,
-  ChevronRight, ChevronUp, ChevronDown
+  ChevronRight, ChevronUp, ChevronDown, Activity
 } from 'lucide-react';
 import { CATEGORIES, DOSAGE_FORMS, TARGET_AUDIENCES, cleanCountryName } from '../data/products';
 import { downloadCSV, downloadJSON } from '../utils/csvHelper';

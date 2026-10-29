@@ -10,6 +10,7 @@ import { HeroBanner } from './components/HeroBanner';
 import { OriginFilterTabs } from './components/OriginFilterTabs';
 import { ProductCard } from './components/ProductCard';
 import { ProductDetailModal } from './components/ProductDetailModal';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { HealthAdvisorModal } from './components/HealthAdvisorModal';
 import { VerificationTool } from './components/VerificationTool';
 import { CartDrawer } from './components/CartDrawer';
@@ -2470,19 +2471,25 @@ export default function App() {
 
       {/* 3. Product Detail Modal */}
       {activeProductDetail && (
-        <ProductDetailModal
-          product={activeProductDetail}
-          onClose={() => setActiveProductDetail(null)}
-          onAddToCart={handleAddToCart}
-          onBuyNow={handleBuyNow}
-          isWishlisted={wishlist.some(item => item.id === activeProductDetail.id)}
-          onToggleWishlist={handleToggleWishlist}
-          onOpenVerifierWithReg={handleOpenVerifierWithReg}
-          reviews={reviewsList}
-          onAddReview={handleAddReview}
-          onOpenVouchers={() => setIsVoucherModalOpen(true)}
-          vouchers={vouchersList}
-        />
+        <ErrorBoundary
+          title="Không thể tải chi tiết sản phẩm"
+          message="Đã xảy ra sự cố khi tải thông tin sản phẩm. Vui lòng thử lại sau."
+          onReset={() => setActiveProductDetail(null)}
+        >
+          <ProductDetailModal
+            product={activeProductDetail}
+            onClose={() => setActiveProductDetail(null)}
+            onAddToCart={handleAddToCart}
+            onBuyNow={handleBuyNow}
+            isWishlisted={wishlist.some(item => item.id === activeProductDetail.id)}
+            onToggleWishlist={handleToggleWishlist}
+            onOpenVerifierWithReg={handleOpenVerifierWithReg}
+            reviews={reviewsList}
+            onAddReview={handleAddReview}
+            onOpenVouchers={() => setIsVoucherModalOpen(true)}
+            vouchers={vouchersList}
+          />
+        </ErrorBoundary>
       )}
 
       {/* 4. Cart Drawer */}

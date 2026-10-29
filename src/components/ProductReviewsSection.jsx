@@ -430,15 +430,15 @@ export const ProductReviewsSection = ({
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2.5">
                   <div className="w-9 h-9 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-800 font-extrabold flex items-center justify-center text-xs">
-                    {rev.customerName.charAt(0)}
+                    {(rev.customerName || 'K').charAt(0)}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-extrabold text-xs sm:text-sm text-slate-900">
-                        {rev.customerName}
+                        {rev.customerName || 'Khách hàng'}
                       </span>
                       <span className="text-[11px] text-slate-400 font-mono">
-                        ({rev.customerPhone})
+                        ({rev.customerPhone || 'Ẩn danh'})
                       </span>
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
@@ -456,7 +456,7 @@ export const ProductReviewsSection = ({
 
                 <div className="text-right">
                   <div className="flex items-center gap-0.5 text-amber-400">
-                    {[...Array(rev.rating)].map((_, i) => (
+                    {[...Array(Math.max(1, Math.min(5, Math.round(Number(rev.rating) || 5))))].map((_, i) => (
                       <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                     ))}
                   </div>

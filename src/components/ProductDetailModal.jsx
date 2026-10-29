@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { 
-  X, ShieldCheck, Star, Truck, RefreshCw, FileCheck2, 
-  ShoppingBag, CheckCircle2, AlertTriangle, PhoneCall, Heart, Plus, Minus,
-  Sparkles, Award, Gift, Tag, ChevronRight
+  X, ShieldCheck, Star, Truck, FileCheck2, 
+  ShoppingBag, CheckCircle2, AlertTriangle, Heart, Plus, Minus,
+  Sparkles, CreditCard, Tag, ChevronRight
 } from 'lucide-react';
 import { ProductReviewsSection } from './ProductReviewsSection';
 import { INITIAL_REVIEWS } from '../data/reviews';
@@ -24,29 +24,30 @@ export const ProductDetailModal = ({
 }) => {
   const [quantity, setQuantity] = useState(1);
 
-  if (!product) return null;
-
-  const isDomestic = product.originType === 'domestic';
-  const comboPromo = getProductComboPromotions(product, vouchers);
-  const giftPromos = getProductGiftPromotions(product, vouchers);
+  const comboPromo = product ? getProductComboPromotions(product, vouchers) : { promo3: null, promo6: null };
+  const giftPromos = product ? getProductGiftPromotions(product, vouchers) : [];
 
   // Khởi tạo combo được chọn dựa trên chương trình khuyến mại thực tế
   const [selectedCombo, setSelectedCombo] = useState(() => 
     comboPromo.promo3 ? 'combo3' : (comboPromo.promo6 ? 'combo6' : 'single')
   );
 
+  if (!product) return null;
+
+  const isDomestic = product.originType === 'domestic';
+
   // Tính giá theo gói liệu trình lấy động từ khuyến mại
   const comboPrice = selectedCombo === 'single'
-    ? product.price
+    ? (Number(product.price) || 0)
     : selectedCombo === 'combo3' && comboPromo.promo3
-      ? Math.round(product.price * 3 * (1 - comboPromo.promo3.discountPercent / 100))
+      ? Math.round((Number(product.price) || 0) * 3 * (1 - (comboPromo.promo3.discountPercent || 10) / 100))
       : selectedCombo === 'combo6' && comboPromo.promo6
-        ? Math.round(product.price * 6 * (1 - comboPromo.promo6.discountPercent / 100))
-        : product.price;
+        ? Math.round((Number(product.price) || 0) * 6 * (1 - (comboPromo.promo6.discountPercent || 20) / 100))
+        : (Number(product.price) || 0);
 
   const comboOriginalPrice = selectedCombo === 'single'
-    ? (product.originalPrice || product.price)
-    : (product.price * (selectedCombo === 'combo3' ? 3 : (selectedCombo === 'combo6' ? 6 : 1)));
+    ? (Number(product.originalPrice) || Number(product.price) || 0)
+    : ((Number(product.price) || 0) * (selectedCombo === 'combo3' ? 3 : (selectedCombo === 'combo6' ? 6 : 1)));
 
   const savedAmount = Math.max(0, comboOriginalPrice - comboPrice);
 
@@ -101,7 +102,7 @@ export const ProductDetailModal = ({
               {isDomestic ? 'Hàng Nội Địa Uy Tín' : `Nhập Khẩu Chính Ngạch ${cleanCountryName(product.countryName)}`}
             </span>
             <span className="text-xs text-slate-500 font-mono hidden sm:inline">
-              Mã: {product.id.toUpperCase()}
+              Mã: {String(product.id || '').toUpperCase()}
             </span>
           </div>
 
@@ -139,12 +140,12 @@ export const ProductDetailModal = ({
                   Chứng Nhận Pháp Lý & Tem Phụ
                 </div>
                 <div className="text-[11px] space-y-1 text-slate-700">
-                  <div>• <strong>Số ĐKSP:</strong> {product.regNumber}</div>
-                  <div>• <strong>Nhà sản xuất:</strong> {product.manufacturer}</div>
-                  <div>• <strong>Quy cách:</strong> {product.packaging}</div>
+                  <div>• <strong>Số ĐKSP:</strong> {product.regNumber || 'Đang cập nhật'}</div>
+                  <div>• <strong>Nhà sản xuất:</strong> {product.manufacturer || 'Chính hãng'}</div>
+                  <div>• <strong>Quy cách:</strong> {product.packaging || 'Tiêu chuẩn'}</div>
                 </div>
                 <button
-                  onClick={() => onOpenVerifierWithReg(product.regNumber)}
+                  onClick={() => onOpenVerifierWithReg && onOpenVerifierWithReg(product.regNumber)}
                   className="mt-1 w-full flex items-center justify-center gap-1 py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-[11px] transition-colors"
                 >
                   <FileCheck2 className="w-3.5 h-3.5" />
@@ -158,7 +159,7 @@ export const ProductDetailModal = ({
               
               <div>
                 <div className="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-1">
-                  Thương hiệu: {product.brand}
+                  Thương hiệu: {product.brand || 'MedXpressCare'}
                 </div>
                 <h2 className="text-xl sm:text-2xl font-black text-slate-900 leading-snug">
                   {product.name}
@@ -168,10 +169,10 @@ export const ProductDetailModal = ({
                 <div className="flex items-center gap-3 mt-2 text-xs">
                   <div className="flex items-center text-amber-500 font-bold">
                     <Star className="w-4 h-4 fill-amber-400 text-amber-400 mr-1" />
-                    <span>{product.rating}</span>
+                    <span>{product.rating || '5.0'}</span>
                   </div>
                   <span className="text-slate-300">|</span>
-                  <span className="text-slate-600">Đã bán <strong>{product.soldCount.toLocaleString('vi-VN')}</strong> hộp</span>
+                  <span className="text-slate-600">Đã bán <strong>{(Number(product.soldCount) || 0).toLocaleString('vi-VN')}</strong> hộp</span>
                   <span className="text-slate-300">|</span>
                   <span className="text-emerald-700 font-semibold flex items-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5" /> Còn hàng trong kho
@@ -232,7 +233,7 @@ export const ProductDetailModal = ({
                             {comboPromo.promo3.title || 'Khuyến Mại Combo Liệu Trình 3 Hộp'}:
                           </div>
                           <div className="text-[11px] text-slate-600 mt-0.5">
-                            Giảm ngay <strong className="text-rose-600 font-bold">{comboPromo.promo3.discountPercent}%</strong> (Tiết kiệm {(Math.round(product.price * 3 * (comboPromo.promo3.discountPercent / 100))).toLocaleString('vi-VN')}₫) + <strong className="text-emerald-700">Miễn phí Giao hàng nhanh</strong>
+                            Giảm ngay <strong className="text-rose-600 font-bold">{comboPromo.promo3.discountPercent}%</strong> (Tiết kiệm {(Math.round((Number(product.price) || 0) * 3 * ((comboPromo.promo3.discountPercent || 10) / 100))).toLocaleString('vi-VN')}₫) + <strong className="text-emerald-700">Miễn phí Giao hàng nhanh</strong>
                           </div>
                         </div>
                       </div>
@@ -261,7 +262,7 @@ export const ProductDetailModal = ({
                             {comboPromo.promo6.title || 'Khuyến Mại Combo Chuyên Sâu 6 Hộp'}:
                           </div>
                           <div className="text-[11px] text-slate-600 mt-0.5">
-                            Giảm sốc <strong className="text-rose-600 font-bold">{comboPromo.promo6.discountPercent}%</strong> (Tiết kiệm {(Math.round(product.price * 6 * (comboPromo.promo6.discountPercent / 100))).toLocaleString('vi-VN')}₫) + <strong className="text-emerald-700">Freeship Giao Nhanh</strong> + <strong className="text-amber-800">X2 Điểm Thưởng</strong>
+                            Giảm sốc <strong className="text-rose-600 font-bold">{comboPromo.promo6.discountPercent}%</strong> (Tiết kiệm {(Math.round((Number(product.price) || 0) * 6 * ((comboPromo.promo6.discountPercent || 20) / 100))).toLocaleString('vi-VN')}₫) + <strong className="text-emerald-700">Freeship Giao Nhanh</strong> + <strong className="text-amber-800">X2 Điểm Thưởng</strong>
                           </div>
                         </div>
                       </div>
@@ -304,7 +305,7 @@ export const ProductDetailModal = ({
                         </div>
                       </div>
                       <span className="text-[10px] font-black px-2 py-1 rounded-lg bg-white text-rose-700 border border-rose-200 shrink-0 shadow-2xs">
-                        Trị giá: {gp.giftValue ? `${gp.giftValue.toLocaleString('vi-VN')}₫` : '0₫'}
+                        Trị giá: {gp.giftValue ? `${(Number(gp.giftValue) || 0).toLocaleString('vi-VN')}₫` : '0₫'}
                       </span>
                     </div>
                   ))}
@@ -314,7 +315,7 @@ export const ProductDetailModal = ({
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <Tag className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                       <span>Mã ưu đãi đang áp dụng:</span>
-                      {(vouchers || []).filter(v => v.enabled).slice(0, 4).map(v => (
+                      {(vouchers || []).filter(v => v && v.enabled).slice(0, 4).map(v => (
                         <span key={v.id} className="font-mono font-bold bg-amber-50 text-amber-900 px-1.5 py-0.5 rounded border border-amber-200">
                           {v.code}
                         </span>
@@ -343,7 +344,7 @@ export const ProductDetailModal = ({
                   </h4>
                   {savedAmount > 0 && (
                     <span className="text-[11px] font-extrabold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">
-                      Tiết kiệm {savedAmount.toLocaleString('vi-VN')}₫
+                      Tiết kiệm {(Number(savedAmount) || 0).toLocaleString('vi-VN')}₫
                     </span>
                   )}
                 </div>
@@ -362,7 +363,7 @@ export const ProductDetailModal = ({
                     <div className="font-extrabold text-xs text-slate-900">1 Hộp</div>
                     <div className="text-[10px] text-slate-500 mt-0.5">Dùng thử 15-30 ngày</div>
                     <div className="font-black text-xs text-emerald-700 mt-1.5">
-                      {product.price.toLocaleString('vi-VN')}₫
+                      {(Number(product.price) || 0).toLocaleString('vi-VN')}₫
                     </div>
                   </button>
 
@@ -385,7 +386,7 @@ export const ProductDetailModal = ({
                         Giảm {comboPromo.promo3.discountPercent}% + Freeship
                       </div>
                       <div className="font-black text-xs text-emerald-700 mt-1.5">
-                        {Math.round(product.price * 3 * (1 - comboPromo.promo3.discountPercent / 100)).toLocaleString('vi-VN')}₫
+                        {Math.round((Number(product.price) || 0) * 3 * (1 - (comboPromo.promo3.discountPercent || 10) / 100)).toLocaleString('vi-VN')}₫
                       </div>
                     </button>
                   )}
@@ -409,7 +410,7 @@ export const ProductDetailModal = ({
                         Giảm {comboPromo.promo6.discountPercent}% + X2 Điểm
                       </div>
                       <div className="font-black text-xs text-amber-700 mt-1.5">
-                        {Math.round(product.price * 6 * (1 - comboPromo.promo6.discountPercent / 100)).toLocaleString('vi-VN')}₫
+                        {Math.round((Number(product.price) || 0) * 6 * (1 - (comboPromo.promo6.discountPercent || 20) / 100)).toLocaleString('vi-VN')}₫
                       </div>
                     </button>
                   )}
@@ -419,11 +420,11 @@ export const ProductDetailModal = ({
               {/* Price Box */}
               <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-wrap items-baseline gap-3">
                 <span className="text-2xl sm:text-3xl font-extrabold text-emerald-600">
-                  {comboPrice.toLocaleString('vi-VN')}₫
+                  {(Number(comboPrice) || 0).toLocaleString('vi-VN')}₫
                 </span>
                 {comboOriginalPrice > comboPrice && (
                   <span className="text-sm text-slate-400 line-through">
-                    {comboOriginalPrice.toLocaleString('vi-VN')}₫
+                    {(Number(comboOriginalPrice) || 0).toLocaleString('vi-VN')}₫
                   </span>
                 )}
                 <div className="text-xs text-slate-500 ml-auto font-medium flex items-center gap-1.5">
@@ -434,7 +435,7 @@ export const ProductDetailModal = ({
 
               {/* Short Description */}
               <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                {product.shortDesc}
+                {product.shortDesc || 'Sản phẩm hỗ trợ chăm sóc sức khỏe chính hãng, đạt tiêu chuẩn y tế an toàn.'}
               </p>
 
               {/* Active Ingredients Table */}
@@ -443,12 +444,18 @@ export const ProductDetailModal = ({
                   🧪 Thành Phần & Hoạt Chất Chính:
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                  {product.ingredients.map((ing, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-slate-50 text-xs border border-slate-100">
-                      <span className="font-medium text-slate-700 truncate pr-2">{ing.name}</span>
-                      <span className="font-bold text-emerald-700 shrink-0">{ing.amount}</span>
+                  {Array.isArray(product.ingredients) && product.ingredients.length > 0 ? (
+                    product.ingredients.map((ing, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-slate-50 text-xs border border-slate-100">
+                        <span className="font-medium text-slate-700 truncate pr-2">{typeof ing === 'object' && ing ? (ing.name || 'Hoạt chất bổ sung') : String(ing)}</span>
+                        <span className="font-bold text-emerald-700 shrink-0">{typeof ing === 'object' && ing ? (ing.amount || 'Chuẩn y tế') : ''}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-2.5 rounded-lg bg-slate-50 text-xs text-slate-500 border border-slate-100 col-span-2">
+                      Chiết xuất tự nhiên đạt tiêu chuẩn kiểm nghiệm an toàn Dược phẩm.
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
 
@@ -458,12 +465,19 @@ export const ProductDetailModal = ({
                   🌿 Công Dụng Nổi Bật:
                 </h4>
                 <ul className="space-y-1.5 text-xs text-slate-600">
-                  {product.benefits.map((b, idx) => (
-                    <li key={idx} className="flex items-start gap-2">
+                  {Array.isArray(product.benefits) && product.benefits.length > 0 ? (
+                    product.benefits.map((b, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                        <span>{String(b)}</span>
+                      </li>
+                    ))
+                  ) : (
+                    <li className="flex items-start gap-2">
                       <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                      <span>{b}</span>
+                      <span>Bổ sung vi chất, nâng cao sức khỏe và đề kháng tự nhiên.</span>
                     </li>
-                  ))}
+                  )}
                 </ul>
               </div>
 
@@ -471,7 +485,7 @@ export const ProductDetailModal = ({
               <div className="space-y-2 text-xs">
                 <div className="p-3 rounded-xl bg-sky-50 text-sky-900 border border-sky-100">
                   <div className="font-bold mb-0.5 text-sky-800">📌 Hướng Dẫn Sử Dụng:</div>
-                  <p>{product.usage}</p>
+                  <p>{product.usage || 'Uống theo chỉ dẫn của dược sĩ hoặc trên nhãn bao bì sản phẩm.'}</p>
                 </div>
 
                 {product.contraindications && (
