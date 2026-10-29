@@ -365,14 +365,44 @@ export const calculateVoucherDiscount = (
   }
 
   // 2. KIỂM TRA ĐIỀU KIỆN GIÁ TRỊ ĐƠN HÀNG TỐI THIỂU
-  if (subtotal < (voucher.minOrderValue || 0)) {
-    const missing = (voucher.minOrderValue || 0) - subtotal;
+  const minOrder = Number(voucher.minOrderValue) || 0;
+  if (subtotal < minOrder) {
+    const missing = minOrder - subtotal;
     return {
       discountAmount: 0,
       shippingDiscount: 0,
       isValid: false,
-      reason: `Đơn hàng cần tối thiểu ${(voucher.minOrderValue || 0).toLocaleString('vi-VN')}₫ (còn thiếu ${missing.toLocaleString('vi-VN')}₫)`
+      reason: `Đơn hàng cần tối thiểu ${minOrder.toLocaleString('vi-VN')}₫ (còn thiếu ${missing.toLocaleString('vi-VN')}₫)`
     };
+  }
+
+  // 2b. KIỂM TRA ĐIỀU KIỆN SỐ LƯỢNG HỘP / SẢN PHẨM TỐI THIỂU (MIN QUANTITY & COMBO TIER)
+  const reqMinQuantity = Number(voucher.minQuantity) || 0;
+  const comboTier = Number(voucher.comboTier) || (voucher.code === 'COMBO3HOP' ? 3 : (voucher.code === 'COMBO6HOP' ? 6 : 0));
+  const effectiveMinQuantity = Math.max(reqMinQuantity, comboTier);
+
+  if (effectiveMinQuantity > 1) {
+    const scope = voucher.applicableScope || voucher.scope || 'all';
+    const applicableCartItems = Array.isArray(cartItems) 
+      ? (scope === 'all' ? cartItems : cartItems.filter(item => isVoucherApplicableToProduct(voucher, item)))
+      : [];
+
+    const totalEligibleBoxes = applicableCartItems.reduce((acc, item) => {
+      // Một item trong giỏ có thể là combo 3 hộp (comboBoxes = 3) hoặc đơn vị lẻ (quantity = 1)
+      const boxesPerUnit = Number(item.comboBoxes) || 1;
+      const qty = Number(item.quantity) || 1;
+      return acc + (boxesPerUnit * qty);
+    }, 0);
+
+    if (totalEligibleBoxes < effectiveMinQuantity) {
+      const missingBoxes = effectiveMinQuantity - totalEligibleBoxes;
+      return {
+        discountAmount: 0,
+        shippingDiscount: 0,
+        isValid: false,
+        reason: `Mã ưu đãi này yêu cầu mua từ ${effectiveMinQuantity} hộp trở lên (giỏ hàng hiện có ${totalEligibleBoxes} hộp, cần thêm ${missingBoxes} hộp).`
+      };
+    }
   }
 
   // 3. KIỂM TRA PHẠM VI THỜI GIAN
@@ -411,11 +441,15 @@ export const calculateVoucherDiscount = (
     }
   }
 
+  // Quyền lợi miễn phí vận chuyển nếu là combo 3/6 hộp hoặc cờ freeShipping = true
+  const isComboFreeShip = (comboTier >= 3 || voucher.code === 'COMBO3HOP' || voucher.code === 'COMBO6HOP' || voucher.freeShipping === true);
+  const extraShippingDiscount = isComboFreeShip ? currentShippingFee : 0;
+
   // 6. KHUYẾN MẠI TẶNG QUÀ
   if (voucher.discountType === 'gift') {
     return {
       discountAmount: 0,
-      shippingDiscount: 0,
+      shippingDiscount: extraShippingDiscount,
       isGift: true,
       giftItem: {
         id: voucher.giftProductId || voucher.id,
@@ -428,7 +462,9 @@ export const calculateVoucherDiscount = (
         description: voucher.description || ''
       },
       isValid: true,
-      reason: `Áp dụng thành công quà tặng: ${voucher.giftName || voucher.title}`
+      reason: isComboFreeShip
+        ? `Áp dụng thành công quà tặng: ${voucher.giftName || voucher.title} & Miễn phí vận chuyển`
+        : `Áp dụng thành công quà tặng: ${voucher.giftName || voucher.title}`
     };
   }
 
@@ -448,9 +484,11 @@ export const calculateVoucherDiscount = (
     const capped = voucher.maxDiscount ? Math.min(calc, voucher.maxDiscount) : calc;
     return {
       discountAmount: capped,
-      shippingDiscount: 0,
+      shippingDiscount: extraShippingDiscount,
       isValid: true,
-      reason: `Áp dụng thành công giảm ${voucher.discountValue}% (-${capped.toLocaleString('vi-VN')}₫)`
+      reason: isComboFreeShip
+        ? `Áp dụng thành công Combo: Giảm ${voucher.discountValue}% (-${capped.toLocaleString('vi-VN')}₫) & Miễn phí vận chuyển`
+        : `Áp dụng thành công giảm ${voucher.discountValue}% (-${capped.toLocaleString('vi-VN')}₫)`
     };
   }
 
@@ -458,8 +496,10 @@ export const calculateVoucherDiscount = (
   const finalDiscount = Math.min(voucher.discountValue, subtotal);
   return {
     discountAmount: finalDiscount,
-    shippingDiscount: 0,
+    shippingDiscount: extraShippingDiscount,
     isValid: true,
-    reason: `Áp dụng thành công giảm ${finalDiscount.toLocaleString('vi-VN')}₫`
+    reason: isComboFreeShip
+      ? `Áp dụng thành công giảm ${finalDiscount.toLocaleString('vi-VN')}₫ & Miễn phí vận chuyển`
+      : `Áp dụng thành công giảm ${finalDiscount.toLocaleString('vi-VN')}₫`
   };
 };

@@ -1162,10 +1162,18 @@ export const CheckoutModal = ({
                     <Tag className="w-4 h-4 text-emerald-600 shrink-0" />
                     <div>
                       <span className="font-extrabold text-slate-900">
-                        {appliedVoucher ? `Mã ưu đãi: ${appliedVoucher}` : 'Mã giảm giá & Khuyến mãi'}
+                        {appliedVoucher && currentVoucherCheck?.isValid
+                          ? `Mã ưu đãi: ${appliedVoucher}`
+                          : appliedVoucher && currentVoucherCheck && !currentVoucherCheck.isValid
+                            ? `Mã ${appliedVoucher} (Chưa đủ điều kiện)`
+                            : 'Mã giảm giá & Khuyến mãi'}
                       </span>
                       <p className="text-[10px] text-slate-500">
-                        {currentVoucherObj ? currentVoucherObj.title : 'Nhập mã hoặc chọn ưu đãi trong danh sách'}
+                        {appliedVoucher && currentVoucherCheck && !currentVoucherCheck.isValid
+                          ? currentVoucherCheck.reason
+                          : currentVoucherObj
+                            ? currentVoucherObj.title
+                            : 'Nhập mã hoặc chọn ưu đãi trong danh sách'}
                       </p>
                     </div>
                   </div>

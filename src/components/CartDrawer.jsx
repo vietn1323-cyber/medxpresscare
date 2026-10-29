@@ -43,20 +43,22 @@ export const CartDrawer = ({
   let discountAmount = 0;
   let shippingDiscount = 0;
   let giftItem = null;
+  let currentVoucherCheck = null;
 
   if (currentVoucherObj) {
-    const res = calculateVoucherDiscount(currentVoucherObj, subtotal, 25000, cartItems, customer);
-    if (res.isValid) {
-      discountAmount = res.discountAmount;
-      shippingDiscount = res.shippingDiscount;
-      if (res.isGift && res.giftItem) {
-        giftItem = res.giftItem;
+    currentVoucherCheck = calculateVoucherDiscount(currentVoucherObj, subtotal, 25000, cartItems, customer);
+    if (currentVoucherCheck.isValid) {
+      discountAmount = currentVoucherCheck.discountAmount;
+      shippingDiscount = currentVoucherCheck.shippingDiscount;
+      if (currentVoucherCheck.isGift && currentVoucherCheck.giftItem) {
+        giftItem = currentVoucherCheck.giftItem;
       }
     }
   }
 
   const baseShippingFee = 25000;
-  const isFreeShip = subtotal >= FREESHIP_THRESHOLD || shippingDiscount > 0;
+  const hasComboItem = cartItems.some(item => item.comboType && item.comboType !== 'single');
+  const isFreeShip = subtotal >= FREESHIP_THRESHOLD || shippingDiscount > 0 || hasComboItem;
   const actualShippingFee = isFreeShip ? 0 : baseShippingFee;
   const grandTotal = Math.max(0, subtotal - discountAmount + actualShippingFee);
 
@@ -321,23 +323,60 @@ export const CartDrawer = ({
                 )}
               </div>
 
-              {appliedVoucher ? (
+              {appliedVoucher && currentVoucherCheck?.isValid ? (
                 <div className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs">
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                     <div>
-                      <span className="font-mono font-bold text-emerald-900">{appliedVoucher?.code || appliedVoucher}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-emerald-900">{appliedVoucher?.code || appliedVoucher}</span>
+                        {discountAmount > 0 && (
+                          <span className="text-[10px] font-black text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">
+                            -{discountAmount.toLocaleString('vi-VN')}₫
+                          </span>
+                        )}
+                        {shippingDiscount > 0 && (
+                          <span className="text-[10px] font-black text-teal-700 bg-teal-100 px-1.5 py-0.5 rounded">
+                            Freeship
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[10px] text-emerald-700">
-                        {currentVoucherObj ? currentVoucherObj.title : 'Đã áp dụng mã ưu đãi thành công'}
+                        {currentVoucherCheck.reason || (currentVoucherObj ? currentVoucherObj.title : 'Đã áp dụng mã ưu đãi thành công')}
                       </p>
                     </div>
                   </div>
                   <button
                     onClick={handleRemoveVoucher}
-                    className="text-[11px] font-bold text-rose-600 hover:text-rose-800 px-2 py-1 rounded-lg hover:bg-rose-50 transition-colors"
+                    className="text-[11px] font-bold text-rose-600 hover:text-rose-800 px-2 py-1 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer"
                   >
                     Gỡ bỏ
                   </button>
+                </div>
+              ) : appliedVoucher && currentVoucherCheck && !currentVoucherCheck.isValid ? (
+                <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-xs space-y-1.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start gap-1.5">
+                      <span className="text-amber-600 shrink-0 mt-0.5 font-bold">⚠️</span>
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono font-bold text-amber-900">{appliedVoucher?.code || appliedVoucher}</span>
+                          <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
+                            Chưa đủ điều kiện
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-amber-800 mt-0.5">
+                          {currentVoucherCheck.reason}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleRemoveVoucher}
+                      className="text-[11px] font-bold text-rose-600 hover:text-rose-800 px-2 py-1 rounded-lg hover:bg-rose-50 transition-colors shrink-0 cursor-pointer"
+                    >
+                      Gỡ bỏ
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <form onSubmit={handleApplyCoupon} className="space-y-1">

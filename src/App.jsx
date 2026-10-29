@@ -20,7 +20,7 @@ import { HealthBlogSection } from './components/HealthBlogSection';
 import { ArticleDetailPage } from './components/ArticleDetailPage';
 import { ProductsPage } from './components/ProductsPage';
 import { VoucherModal } from './components/VoucherModal';
-import { DEFAULT_VOUCHERS } from './data/vouchers';
+import { DEFAULT_VOUCHERS, calculateVoucherDiscount } from './data/vouchers';
 import { INITIAL_REVIEWS } from './data/reviews';
 import { Footer } from './components/Footer';
 import { AdminPanel } from './components/AdminPanel';
@@ -541,27 +541,56 @@ export default function App() {
           const voucherMap = new Map();
           DEFAULT_VOUCHERS.forEach(v => voucherMap.set(v.id, v));
           filteredParsed.forEach(v => {
-            const defaultItem = voucherMap.get(v.id) || {};
+            const defaultItem = voucherMap.get(v.id) || DEFAULT_VOUCHERS.find(d => d.code === v.code) || {};
             // Nếu usedCount là số liệu mẫu cũ (142, 524, 89, 65, 41, 168, 92), reset về 0
             const cleanUsedCount = [142, 524, 89, 65, 41, 168, 92].includes(v.usedCount) ? 0 : (v.usedCount || 0);
+
+            // Bảo vệ các ngưỡng chuẩn của hệ thống:
+            // - FREESHIP: tối thiểu 500.000₫
+            // - TRIAN10: tối thiểu 600.000₫
+            // - MEDXPRESS50: tối thiểu 400.000₫
+            // - DUOCSI30: tối thiểu 300.000₫
+            // - COMBO15: tối thiểu 1.200.000₫
+            // - COMBO3HOP: tối thiểu 3 hộp, comboTier = 3
+            // - COMBO6HOP: tối thiểu 6 hộp, comboTier = 6
+            let effectiveMinOrderValue = Number(v.minOrderValue) || 0;
+            if (defaultItem.code === 'FREESHIP' && effectiveMinOrderValue < 500000) effectiveMinOrderValue = 500000;
+            if (defaultItem.code === 'TRIAN10' && effectiveMinOrderValue < 600000) effectiveMinOrderValue = 600000;
+            if (defaultItem.code === 'MEDXPRESS50' && effectiveMinOrderValue < 400000) effectiveMinOrderValue = 400000;
+            if (defaultItem.code === 'DUOCSI30' && effectiveMinOrderValue < 300000) effectiveMinOrderValue = 300000;
+            if (defaultItem.code === 'COMBO15' && effectiveMinOrderValue < 1200000) effectiveMinOrderValue = 1200000;
+
+            let effectiveMinQuantity = Number(v.minQuantity) || (defaultItem.minQuantity || 1);
+            if (defaultItem.code === 'COMBO3HOP') effectiveMinQuantity = 3;
+            if (defaultItem.code === 'COMBO6HOP') effectiveMinQuantity = 6;
+
+            let effectiveComboTier = defaultItem.comboTier !== undefined ? defaultItem.comboTier : (v.comboTier || null);
+            if (defaultItem.code === 'COMBO3HOP') effectiveComboTier = 3;
+            if (defaultItem.code === 'COMBO6HOP') effectiveComboTier = 6;
+
             voucherMap.set(v.id, {
               ...defaultItem,
               ...v,
+              minOrderValue: effectiveMinOrderValue,
+              minQuantity: effectiveMinQuantity,
+              comboTier: effectiveComboTier,
               usedCount: cleanUsedCount,
               startDate: v.startDate || defaultItem.startDate || '2026-01-01',
               expiryDate: v.expiryDate || defaultItem.expiryDate || '2026-12-31',
               applicableScope: v.applicableScope || defaultItem.applicableScope || 'all',
               applicableCategories: Array.isArray(v.applicableCategories) ? v.applicableCategories : (defaultItem.applicableCategories || []),
               applicableProducts: Array.isArray(v.applicableProducts) ? v.applicableProducts : (defaultItem.applicableProducts || []),
-              minQuantity: v.minQuantity || defaultItem.minQuantity || 1,
-              comboTier: v.comboTier !== undefined ? v.comboTier : (defaultItem.comboTier || null),
               giftProductId: v.giftProductId || defaultItem.giftProductId || '',
               giftName: v.giftName || defaultItem.giftName || '',
               giftValue: v.giftValue !== undefined ? v.giftValue : (defaultItem.giftValue || 0),
               giftImage: v.giftImage || defaultItem.giftImage || ''
             });
           });
-          return Array.from(voucherMap.values());
+          const merged = Array.from(voucherMap.values());
+          try {
+            localStorage.setItem('medxpress_vouchers_db', JSON.stringify(merged));
+          } catch {}
+          return merged;
         }
       }
       return DEFAULT_VOUCHERS;
@@ -2635,6 +2664,15 @@ export default function App() {
             setIsCustomerAuthOpen(true);
           }}
           onApplyVoucher={(code) => {
+            const matched = vouchersList.find(v => v.code === code);
+            const cartSubtotal = cart.reduce((a, b) => a + (b.price * b.quantity), 0);
+            if (matched) {
+              const check = calculateVoucherDiscount(matched, cartSubtotal, 25000, cart, currentCustomer);
+              if (!check.isValid) {
+                showToast(`Chưa đủ điều kiện: ${check.reason}`);
+                return;
+              }
+            }
             setAppliedVoucher(code);
             showToast(`Đã áp dụng mã voucher "${code}"!`);
           }}

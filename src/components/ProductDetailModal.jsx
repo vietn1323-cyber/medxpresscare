@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   X, ShieldCheck, Star, Truck, FileCheck2, 
   ShoppingBag, CheckCircle2, AlertTriangle, Heart, Plus, Minus,
@@ -27,10 +27,13 @@ export const ProductDetailModal = ({
   const comboPromo = product ? getProductComboPromotions(product, vouchers) : { promo3: null, promo6: null };
   const giftPromos = product ? getProductGiftPromotions(product, vouchers) : [];
 
-  // Khởi tạo combo được chọn dựa trên chương trình khuyến mại thực tế
-  const [selectedCombo, setSelectedCombo] = useState(() => 
-    comboPromo.promo3 ? 'combo3' : (comboPromo.promo6 ? 'combo6' : 'single')
-  );
+  // Mặc định gói 1 hộp tiêu chuẩn ('single') khi khách hàng xem sản phẩm
+  const [selectedCombo, setSelectedCombo] = useState('single');
+
+  useEffect(() => {
+    setSelectedCombo('single');
+    setQuantity(1);
+  }, [product?.id]);
 
   if (!product) return null;
 
@@ -314,9 +317,13 @@ export const ProductDetailModal = ({
                   <div className="p-2.5 rounded-xl bg-white/80 border border-slate-200/90 flex flex-wrap items-center justify-between gap-1 text-[11px] text-slate-600">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <Tag className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                      <span>Mã ưu đãi đang áp dụng:</span>
+                      <span>Mã ưu đãi có thể dùng khi thanh toán:</span>
                       {(vouchers || []).filter(v => v && v.enabled).slice(0, 4).map(v => (
-                        <span key={v.id} className="font-mono font-bold bg-amber-50 text-amber-900 px-1.5 py-0.5 rounded border border-amber-200">
+                        <span 
+                          key={v.id} 
+                          className="font-mono font-bold bg-amber-50 text-amber-900 px-1.5 py-0.5 rounded border border-amber-200"
+                          title={v.description || `${v.title} (Đơn từ ${(v.minOrderValue || 0).toLocaleString('vi-VN')}₫)`}
+                        >
                           {v.code}
                         </span>
                       ))}
