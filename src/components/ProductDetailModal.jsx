@@ -314,115 +314,119 @@ export const ProductDetailModal = ({
                   ))}
 
                   {/* Ưu đãi 4: Mã Voucher thanh toán */}
-                  <div className="p-2.5 rounded-xl bg-white/80 border border-slate-200/90 flex flex-wrap items-center justify-between gap-1 text-[11px] text-slate-600">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <Tag className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                      <span>Mã ưu đãi có thể dùng khi thanh toán:</span>
-                      {(vouchers || []).filter(v => v && v.enabled).slice(0, 4).map(v => (
-                        <span 
-                          key={v.id} 
-                          className="font-mono font-bold bg-amber-50 text-amber-900 px-1.5 py-0.5 rounded border border-amber-200"
-                          title={v.description || `${v.title} (Đơn từ ${(v.minOrderValue || 0).toLocaleString('vi-VN')}₫)`}
+                  {(vouchers || []).filter(v => v && v.enabled).length > 0 && (
+                    <div className="p-2.5 rounded-xl bg-white/80 border border-slate-200/90 flex flex-wrap items-center justify-between gap-1 text-[11px] text-slate-600">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <Tag className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                        <span>Mã ưu đãi có thể dùng khi thanh toán:</span>
+                        {(vouchers || []).filter(v => v && v.enabled).slice(0, 4).map(v => (
+                          <span 
+                            key={v.id} 
+                            className="font-mono font-bold bg-amber-50 text-amber-900 px-1.5 py-0.5 rounded border border-amber-200"
+                            title={v.description || `${v.title} (Đơn từ ${(v.minOrderValue || 0).toLocaleString('vi-VN')}₫)`}
+                          >
+                            {v.code}
+                          </span>
+                        ))}
+                      </div>
+                      {onOpenVouchers && (
+                        <button
+                          type="button"
+                          onClick={onOpenVouchers}
+                          className="text-emerald-700 font-black hover:underline flex items-center gap-0.5 text-[11px] ml-auto"
                         >
-                          {v.code}
-                        </span>
-                      ))}
+                          <span>Săn Thêm Voucher</span>
+                          <ChevronRight className="w-3 h-3" />
+                        </button>
+                      )}
                     </div>
-                    {onOpenVouchers && (
+                  )}
+                </div>
+              </div>
+
+              {/* Combo Liệu Trình Dược Học (Chỉ hiển thị nếu có chương trình combo có hiệu lực) */}
+              {comboPromo.hasAnyCombo && (
+                <div className="space-y-2 pt-1">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                      <Sparkles className="w-4 h-4 text-emerald-600" />
+                      <span>Chọn Liệu Trình Uống Khuyên Dùng:</span>
+                    </h4>
+                    {savedAmount > 0 && (
+                      <span className="text-[11px] font-extrabold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">
+                        Tiết kiệm {(Number(savedAmount) || 0).toLocaleString('vi-VN')}₫
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 text-left">
+                    {/* Gói 1 hộp */}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCombo('single')}
+                      className={`p-2.5 sm:p-3 rounded-2xl border-2 text-left transition-all relative ${
+                        selectedCombo === 'single'
+                          ? 'border-emerald-500 bg-emerald-50/60 ring-2 ring-emerald-500/20'
+                          : 'border-slate-200 bg-white hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="font-extrabold text-xs text-slate-900">1 Hộp</div>
+                      <div className="text-[10px] text-slate-500 mt-0.5">Dùng thử 15-30 ngày</div>
+                      <div className="font-black text-xs text-emerald-700 mt-1.5">
+                        {(Number(product.price) || 0).toLocaleString('vi-VN')}₫
+                      </div>
+                    </button>
+
+                    {/* Combo 3 hộp (Hiển thị nếu chương trình khuyến mại có hiệu lực) */}
+                    {comboPromo.promo3 && (
                       <button
                         type="button"
-                        onClick={onOpenVouchers}
-                        className="text-emerald-700 font-black hover:underline flex items-center gap-0.5 text-[11px] ml-auto"
+                        onClick={() => setSelectedCombo('combo3')}
+                        className={`p-2.5 sm:p-3 rounded-2xl border-2 text-left transition-all relative ${
+                          selectedCombo === 'combo3'
+                            ? 'border-emerald-600 bg-emerald-50 ring-2 ring-emerald-500/30'
+                            : 'border-emerald-200 bg-white hover:border-emerald-300'
+                        }`}
                       >
-                        <span>Săn Thêm Voucher</span>
-                        <ChevronRight className="w-3 h-3" />
+                        <span className="absolute -top-2.5 right-2 bg-emerald-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow-xs">
+                          Khuyên Dùng ⭐
+                        </span>
+                        <div className="font-extrabold text-xs text-slate-900">Liệu Trình 3 Hộp</div>
+                        <div className="text-[10px] text-emerald-700 font-bold mt-0.5">
+                          Giảm {comboPromo.promo3.discountPercent}% + Freeship
+                        </div>
+                        <div className="font-black text-xs text-emerald-700 mt-1.5">
+                          {Math.round((Number(product.price) || 0) * 3 * (1 - (comboPromo.promo3.discountPercent || 10) / 100)).toLocaleString('vi-VN')}₫
+                        </div>
+                      </button>
+                    )}
+
+                    {/* Combo 6 hộp (Hiển thị nếu chương trình khuyến mại có hiệu lực) */}
+                    {comboPromo.promo6 && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedCombo('combo6')}
+                        className={`p-2.5 sm:p-3 rounded-2xl border-2 text-left transition-all relative ${
+                          selectedCombo === 'combo6'
+                            ? 'border-amber-500 bg-amber-50/70 ring-2 ring-amber-500/30'
+                            : 'border-amber-200 bg-white hover:border-amber-300'
+                        }`}
+                      >
+                        <span className="absolute -top-2.5 right-2 bg-amber-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow-xs">
+                          Tiết Kiệm Nhất 👑
+                        </span>
+                        <div className="font-extrabold text-xs text-slate-900">Chuyên Sâu 6 Hộp</div>
+                        <div className="text-[10px] text-amber-800 font-bold mt-0.5">
+                          Giảm {comboPromo.promo6.discountPercent}% + X2 Điểm
+                        </div>
+                        <div className="font-black text-xs text-amber-700 mt-1.5">
+                          {Math.round((Number(product.price) || 0) * 6 * (1 - (comboPromo.promo6.discountPercent || 20) / 100)).toLocaleString('vi-VN')}₫
+                        </div>
                       </button>
                     )}
                   </div>
                 </div>
-              </div>
-
-              {/* Combo Liệu Trình Dược Học */}
-              <div className="space-y-2 pt-1">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                    <Sparkles className="w-4 h-4 text-emerald-600" />
-                    <span>Chọn Liệu Trình Uống Khuyên Dùng:</span>
-                  </h4>
-                  {savedAmount > 0 && (
-                    <span className="text-[11px] font-extrabold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">
-                      Tiết kiệm {(Number(savedAmount) || 0).toLocaleString('vi-VN')}₫
-                    </span>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-3 gap-2 text-left">
-                  {/* Gói 1 hộp */}
-                  <button
-                    type="button"
-                    onClick={() => setSelectedCombo('single')}
-                    className={`p-2.5 sm:p-3 rounded-2xl border-2 text-left transition-all relative ${
-                      selectedCombo === 'single'
-                        ? 'border-emerald-500 bg-emerald-50/60 ring-2 ring-emerald-500/20'
-                        : 'border-slate-200 bg-white hover:border-slate-300'
-                    }`}
-                  >
-                    <div className="font-extrabold text-xs text-slate-900">1 Hộp</div>
-                    <div className="text-[10px] text-slate-500 mt-0.5">Dùng thử 15-30 ngày</div>
-                    <div className="font-black text-xs text-emerald-700 mt-1.5">
-                      {(Number(product.price) || 0).toLocaleString('vi-VN')}₫
-                    </div>
-                  </button>
-
-                  {/* Combo 3 hộp (Hiển thị nếu chương trình khuyến mại có hiệu lực) */}
-                  {comboPromo.promo3 && (
-                    <button
-                      type="button"
-                      onClick={() => setSelectedCombo('combo3')}
-                      className={`p-2.5 sm:p-3 rounded-2xl border-2 text-left transition-all relative ${
-                        selectedCombo === 'combo3'
-                          ? 'border-emerald-600 bg-emerald-50 ring-2 ring-emerald-500/30'
-                          : 'border-emerald-200 bg-white hover:border-emerald-300'
-                      }`}
-                    >
-                      <span className="absolute -top-2.5 right-2 bg-emerald-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow-xs">
-                        Khuyên Dùng ⭐
-                      </span>
-                      <div className="font-extrabold text-xs text-slate-900">Liệu Trình 3 Hộp</div>
-                      <div className="text-[10px] text-emerald-700 font-bold mt-0.5">
-                        Giảm {comboPromo.promo3.discountPercent}% + Freeship
-                      </div>
-                      <div className="font-black text-xs text-emerald-700 mt-1.5">
-                        {Math.round((Number(product.price) || 0) * 3 * (1 - (comboPromo.promo3.discountPercent || 10) / 100)).toLocaleString('vi-VN')}₫
-                      </div>
-                    </button>
-                  )}
-
-                  {/* Combo 6 hộp (Hiển thị nếu chương trình khuyến mại có hiệu lực) */}
-                  {comboPromo.promo6 && (
-                    <button
-                      type="button"
-                      onClick={() => setSelectedCombo('combo6')}
-                      className={`p-2.5 sm:p-3 rounded-2xl border-2 text-left transition-all relative ${
-                        selectedCombo === 'combo6'
-                          ? 'border-amber-500 bg-amber-50/70 ring-2 ring-amber-500/30'
-                          : 'border-amber-200 bg-white hover:border-amber-300'
-                      }`}
-                    >
-                      <span className="absolute -top-2.5 right-2 bg-amber-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow-xs">
-                        Tiết Kiệm Nhất 👑
-                      </span>
-                      <div className="font-extrabold text-xs text-slate-900">Chuyên Sâu 6 Hộp</div>
-                      <div className="text-[10px] text-amber-800 font-bold mt-0.5">
-                        Giảm {comboPromo.promo6.discountPercent}% + X2 Điểm
-                      </div>
-                      <div className="font-black text-xs text-amber-700 mt-1.5">
-                        {Math.round((Number(product.price) || 0) * 6 * (1 - (comboPromo.promo6.discountPercent || 20) / 100)).toLocaleString('vi-VN')}₫
-                      </div>
-                    </button>
-                  )}
-                </div>
-              </div>
+              )}
 
               {/* Price Box */}
               <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-wrap items-baseline gap-3">

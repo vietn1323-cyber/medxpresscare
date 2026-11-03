@@ -68,6 +68,7 @@ export const AdminPanel = ({
   onAddVoucher,
   onUpdateVoucher,
   onDeleteVoucher,
+  onResetVouchers,
   reviews = INITIAL_REVIEWS,
   onAddReview,
   onUpdateReviewStatus,
@@ -4592,44 +4593,61 @@ export const AdminPanel = ({
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEditingVoucher(null);
-                    setVoucherFormData({
-                      code: '',
-                      title: '',
-                      discountType: 'gift',
-                      discountValue: 0,
-                      giftProductId: '',
-                      giftName: '',
-                      giftValue: 0,
-                      giftImage: '',
-                      minOrderValue: 0,
-                      maxDiscount: 0,
-                      minQuantity: 1,
-                      comboTier: null,
-                      usageLimit: 500,
-                      usedCount: 0,
-                      startDate: new Date().toISOString().slice(0, 10),
-                      expiryDate: '2026-12-31',
-                      applicableScope: 'all',
-                      applicableCategories: [],
-                      applicableProducts: [],
-                      target_customer: 'all',
-                      enabled: true,
-                      badgeText: '',
-                      description: ''
-                    });
-                    setVoucherProductSearch('');
-                    setGiftProductSearch('');
-                    setShowAddVoucherModal(true);
-                  }}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all shrink-0 cursor-pointer"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Tạo Chương Trình Khuyến Mại Mới</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  {onResetVouchers && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (window.confirm('Khôi phục danh sách 7 chương trình khuyến mại mặc định ban đầu?')) {
+                          onResetVouchers();
+                        }
+                      }}
+                      className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-all shrink-0 cursor-pointer"
+                      title="Khôi phục lại 7 voucher mặc định ban đầu"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Khôi Phục Mặc Định</span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingVoucher(null);
+                      setVoucherFormData({
+                        code: '',
+                        title: '',
+                        discountType: 'gift',
+                        discountValue: 0,
+                        giftProductId: '',
+                        giftName: '',
+                        giftValue: 0,
+                        giftImage: '',
+                        minOrderValue: 0,
+                        maxDiscount: 0,
+                        minQuantity: 1,
+                        comboTier: null,
+                        usageLimit: 500,
+                        usedCount: 0,
+                        startDate: new Date().toISOString().slice(0, 10),
+                        expiryDate: '2026-12-31',
+                        applicableScope: 'all',
+                        applicableCategories: [],
+                        applicableProducts: [],
+                        target_customer: 'all',
+                        enabled: true,
+                        badgeText: '',
+                        description: ''
+                      });
+                      setVoucherProductSearch('');
+                      setGiftProductSearch('');
+                      setShowAddVoucherModal(true);
+                    }}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all shrink-0 cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Tạo Chương Trình Khuyến Mại Mới</span>
+                  </button>
+                </div>
               </div>
 
               {/* Bảng Danh Sách Voucher & Chương Trình Khuyến Mại */}
@@ -4861,8 +4879,60 @@ export const AdminPanel = ({
                 </div>
 
                 {vouchers.length === 0 && (
-                  <div className="p-8 text-center text-slate-400 text-xs">
-                    Chưa có chương trình khuyến mại nào. Hãy bấm "Tạo Chương Trình Khuyến Mại Mới" để bắt đầu!
+                  <div className="p-10 text-center text-slate-400 text-xs space-y-3">
+                    <Tag className="w-10 h-10 mx-auto text-slate-300" />
+                    <p className="font-semibold text-slate-600 text-sm">Chưa có chương trình khuyến mại nào trong hệ thống.</p>
+                    <p className="text-slate-400">Bạn có thể tạo chương trình khuyến mại mới hoặc khôi phục lại 7 voucher mặc định.</p>
+                    <div className="flex items-center justify-center gap-2 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingVoucher(null);
+                          setVoucherFormData({
+                            code: '',
+                            title: '',
+                            discountType: 'fixed',
+                            discountValue: 0,
+                            giftProductId: '',
+                            giftName: '',
+                            giftValue: 0,
+                            giftImage: '',
+                            minOrderValue: 0,
+                            maxDiscount: 0,
+                            minQuantity: 1,
+                            comboTier: null,
+                            usageLimit: 500,
+                            usedCount: 0,
+                            startDate: new Date().toISOString().slice(0, 10),
+                            expiryDate: '2026-12-31',
+                            applicableScope: 'all',
+                            applicableCategories: [],
+                            applicableProducts: [],
+                            target_customer: 'all',
+                            enabled: true,
+                            badgeText: '',
+                            description: ''
+                          });
+                          setShowAddVoucherModal(true);
+                        }}
+                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all cursor-pointer"
+                      >
+                        Tạo Khuyến Mại Mới
+                      </button>
+                      {onResetVouchers && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (window.confirm('Khôi phục danh sách 7 chương trình khuyến mại mặc định ban đầu?')) {
+                              onResetVouchers();
+                            }
+                          }}
+                          className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer"
+                        >
+                          Khôi Phục 7 Mã Mặc Định
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

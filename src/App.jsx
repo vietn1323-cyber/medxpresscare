@@ -528,31 +528,25 @@ export default function App() {
   const [vouchersList, setVouchersList] = useState(() => {
     try {
       const saved = localStorage.getItem('medxpress_vouchers_db');
-      if (saved) {
+      if (saved !== null) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           // Bảo toàn và nâng cấp dữ liệu: loại bỏ các mẫu quà tặng test cũ (vouch-gift-01, vouch-gift-02, QUATANG500, BINHYTE)
           const filteredParsed = parsed.filter(v => 
+            v &&
             v.id !== 'vouch-gift-01' && 
             v.id !== 'vouch-gift-02' && 
             v.code !== 'QUATANG500' && 
             v.code !== 'BINHYTE'
           );
-          const voucherMap = new Map();
-          DEFAULT_VOUCHERS.forEach(v => voucherMap.set(v.id, v));
-          filteredParsed.forEach(v => {
-            const defaultItem = voucherMap.get(v.id) || DEFAULT_VOUCHERS.find(d => d.code === v.code) || {};
+
+          // Chuẩn hóa thuộc tính cho các voucher còn tồn tại (TUYỆT ĐỐI KHÔNG re-seed các voucher đã bị xóa)
+          return filteredParsed.map(v => {
+            const defaultItem = DEFAULT_VOUCHERS.find(d => d.id === v.id || d.code === v.code) || {};
             // Nếu usedCount là số liệu mẫu cũ (142, 524, 89, 65, 41, 168, 92), reset về 0
             const cleanUsedCount = [142, 524, 89, 65, 41, 168, 92].includes(v.usedCount) ? 0 : (v.usedCount || 0);
 
-            // Bảo vệ các ngưỡng chuẩn của hệ thống:
-            // - FREESHIP: tối thiểu 500.000₫
-            // - TRIAN10: tối thiểu 600.000₫
-            // - MEDXPRESS50: tối thiểu 400.000₫
-            // - DUOCSI30: tối thiểu 300.000₫
-            // - COMBO15: tối thiểu 1.200.000₫
-            // - COMBO3HOP: tối thiểu 3 hộp, comboTier = 3
-            // - COMBO6HOP: tối thiểu 6 hộp, comboTier = 6
+            // Bảo vệ các ngưỡng chuẩn của hệ thống cho voucher còn tồn tại:
             let effectiveMinOrderValue = Number(v.minOrderValue) || 0;
             if (defaultItem.code === 'FREESHIP' && effectiveMinOrderValue < 500000) effectiveMinOrderValue = 500000;
             if (defaultItem.code === 'TRIAN10' && effectiveMinOrderValue < 600000) effectiveMinOrderValue = 600000;
@@ -568,7 +562,7 @@ export default function App() {
             if (defaultItem.code === 'COMBO3HOP') effectiveComboTier = 3;
             if (defaultItem.code === 'COMBO6HOP') effectiveComboTier = 6;
 
-            voucherMap.set(v.id, {
+            return {
               ...defaultItem,
               ...v,
               minOrderValue: effectiveMinOrderValue,
@@ -584,13 +578,8 @@ export default function App() {
               giftName: v.giftName || defaultItem.giftName || '',
               giftValue: v.giftValue !== undefined ? v.giftValue : (defaultItem.giftValue || 0),
               giftImage: v.giftImage || defaultItem.giftImage || ''
-            });
+            };
           });
-          const merged = Array.from(voucherMap.values());
-          try {
-            localStorage.setItem('medxpress_vouchers_db', JSON.stringify(merged));
-          } catch {}
-          return merged;
         }
       }
       return DEFAULT_VOUCHERS;
@@ -895,6 +884,18 @@ export default function App() {
             apiClient.saveCustomers(customersList);
           }
 
+          // Vouchers
+          if (Array.isArray(cloudData.vouchers)) {
+            setVouchersList(cloudData.vouchers);
+            try {
+              localStorage.setItem('medxpress_vouchers_db', JSON.stringify(cloudData.vouchers));
+            } catch (e) {
+              console.error(e);
+            }
+          } else {
+            apiClient.saveVouchers(vouchersList);
+          }
+
           // Consultations & Health Surveys
           try {
             const cloudConsultations = await apiClient.fetchConsultations();
@@ -950,6 +951,11 @@ export default function App() {
     if (!isD1Loaded) return;
     apiClient.saveCustomers(customersList);
   }, [customersList, isD1Loaded]);
+
+  useEffect(() => {
+    if (!isD1Loaded) return;
+    apiClient.saveVouchers(vouchersList);
+  }, [vouchersList, isD1Loaded]);
 
   // Sync to localStorage
   useEffect(() => {
@@ -1874,18 +1880,58 @@ export default function App() {
 
   // Voucher CRUD handlers
   const handleAddVoucher = (newVoucher) => {
-    setVouchersList(prev => [newVoucher, ...prev]);
+    setVouchersList(prev => {
+      const updated = [newVoucher, ...prev];
+      try {
+        localStorage.setItem('medxpress_vouchers_db', JSON.stringify(updated));
+      } catch (e) {}
+      apiClient.saveVouchers(updated);
+      return updated;
+    });
     showToast(`Đã tạo mã voucher "${newVoucher.code}" thành công!`);
   };
 
   const handleUpdateVoucher = (updated) => {
-    setVouchersList(prev => prev.map(v => v.id === updated.id ? updated : v));
+    setVouchersList(prev => {
+      const list = prev.map(v => v.id === updated.id ? updated : v);
+      try {
+        localStorage.setItem('medxpress_vouchers_db', JSON.stringify(list));
+      } catch (e) {}
+      apiClient.saveVouchers(list);
+      return list;
+    });
     showToast(`Đã cập nhật mã voucher "${updated.code}"!`);
   };
 
   const handleDeleteVoucher = (vId) => {
-    setVouchersList(prev => prev.filter(v => v.id !== vId));
+    setVouchersList(prev => {
+      const updated = prev.filter(v => v.id !== vId);
+      try {
+        localStorage.setItem('medxpress_vouchers_db', JSON.stringify(updated));
+      } catch (e) {}
+      apiClient.saveVouchersNow(updated);
+      return updated;
+    });
+    if (appliedVoucher) {
+      setAppliedVoucher(prev => {
+        const curCode = prev?.code || prev;
+        const target = vouchersList.find(v => v.id === vId);
+        if (target && target.code === curCode) {
+          return '';
+        }
+        return prev;
+      });
+    }
     showToast(`Đã xóa mã voucher khỏi hệ thống!`);
+  };
+
+  const handleResetVouchers = () => {
+    setVouchersList(DEFAULT_VOUCHERS);
+    try {
+      localStorage.setItem('medxpress_vouchers_db', JSON.stringify(DEFAULT_VOUCHERS));
+    } catch (e) {}
+    apiClient.saveVouchersNow(DEFAULT_VOUCHERS);
+    showToast('Đã khôi phục 7 chương trình khuyến mại mặc định ban đầu!');
   };
 
   // Review CRUD handlers
@@ -2478,6 +2524,7 @@ export default function App() {
           onAddVoucher={handleAddVoucher}
           onUpdateVoucher={handleUpdateVoucher}
           onDeleteVoucher={handleDeleteVoucher}
+          onResetVouchers={handleResetVouchers}
           reviews={reviewsList}
           onAddReview={handleAddReview}
           onUpdateReviewStatus={handleUpdateReviewStatus}

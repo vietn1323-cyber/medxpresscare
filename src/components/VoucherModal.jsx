@@ -79,28 +79,30 @@ export const VoucherModal = ({
           </div>
         </div>
 
-        {/* Banner Khuyến Mại Combo Liệu Trình 3 & 6 Hộp */}
-        <div className="mx-4 sm:mx-6 mt-4 p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-emerald-500/10 to-teal-500/15 border border-amber-300 flex items-start gap-3 shadow-2xs">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 font-black flex items-center justify-center shrink-0 shadow-xs text-lg">
-            👑
-          </div>
-          <div className="flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[10px] font-black uppercase tracking-wider text-amber-900 bg-amber-200 px-2 py-0.5 rounded-full border border-amber-300">
-                Chính Sách Khuyến Mại Combo Liệu Trình
-              </span>
-              <span className="text-xs font-bold text-emerald-800">Tự động áp dụng khi chọn 3 hoặc 6 hộp</span>
+        {/* Banner Khuyến Mại Combo Liệu Trình 3 & 6 Hộp (Chỉ hiển thị nếu có chương trình combo) */}
+        {activeVouchers.some(v => v.comboTier || (v.minQuantity && v.minQuantity > 1) || v.code.includes('COMBO') || v.title?.toLowerCase().includes('combo')) && (
+          <div className="mx-4 sm:mx-6 mt-4 p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-emerald-500/10 to-teal-500/15 border border-amber-300 flex items-start gap-3 shadow-2xs">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 font-black flex items-center justify-center shrink-0 shadow-xs text-lg">
+              👑
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 text-xs">
-              <div className="p-2 rounded-xl bg-white/80 border border-emerald-200 text-emerald-950">
-                <strong className="text-emerald-800">⭐ Combo 3 Hộp:</strong> Giảm ngay <strong>10%</strong> + <strong>Miễn phí Giao hàng nhanh</strong> toàn quốc.
+            <div className="flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-wider text-amber-900 bg-amber-200 px-2 py-0.5 rounded-full border border-amber-300">
+                  Chính Sách Khuyến Mại Combo Liệu Trình
+                </span>
+                <span className="text-xs font-bold text-emerald-800">Tự động áp dụng khi chọn 3 hoặc 6 hộp</span>
               </div>
-              <div className="p-2 rounded-xl bg-white/80 border border-amber-200 text-amber-950">
-                <strong className="text-amber-800">👑 Combo 6 Hộp:</strong> Giảm kịch sàn <strong>20%</strong> + <strong>Freeship Giao Nhanh</strong> + <strong>X2 Điểm Thưởng</strong> thành viên.
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 text-xs">
+                <div className="p-2 rounded-xl bg-white/80 border border-emerald-200 text-emerald-950">
+                  <strong className="text-emerald-800">⭐ Combo 3 Hộp:</strong> Giảm ngay <strong>10%</strong> + <strong>Miễn phí Giao hàng nhanh</strong> toàn quốc.
+                </div>
+                <div className="p-2 rounded-xl bg-white/80 border border-amber-200 text-amber-950">
+                  <strong className="text-amber-800">👑 Combo 6 Hộp:</strong> Giảm kịch sàn <strong>20%</strong> + <strong>Freeship Giao Nhanh</strong> + <strong>X2 Điểm Thưởng</strong> thành viên.
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Filters */}
         <div className="p-3 bg-slate-50 border-b border-slate-200/80 flex items-center gap-2 overflow-x-auto">

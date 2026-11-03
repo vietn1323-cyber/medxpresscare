@@ -224,10 +224,11 @@ export const isVoucherApplicableToProduct = (voucher, product) => {
  */
 export const getProductComboPromotions = (product, vouchers = DEFAULT_VOUCHERS) => {
   if (!product) return { hasAnyCombo: false, promo3: null, promo6: null };
-  const activeVouchers = Array.isArray(vouchers) && vouchers.length > 0 ? vouchers : DEFAULT_VOUCHERS;
+  const activeVouchers = Array.isArray(vouchers) ? vouchers : DEFAULT_VOUCHERS;
 
   // 1. Tìm voucher Combo 3 hộp áp dụng cho sản phẩm này
   const promo3Voucher = activeVouchers.find(v => 
+    v &&
     v.enabled && 
     isVoucherTimeValid(v) && 
     isVoucherApplicableToProduct(v, product) && 
@@ -236,6 +237,7 @@ export const getProductComboPromotions = (product, vouchers = DEFAULT_VOUCHERS) 
 
   // 2. Tìm voucher Combo 6 hộp áp dụng cho sản phẩm này
   const promo6Voucher = activeVouchers.find(v => 
+    v &&
     v.enabled && 
     isVoucherTimeValid(v) && 
     isVoucherApplicableToProduct(v, product) && 
@@ -272,8 +274,9 @@ export const getProductComboPromotions = (product, vouchers = DEFAULT_VOUCHERS) 
  */
 export const getProductGiftPromotions = (product, vouchers = DEFAULT_VOUCHERS) => {
   if (!product) return [];
-  const activeVouchers = Array.isArray(vouchers) && vouchers.length > 0 ? vouchers : DEFAULT_VOUCHERS;
+  const activeVouchers = Array.isArray(vouchers) ? vouchers : DEFAULT_VOUCHERS;
   return activeVouchers.filter(v => 
+    v &&
     v.enabled && 
     v.discountType === 'gift' && 
     isVoucherTimeValid(v) && 

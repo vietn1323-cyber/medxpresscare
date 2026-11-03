@@ -152,6 +152,37 @@ export const apiClient = {
     });
   },
 
+  // Lưu danh sách voucher khuyến mại - Debounced
+  saveVouchers(vouchers) {
+    debounceCall('vouchers', async () => {
+      try {
+        await fetch('/api/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ vouchers })
+        });
+      } catch (e) {
+        console.warn('D1 Sync Vouchers error:', e);
+      }
+    });
+  },
+
+  // Lưu voucher ngay lập tức (dùng khi xóa hoặc sửa voucher để tránh mất dữ liệu khi F5 nhanh)
+  async saveVouchersNow(vouchers) {
+    if (debounceTimers['vouchers']) {
+      clearTimeout(debounceTimers['vouchers']);
+    }
+    try {
+      await fetch('/api/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vouchers })
+      });
+    } catch (e) {
+      console.warn('D1 Sync Vouchers Now error:', e);
+    }
+  },
+
   // Lưu danh sách khách hàng & điểm tích lũy - Debounced
   saveCustomers(customers) {
     debounceCall('customers', async () => {
